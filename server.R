@@ -121,9 +121,30 @@ server <- function(input, output, session) {
         class = "col-3",
         actionButton("cols", "Confirm column names")))
   })
-  #### ii - selecting cols and cleaning data
+
+  #### ii - column confirmation gate (ISS-020)
+  # A reactiveVal counter is used instead of binding directly to input$cols.
+  # This allows the confirmation to be explicitly reset when a new file is
+  # uploaded, preventing the previous column mapping from silently applying
+  # to new data before the user re-confirms.
+  cols_confirmed <- reactiveVal(0)
+
+  observeEvent(input$cols, {
+    cols_confirmed(cols_confirmed() + 1)
+  })
+
+  observeEvent(input$upload, {
+    cols_confirmed(0)
+  })
+
+  #### iii - selecting cols and cleaning data
   data_updated <- reactive({
     req(data_uploaded())
+    # ISS-020: explicitly require confirmation has occurred since the last file
+    # upload. cols_confirmed() is reset to 0 by observeEvent(input$upload),
+    # so this req() suspends the reactive cleanly until the user re-confirms
+    # the column mapping for the new file.
+    req(cols_confirmed() > 0)
     
     validate(
       need(
@@ -239,7 +260,11 @@ server <- function(input, output, session) {
     }
     temp2
   }) %>%
-    bindEvent(input$cols)
+    # ISS-020: bind to cols_confirmed counter rather than input$cols directly.
+    # Resetting the counter on new file upload (observeEvent above) invalidates
+    # this reactive. The req(cols_confirmed() > 0) above then suspends execution
+    # until the user re-confirms, preventing the old mapping applying to new data.
+    bindEvent(cols_confirmed(), ignoreInit = TRUE)
   
   ### b - run regression
   #### i - fit regression
@@ -307,10 +332,18 @@ server <- function(input, output, session) {
   ### a - uploaded data
   output$dat_upload <- DT::renderDataTable({
     req(data_updated())
-    
-    cols <- c("Variable", "Level", "Estimate", "UCI (95%CI)",
-              "LCI (95%CI)", "n", "p", "Significance")
-    
+
+    # ISS-021: (1) corrected LCI/UCI label order — was swapped (UCI then LCI)
+    # relative to the actual column order in data_updated() (est, lci, uci).
+    # (2) column label vector now built dynamically from colnames(data_updated())
+    # so optional columns (n, p, significance) only contribute a label when
+    # actually present, preventing a length mismatch error in DT::datatable().
+    cols <- c("Variable", "Level", "Estimate", "LCI (95%CI)", "UCI (95%CI)")
+
+    if ("n"            %in% colnames(data_updated())) cols <- c(cols, "n")
+    if ("p"            %in% colnames(data_updated())) cols <- c(cols, "p")
+    if ("significance" %in% colnames(data_updated())) cols <- c(cols, "Significance")
+
     if (input$by_group == TRUE & !is.null(input$group_var_name)) {
       cols <- append(cols, input$group_var_name)
     }
@@ -329,25 +362,19 @@ server <- function(input, output, session) {
       DT::formatRound(
         3:5,
         digits = 2)
-    
-    if (length(input$n_name) != 0) {
-      if (input$n_name != "empty") {
-        temp <- temp %>%
-          DT::formatRound(
-            6,
-            mark = ",",
-            digits = 0)
-      }
+
+    # Format optional columns by presence rather than input$*_name checks,
+    # consistent with the dynamic cols vector above (ISS-021).
+    if ("n" %in% colnames(data_updated())) {
+      temp <- temp %>%
+        DT::formatRound(6, mark = ",", digits = 0)
     }
-    
-    if (length(input$p_name) != 0) {
-      if (input$p_name != "empty") {
-        temp <- temp %>%
-          DT::formatRound(
-            7,
-            digits = 3)
-      }
+
+    if ("p" %in% colnames(data_updated())) {
+      temp <- temp %>%
+        DT::formatRound(7, digits = 3)
     }
+
     temp
   })
   ### b - regression information

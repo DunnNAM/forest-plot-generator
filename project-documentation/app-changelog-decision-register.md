@@ -107,12 +107,81 @@ Entries are listed in reverse chronological order (newest first) within each sec
 | PDEC-003 | Should `extrafont` be replaced with `sysfonts`/`showtext` for font handling in the app? Requires confirming whether font logic lives in the app, in `forestHelperR`, or both. | ISS-002, PKG-007, FEAT-008 | Medium | After code review |
 | PDEC-004 | Should the `officer` dependency be removed from `global.R` until Word/PowerPoint export is implemented? | ISS-006, FEAT-004 | Low | Early in code review |
 | PDEC-005 | Should `forestHelperR` be moved to its own GitHub repository? | ISS-008, PKG-006 | **Deferred** — no hosting or sharing requirement at this stage. Leave package in current local location. Revisit when publication or server hosting is being planned. | When hosting/publication is scoped |
+| PDEC-006 | Should `forestHelperR` declare its dependencies more explicitly so that `.tar.gz` installs resolve them automatically, or should the install documentation be updated to instruct users to install dependencies first? | ISS-014 (app), `forestHelperR` `DESCRIPTION` | Low — parked for future package maintenance cycle | Future package release |
 
 > **Closed pending decisions:** PDEC-002 → DEC-002 (May 2026).
 
 ---
 
 ## Changes
+
+### CHG-006 — Fix ISS-020: reset column confirmation on new file upload
+
+| Field | Detail |
+|---|---|
+| **Date** | May 2026 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-020 |
+
+**Files changed:** `server.R`
+
+**Summary of changes:**
+
+Three additions immediately after `output$sortable`:
+
+```r
+cols_confirmed <- reactiveVal(0)
+
+observeEvent(input$cols, {
+  cols_confirmed(cols_confirmed() + 1)
+})
+
+observeEvent(input$upload, {
+  cols_confirmed(0)
+})
+```
+
+`data_updated()` changes:
+- `req(cols_confirmed() > 0)` added immediately after `req(data_uploaded())` as an explicit suspension gate
+- `bindEvent(input$cols)` replaced with `bindEvent(cols_confirmed(), ignoreInit = TRUE)`
+- `ignoreNULL = FALSE` not used — `req()` handles the zero-state gate cleanly
+
+The section heading `#### ii` was also renumbered to `#### iii` to reflect the new `#### ii — column confirmation gate` section inserted above it.
+
+**Rationale:** Previously `data_updated()` bound directly to `input$cols`. When a new file was uploaded, `input$cols` retained its previous value and `data_updated()` immediately re-executed with the new file's data but the old column mapping, causing a `Column 'variable' doesn't exist` crash. The `reactiveVal` counter is reset to `0` on upload and incremented on confirmation, giving explicit control over when processing is permitted. The `req(cols_confirmed() > 0)` guard provides a clean suspension point that prevents any downstream reactives from receiving stale or mismatched data.
+
+**Testing notes:** Tested by uploading File A, confirming, then uploading File B. Before fix: app crashed with `dplyr::select` error. After fix: Review Data tab clears on File B upload and remains blank until the user confirms the new column mapping.
+
+**ISS-020 status:** → **Resolved**
+
+---
+
+### CHG-005 — Fix ISS-021: correct LCI/UCI label order; dynamic column label vector in `output$dat_upload`
+
+| Field | Detail |
+|---|---|
+| **Date** | May 2026 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-021 |
+
+**Files changed:** `server.R`
+
+**Summary of changes to `output$dat_upload`:**
+
+| Before | After |
+|---|---|
+| `cols <- c("Variable", "Level", "Estimate", "UCI (95%CI)", "LCI (95%CI)", "n", "p", "Significance")` — hardcoded 8-element vector with LCI/UCI swapped | `cols` built dynamically starting from the five always-present columns in correct order; optional columns appended only when present in `colnames(data_updated())` |
+| `formatRound` checks used `input$n_name != "empty"` | `formatRound` checks use `"n" %in% colnames(data_updated())` — consistent with the dynamic cols vector and more direct |
+
+**Rationale:** The hardcoded `cols` vector had two defects: (1) `"UCI (95%CI)"` and `"LCI (95%CI)"` were in the wrong order relative to the actual column order produced by `data_updated()` (`est`, `lci`, `uci`), meaning the lower CI bound was labelled as the upper and vice versa — a correctness risk in a clinical reporting context; (2) the fixed-length vector would cause a DT column count mismatch error if optional columns (`n`, `p`, `significance`) were absent from the uploaded file.
+
+**Testing notes:** Tested with File A (8 columns — all labels correct, LCI/UCI in correct positions) and File B (5 columns — table renders without error, no spurious optional column headers).
+
+**ISS-021 status:** → **Resolved**
+
+---
 
 ### CHG-004 — Remove `setwd()` block from `global.R`; replace `source()` with `here::here()`
 
@@ -138,7 +207,7 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 `here::here()` resolves paths relative to the project root using a priority order: `.here` sentinel file → `.Rproj` → `.git` → `DESCRIPTION` → working directory fallback. This is correct and consistent across both local RStudio development and the existing Shiny Server deployment, with no server-side changes required.
 
-**`.here` sentinel file:** An empty `.here` file has been added to the project root. This explicitly anchors `here::here()` resolution regardless of whether an `.Rproj` file is present on the server, ensuring consistent behaviour across all deployment contexts. The file contains no content and has no runtime effect beyond root anchoring.
+**`.here` sentinel file:** An empty `.here` file has been added to the project root. This explicitly anchors `here::here()` resolution regardless of whether an `.Rproj` file is present on the server, ensuring consistent behaviour across all deployment contexts.
 
 **Dependency added:** `here` — must be present on all deployment targets. Install with `install.packages("here")`.
 
@@ -208,8 +277,13 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | May 2026 | Preliminary security review | Low risk. No patient data, credentials, or sensitive infrastructure details found. |
 | May 2026 | `global.R`, `ui.R`, `server.R`, `data_creation.R` uploaded and reviewed | ISS-001 resolved (CHG-004). `data_creation.R` confirmed clean. PDEC-002 formally closed as DEC-002. |
 | May 2026 | `data.R` and `README.md` (package files) uploaded and reviewed | PKG-005 and PKG-006 confirmed already resolved in package phase. Pre-commit checklist fully cleared. Security assessment marked complete. |
-| — | Broader code review of `ui.R` and `server.R` for functional issues | Pending |
+| May 2026 | Full code review of `global.R`, `ui.R`, `server.R` | ISS-013 through ISS-026 raised. ISS-021 and ISS-020 prioritised for resolution. |
+| May 2026 | ISS-021 resolved (CHG-005) — LCI/UCI label swap corrected; dynamic column label vector implemented | Tested with 8-column and 5-column files. Pass. |
+| May 2026 | ISS-020 resolved (CHG-006) — column confirmation reset on new file upload | Initial implementation required a follow-up fix: `req(cols_confirmed() > 0)` added after crash observed on sequential file upload. Tested with File A → File B sequence. Pass. |
+| May 2026 | Two-group upload UX clarified during ISS-020 testing | Confirmed by design: both files must be selected simultaneously in the file picker for two-group comparison. Sequential upload replaces the previous file. ISS-027 raised as a low-priority UX clarification item. |
+| May 2026 | `forestHelperR` v0.2.0 built as `.tar.gz` and installed locally | Four undeclared dependencies (`extrafont`, `forestploter`, `lmtest`, `sandwich`) required manual pre-installation. PDEC-006 raised to address in a future package maintenance cycle. |
+| — | Remaining open issues (ISS-013 to ISS-026 excluding resolved) | Pending — to be addressed in subsequent sessions |
 
 ---
 
-*Document version: 0.4 — Pre-commit hygiene checklist fully cleared; PKG-005 and PKG-006 verified resolved; security assessment complete; project cleared for private GitHub commit*
+*Document version: 0.5 — CHG-005 and CHG-006 implemented and tested; ISS-020 and ISS-021 resolved; ISS-027 and PDEC-006 raised; two-group upload UX behaviour documented*
