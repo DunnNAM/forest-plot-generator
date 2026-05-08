@@ -9,6 +9,8 @@ library(tidyr)
 library(vroom)       # file upload parsing (csv/tsv/txt) — declared explicitly (NEW-002)
 library(readxl)      # file upload parsing (xls/xlsx) — declared explicitly (NEW-002)
 
+library(here)        # portable path resolution — replaces setwd() block (ISS-001 / CHG-004)
+
 library(bslib)
 library(grid)
 library(DT)
@@ -28,15 +30,13 @@ library(forestHelperR)
 # font_import()  # run once interactively on a new machine to register fonts
 
 loadfonts(device = "all")
-temp <- getwd()
-if (stringr::str_detect(temp, "home")) {
-  setwd("/home/rstudio/apps/ForestPlotGenerator")
-} else {
-  setwd("/srv/shiny-server/ForestPlotGenerator")
-}
+
+# setwd() block removed — here::here() resolves paths relative to the project
+# root (.here sentinel file or .Rproj) on both local and server deployments.
+# No manual working directory manipulation is required (ISS-001 / CHG-004).
 
 # Load simulated data -----------------------------------------------------
-source("./data/data_creation.R")
+source(here::here("data", "data_creation.R"))
 
 
 # functions/functions.R removed — all functions now provided by forestHelperR

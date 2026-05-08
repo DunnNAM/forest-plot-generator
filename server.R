@@ -20,24 +20,26 @@ server <- function(input, output, session) {
         validate("Invalid file: please upload a .csv, .tsv or .txt file")) %>%
         dplyr::mutate(empty = NA)
     } else {
-      for (i in 1:nrow(input$upload)) {
+      ## ISS-003 fix: replaced for-loop (uninitialised temp, unindexed datapath,
+      ## incorrect bind_rows accumulation) with lapply + dplyr::bind_rows.
+      lapply(seq_len(nrow(input$upload)), function(i) {
         ext <- tools::file_ext(input$upload$name[i])
-        temp <- switch(
+        switch(
           ext,
-          xlsx = readxl::read_xlsx(input$upload$datapath, trim_ws = TRUE),
-          xls = readxl::read_xls(input$upload$datapath, trim_ws = TRUE),
-          csv = vroom::vroom(input$upload$datapath[i], delim = ",",
-                             show_col_types = FALSE),
-          tsv = vroom::vroom(input$upload$datapath[i], delim = "\t",
-                             show_col_types = FALSE),
-          txt = vroom::vroom(input$upload$datapath[i], delim = ",",
-                             show_col_types = FALSE),
-          validate("Invalid file: please upload a .csv, .tsv or .txt file")) %>%
+          xlsx = readxl::read_xlsx(input$upload$datapath[i], trim_ws = TRUE),
+          xls  = readxl::read_xls(input$upload$datapath[i], trim_ws = TRUE),
+          csv  = vroom::vroom(input$upload$datapath[i], delim = ",",
+                              show_col_types = FALSE),
+          tsv  = vroom::vroom(input$upload$datapath[i], delim = "\t",
+                              show_col_types = FALSE),
+          txt  = vroom::vroom(input$upload$datapath[i], delim = ",",
+                              show_col_types = FALSE),
+          validate("Invalid file: please upload a .csv, .tsv or .txt file")
+        ) %>%
           dplyr::mutate(Group = i,
-                        empty = NA) %>%
-          bind_rows(temp,.)
-      }
-      temp
+                        empty = NA)
+      }) %>%
+        dplyr::bind_rows()
     }
   })
   ### ii - check
@@ -396,14 +398,17 @@ server <- function(input, output, session) {
     req(input$robust_variance, input$regression_type == 'poisson')
     
     table <- broom::tidy(fit(), conf.level = 0.95)
+    ## NEW-001 fix: corrected vcov to vcov. (trailing dot) — lmtest::coeftest()
+    ## and lmtest::coefci() require vcov. not vcov. Using vcov= was silently
+    ## ignored, causing the preview to show non-robust standard errors.
     table[,c("std.error", "p.value")] <- lmtest::coeftest(
       fit(), df = Inf,
-      vcov = sandwich::vcovHC,
+      vcov. = sandwich::vcovHC,
       type = "HC0")[, c("Std. Error", "Pr(>|z|)")]
     table[,c("lci", "uci")] <- lmtest::coefci(
       fit(),
       df = Inf,
-      vcov = sandwich::vcovHC,
+      vcov. = sandwich::vcovHC,
       type = "HC0")
     table
   })
