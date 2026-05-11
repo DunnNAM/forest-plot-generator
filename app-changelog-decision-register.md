@@ -166,6 +166,26 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-021 — DEC-004 Step 4: extract preview outputs to `server/preview.R`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-004 |
+
+**Files added:** `server/preview.R`  
+**Files changed:** `server.R`
+
+**Summary:**
+
+Fourth step of the DEC-004 file split. All four Review Data tab outputs — `output$dat_upload`, `output$dat_summary`, `output$regression_details`, and `output$robust` — extracted from `server.R` into `server/preview.R`. These are display-only outputs with no reactive values returned; they consume `data_updated()`, `reg_table()`, and `fit()` defined in the earlier sourced files.
+
+**Test results:** 48 unit tests, 9 integration assertions — 0 failures, 0 warnings.
+
+---
+
 ### CHG-020 — DEC-004 Step 3: extract regression fitting to `server/regression.R`
 
 | Field | Detail |
@@ -782,4 +802,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 1.9 — CHG-020 implemented: server/regression.R extracted*
+*Document version: 2.0 — CHG-021 implemented: server/preview.R extracted*
