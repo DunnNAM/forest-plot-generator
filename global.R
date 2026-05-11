@@ -16,7 +16,8 @@ library(grid)
 library(DT)
 library(forestploter)
 library(gridExtra)
-library(extrafont)
+library(sysfonts)
+library(showtext)
 # officer removed — no export handlers wired; add back when FEAT-004 is implemented (PDEC-004 / CHG-002)
 library(shiny)
 library(survival)
@@ -32,9 +33,27 @@ library(clipr)
 
 
 # Setup -------------------------------------------------------------------
-# font_import()  # run once interactively on a new machine to register fonts
+# Register Lato from bundled TTF files — works on every machine without any
+# one-time import step (replaces extrafont::font_import() / loadfonts()).
+sysfonts::font_add(
+  family   = "Lato",
+  regular  = here::here("Lato", "Lato-Regular.ttf"),
+  bold     = here::here("Lato", "Lato-Bold.ttf"),
+  italic   = here::here("Lato", "Lato-Italic.ttf"),
+  bolditalic = here::here("Lato", "Lato-BoldItalic.ttf")
+)
 
-loadfonts(device = "all")
+# Attempt to load Google Fonts. Each call is wrapped in tryCatch so that a
+# missing internet connection fails silently — the font simply won't appear in
+# sysfonts::font_families() and will be filtered out of the selector below.
+for (gfont in c("Roboto", "Open Sans", "Source Sans Pro", "Montserrat")) {
+  tryCatch(
+    sysfonts::font_add_google(gfont),
+    error = function(e) NULL
+  )
+}
+
+showtext::showtext_auto()
 
 # setwd() block removed — here::here() resolves paths relative to the project
 # root (.here sentinel file or .Rproj) on both local and server deployments.
@@ -110,8 +129,8 @@ log_scale = list("min" = list(0.05),
                  "90%" = list(16,2), 
                  "max" = list(20))
 
-## restrict fonts down to ones available on this machine
-fonts <- fonts[fonts %in% names(grDevices::postscriptFonts())]
+## restrict fonts down to ones successfully registered with sysfonts
+fonts <- fonts[fonts %in% sysfonts::font_families()]
 
 faces <- c("Plain" = "plain", "Italic" = "italic", "Bold" = "bold")
 display_option <- c("Counts" = "n", "Estimate" = "est",

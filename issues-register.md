@@ -41,13 +41,13 @@
 |---|---|
 | **Source** | DOC |
 | **Severity** | High |
-| **Status** | Open — **RUNTIME CONFIRMED 2026-05-11** |
+| **Status** | **Resolved — CHG-016** |
 | **File(s)** | `global.R` |
 | **Description** | `extrafont::font_import()` is commented out. `loadfonts()` will silently fail on any machine where fonts have not been pre-imported interactively. Lato font files are bundled in the `Lato/` directory but the import step is not automated. |
 | **Risk** | Font rendering will fall back silently on new machines, producing plots with incorrect fonts without any error message to the user. |
 | **Recommended fix** | Add a startup check: if the target font is not found in `extrafont::fonts()`, emit a clear `warning()` or `message()` in the UI. Document the one-time setup step clearly in a `README.md`. Consider whether `sysfonts` / `showtext` would be a more portable alternative (see PDEC-003). |
 | **Runtime observation (2026-05-11)** | Confirmed during Batch 3 testing. Font selector shows only 5 base R/system fonts (Helvetica, Times, Courier, Palatino, Bookman). Custom fonts (Lato, Roboto, Open Sans, Source Sans Pro, Montserrat) are absent — consistent with `extrafont` fonts not having been imported on this machine. The silent fallback means no error is surfaced to the user. ISS-016/026 empirical verification (1.2× expansion factor for Open Sans and Montserrat) is blocked until this issue is resolved. **Parked as non-critical for now.** |
-| **Resolution** | — |
+| **Resolution** | `extrafont` replaced with `sysfonts`/`showtext` (PDEC-003 → DEC-003). Lato registered at startup from bundled TTF files — no one-time import step required. Roboto, Open Sans, Montserrat loaded via `font_add_google()` wrapped in `tryCatch()` — fail silently when internet is unavailable and are filtered from the selector. Font availability check updated from `grDevices::postscriptFonts()` to `sysfonts::font_families()`. Verified: Lato, Open Sans, Roboto, Montserrat appear in selector on a machine with internet access. Note: `"Source Sans Pro"` has been renamed `"Source Sans 3"` on Google Fonts and fails silently — see ISS-030. Note: OS system fonts (Arial, Helvetica, Times, etc.) no longer appear in the selector — see ISS-029. |
 
 ### ISS-003 — Two-file upload uses fragile `for` loop pattern
 
@@ -265,17 +265,54 @@
 
 ## Low Severity Issues
 
+### ISS-028 — Age group levels not sorted in expected clinical order (simulated data)
+
+| Field | Detail |
+|---|---|
+| **Source** | RUNTIME |
+| **Severity** | Medium |
+| **Status** | Open |
+| **File(s)** | `data/data_creation.R`, `forestHelperR` package (`regTabler()`) |
+| **Description** | In simulated data mode, the age group variable displays with the reference category (60–69) appearing first in the forest plot, ahead of the non-reference levels (<50, 50–59). Expected clinical display order is <50 → 50–59 → 60–69 (ref). The root cause is likely factor level ordering in `data_creation.R` or in `forestHelperR::regTabler()` — the reference level is the base factor level in the regression, which R places first by default. |
+| **Risk** | Misleading variable display order in a clinical reporting context. |
+| **Recommended fix** | Investigate factor level assignment in `data_creation.R` and row ordering in `regTabler()`. Reorder factor levels so the reference category appears last within each variable group, consistent with standard forest plot convention. Fix likely sits in the `forestHelperR` package, so raise as a package-level issue. |
+| **Resolution** | — |
+
+### ISS-029 — OS system fonts no longer available in font selector after `sysfonts`/`showtext` migration
+
+| Field | Detail |
+|---|---|
+| **Source** | RUNTIME — identified during CHG-016 testing |
+| **Severity** | Low |
+| **Status** | Open |
+| **File(s)** | `global.R` |
+| **Description** | Prior to CHG-016, `extrafont::loadfonts()` registered OS system fonts (Helvetica, Times, Courier, Palatino, Bookman) with `grDevices`, making them available via `postscriptFonts()`. After migration to `sysfonts`/`showtext`, these fonts are no longer in `sysfonts::font_families()` because `sysfonts` requires explicit registration via `font_add()`. The font selector now shows only Lato and the Google Fonts that loaded successfully. |
+| **Recommended fix** | Add `sysfonts::font_add()` calls for common OS system fonts using platform-conditional paths (e.g. `C:/Windows/Fonts/` on Windows, `/System/Library/Fonts/` on macOS). Wrap in `tryCatch()` consistent with the Google Fonts pattern so missing fonts fail silently. Limit to fonts already in the `fonts` vector in `global.R`. |
+| **Resolution** | — |
+
+### ISS-030 — `"Source Sans Pro"` renamed to `"Source Sans 3"` on Google Fonts; silently absent from selector
+
+| Field | Detail |
+|---|---|
+| **Source** | RUNTIME — identified during CHG-016 testing |
+| **Severity** | Low |
+| **Status** | Open |
+| **File(s)** | `global.R` |
+| **Description** | `sysfonts::font_add_google("Source Sans Pro")` fails silently because Google Fonts renamed the family to `"Source Sans 3"`. The font does not appear in `font_families()` and is filtered from the selector. The `fonts` vector and the 1.2× expansion group in `R/helpers.R` both still reference `"Source Sans Pro"` by the old name. |
+| **Recommended fix** | Update the `font_add_google()` call to `"Source Sans 3"`, update the `fonts` vector and `get_font_expansion()` in `R/helpers.R` to use the new family name. Verify the 1.2× expansion factor applies correctly under the new name. |
+| **Resolution** | — |
+
 ### ISS-009 — Screenshot path is a placeholder
 
 | Field | Detail |
 |---|---|
 | **Source** | DOC |
 | **Severity** | Low |
-| **Status** | Open |
-| **File(s)** | `forest-plot-builder.md` |
+| **Status** | **Resolved — CHG-017** |
+| **File(s)** | `forest-plot-builder.md` (DataScienceHangout-Shinytalk repo) |
 | **Description** | Documentation references `../assets/screenshot_forest.png` — a placeholder path. |
 | **Recommended fix** | Add an actual screenshot and update the path. |
-| **Resolution** | — |
+| **Resolution** | Screenshot file confirmed present at `assets/screenshot_forest.png`. Stale `<!-- Replace with actual screenshot path -->` HTML comment removed. Path was already correct. |
 
 ### ISS-010 — Talk date placeholder in documentation footer
 
@@ -283,11 +320,11 @@
 |---|---|
 | **Source** | DOC |
 | **Severity** | Low |
-| **Status** | Open |
-| **File(s)** | `forest-plot-builder.md` |
+| **Status** | **Resolved — CHG-017** |
+| **File(s)** | `forest-plot-builder.md` (DataScienceHangout-Shinytalk repo) |
 | **Description** | Footer contains `[Month] [Year]` placeholders. |
 | **Recommended fix** | Fill in the actual date or remove the footer. |
-| **Resolution** | — |
+| **Resolution** | Footer updated to `May 2026`. |
 
 ### ISS-012 — `data_creation.R` sourced at startup with no caching
 
@@ -340,15 +377,15 @@
 | ID | Severity | Area | Short description | Status |
 |---|---|---|---|---|
 | ISS-001 | Critical | `global.R` | Hardcoded `setwd()` paths | ✅ Resolved — CHG-004 |
-| ISS-002 | High | `global.R` | Font import not portable | Open |
+| ISS-002 | High | `global.R` | Font import not portable | ✅ Resolved — CHG-016 |
 | ISS-003 | High | `server.R` | Two-file upload `for` loop | ✅ Resolved |
 | ISS-004 | High | All | No unit tests | ✅ Resolved — CHG-014 (Phase 1), CHG-015 (Phase 2) |
 | ISS-005 | High | `functions.R` | Orphaned legacy file | ✅ Resolved — DEC-002 |
 | ISS-006 | Medium | `global.R` | `officer` loaded but unused | ✅ Resolved — CHG-002 |
 | ISS-007 | Medium | Root | No `README.md` | ✅ Resolved — CHG-010 |
 | ISS-008 | Medium | Root | `forestHelperR` install undocumented | ✅ Resolved — CHG-010 |
-| ISS-009 | Low | Docs | Screenshot placeholder path | Open |
-| ISS-010 | Low | Docs | Talk date placeholder in footer | Open |
+| ISS-009 | Low | Docs | Screenshot placeholder path | ✅ Resolved — CHG-017 |
+| ISS-010 | Low | Docs | Talk date placeholder in footer | ✅ Resolved — CHG-017 |
 | ISS-011 | Medium | Root | No `renv` lockfile | ✅ Resolved — CHG-011 |
 | ISS-012 | Low | `global.R` | `data_creation.R` not cached | ✅ Resolved — CHG-012 |
 | ISS-013 | High | `server.R` | `coxph()` missing `survival::` qualifier | ✅ Resolved — CHG-007 |
@@ -366,7 +403,39 @@
 | ISS-025 | Low | `server.R` | 42-line commented-out reactive with copy-paste bug | ✅ Resolved — CHG-009 |
 | ISS-026 | Low | `server.R` / `global.R` | `"Open Sans"` missing from font expansion group | ✅ Resolved — CHG-009 *(verification pending)* |
 | ISS-027 | Low | `ui.R` | Two-group upload workflow not discoverable from UI | ✅ Resolved — CHG-008 |
+| ISS-028 | Medium | `data_creation.R` / `forestHelperR` | Age group levels not sorted in expected clinical order | Open |
+| ISS-029 | Low | `global.R` | OS system fonts absent from selector after `sysfonts` migration | Open |
+| ISS-030 | Low | `global.R` / `R/helpers.R` | `"Source Sans Pro"` renamed on Google Fonts; silently absent | Open |
+| ISS-031 | Medium | `ui.R` | Export button layout: fourth button wraps with no spacing | Open |
+| FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | Open |
 
 ---
 
-*Document version: 3.0 — ISS-004 fully resolved (CHG-014 + CHG-015): 48 unit tests + 7 shinytest2 integration tests passing; ISS-013/014/015 register entries corrected to Resolved*
+### ISS-031 — Export button layout: fourth button wraps to new row with no spacing
+
+| Field | Detail |
+|---|---|
+| **Source** | RUNTIME |
+| **Severity** | Medium |
+| **Status** | Open |
+| **File(s)** | `ui.R` — Plot tab export button block |
+| **Description** | The Plot tab contains four action/download buttons: Download PNG, Download SVG, Copy R code, and Download .R script. The first three sit on one line; the fourth wraps to a new row with no vertical gap, appearing hard against the bottom of the first button. The layout degrades without CSS or flex controls to keep all four on one row (or wrap cleanly with spacing). |
+| **Recommended fix** | See FEAT-009. Preferred solution is a redesigned Export panel in the right sidebar accordion rather than a layout patch in the current location. Short-term patch: add `margin-top` or `gap` CSS to the button group, or use `shiny::fluidRow()` / `bslib` layout helpers to keep buttons on one row up to the minimum supported screen width. |
+| **Resolution** | — |
+
+### FEAT-009 — Redesign export controls into a dedicated sidebar accordion panel
+
+| Field | Detail |
+|---|---|
+| **Source** | USER |
+| **Severity** | Medium |
+| **Status** | Open |
+| **File(s)** | `ui.R`, `server.R` |
+| **Description** | Replace the current four-button export block in the Plot tab with a dedicated "Export graph / code" accordion section in the right-hand sidebar. Proposed structure: **(1) Export graph** — a single export button whose output format (PNG / SVG) is controlled by a `radioButtons()` input above it; **(2) Export code** — two buttons side-by-side, "Copy R code" and "Download .R script", representing distinct functionalities that cannot be merged. Colour-code the two sections to visually separate plot export from code export. |
+| **Design notes** | Radio button + single button approach for graph export reduces cognitive load vs. two separate download buttons. Two buttons remain necessary for code export since clipboard copy and file download are distinct actions. Using the sidebar accordion (vs. fixing the Plot tab layout) removes export controls from the main view and groups them logically with other settings. |
+| **Dependencies** | ISS-031 (current layout bug, resolved by this feature). Sidebar accordion requires `bslib::accordion()` or similar — confirm available in current bslib version. |
+| **Resolution** | — |
+
+---
+
+*Document version: 3.3 — ISS-009/010 resolved (CHG-017): screenshot comment removed, talk date filled in*

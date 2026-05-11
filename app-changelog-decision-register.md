@@ -32,6 +32,30 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Decisions
 
+### DEC-003 — Replace `extrafont` with `sysfonts`/`showtext` for font handling
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Active |
+| **Refs** | ISS-002, PDEC-003 |
+
+**Decision:** Replace `extrafont` + `loadfonts()` with `sysfonts` + `showtext`. Register Lato at startup from the bundled `Lato/` TTF files. Attempt to load Roboto, Open Sans, Source Sans Pro, and Montserrat via `font_add_google()`, each wrapped in `tryCatch()` so internet unavailability fails silently.
+
+**Rationale:** `extrafont` requires a one-time `font_import()` per machine — a manual step that is not automated, produces no user-visible error when skipped, and was confirmed to leave the font selector showing only 5 base system fonts on the development machine (ISS-002 runtime observation). `sysfonts`/`showtext` loads fonts from TTF files at startup with no per-machine setup. The `tryCatch()` pattern for Google Fonts provides a graceful degradation path for server deployments without external internet access.
+
+**Alternatives considered:**
+
+- Automate `font_import()` at startup — rejected; `font_import()` is slow, scans entire font directories, and is still machine-dependent. Does not solve the portability problem for deployment targets.
+- Bundle all custom font TTF files and drop Google Fonts dependency entirely — deferred; would require sourcing and bundling Roboto, Open Sans, Source Sans Pro, Montserrat TTF files. Viable future improvement (eliminates internet dependency entirely).
+
+**Known limitations introduced:** OS system fonts (Arial, Helvetica, Times, etc.) no longer appear in the selector — see ISS-029. `"Source Sans Pro"` silently absent (renamed to `"Source Sans 3"` on Google Fonts) — see ISS-030.
+
+> **Closes PDEC-003.**
+
+---
+
 ### DEC-002 — Delete `functions/functions.R`; rely solely on `forestHelperR` package
 
 | Field | Detail |
@@ -104,7 +128,7 @@ Entries are listed in reverse chronological order (newest first) within each sec
 | ID | Question | Refs | Priority | Target decision date |
 |---|---|---|---|---|
 | PDEC-001 | Should the app be refactored from the 3-file structure (`ui.R`, `server.R`, `global.R`) to a Shiny module architecture? Decision requires reading `server.R` to assess complexity. | FEAT-007 | Medium | After initial code review |
-| PDEC-003 | Should `extrafont` be replaced with `sysfonts`/`showtext` for font handling in the app? Requires confirming whether font logic lives in the app, in `forestHelperR`, or both. | ISS-002, PKG-007, FEAT-008 | Medium | After code review |
+| ~~PDEC-003~~ | ~~Should `extrafont` be replaced with `sysfonts`/`showtext`?~~ | ISS-002 | — | **Closed as DEC-003** |
 | PDEC-004 | Should the `officer` dependency be removed from `global.R` until Word/PowerPoint export is implemented? | ISS-006, FEAT-004 | Low | Early in code review |
 | PDEC-005 | Should `forestHelperR` be moved to its own GitHub repository? | ISS-008, PKG-006 | **Deferred** — no hosting or sharing requirement at this stage. Leave package in current local location. Revisit when publication or server hosting is being planned. | When hosting/publication is scoped |
 | PDEC-006 | Should `forestHelperR` declare its dependencies more explicitly so that `.tar.gz` installs resolve them automatically, or should the install documentation be updated to instruct users to install dependencies first? | ISS-014 (app), `forestHelperR` `DESCRIPTION` | Low — parked for future package maintenance cycle | Future package release |
@@ -114,6 +138,54 @@ Entries are listed in reverse chronological order (newest first) within each sec
 ---
 
 ## Changes
+
+### CHG-017 — ISS-009 / ISS-010: fix documentation placeholders in presentation repo
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-009, ISS-010 |
+
+**Repo:** `DataScienceHangout-Shinytalk`  
+**File changed:** `docs/forest-plot-builder.md`
+
+| ISS | Change |
+|---|---|
+| ISS-009 | Removed stale `<!-- Replace with actual screenshot path -->` HTML comment. Screenshot file `assets/screenshot_forest.png` confirmed present; path `../assets/screenshot_forest.png` was already correct. |
+| ISS-010 | Footer updated from `[Month] [Year]` to `May 2026`. |
+
+**ISS-009 status:** → **Resolved**  
+**ISS-010 status:** → **Resolved**
+
+---
+
+### CHG-016 — ISS-002 / PDEC-003: replace `extrafont` with `sysfonts`/`showtext`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-002, DEC-003 |
+
+**Files changed:** `global.R`
+
+**Summary of changes to `global.R`:**
+
+| Location | Before | After |
+|---|---|---|
+| Package block | `library(extrafont)` | `library(sysfonts)` + `library(showtext)` |
+| Setup block | `font_import()` comment + `loadfonts(device = "all")` | `sysfonts::font_add("Lato", ...)` from bundled TTFs; `tryCatch(font_add_google(...))` loop for Google Fonts; `showtext::showtext_auto()` |
+| Font filter | `fonts %in% names(grDevices::postscriptFonts())` | `fonts %in% sysfonts::font_families()` |
+
+**Verified:** App starts cleanly. Font selector shows Lato, Open Sans, Roboto, Montserrat on a machine with internet access. `Source Sans Pro` absent (renamed on Google Fonts — ISS-030). OS system fonts absent (ISS-029).
+
+**ISS-002 status:** → **Resolved**
+**PDEC-003 status:** → **Closed as DEC-003**
+
+---
 
 ### CHG-015 — ISS-004 Phase 2: shinytest2 integration tests
 
@@ -609,7 +681,8 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | 2026-05-11 | `dat.rds` caching logic added to `global.R` — ISS-012 resolved (CHG-012) | Conditional load: reads `data/dat.rds` if present, falls back to `source(data_creation.R)`. Cache must be created once interactively and committed to activate. |
 | 2026-05-11 | ISS-004 Phase 1 — test infrastructure initialised; 9 pure helpers extracted to `R/helpers.R`; 48 unit tests passing (CHG-014) | `testthat` wired up via `usethis::use_testthat()`. `renv.lock` updated. `server.R` refactored to call helpers. Phase 2 (`shinytest2`) pending. |
 | 2026-05-11 | ISS-004 Phase 2 — `shinytest2` integration tests (CHG-015) | 7 integration tests passing across 3 scenarios: column confirmation gate (incl. ISS-020 regression guard), two-file upload, and regression type → estimate label. `renv.lock` updated (sortable, knitr, shinytest2 pinned). ISS-004 fully resolved. ISS-013/014/015 register entries corrected to Resolved (were incorrectly showing Open). |
+| 2026-05-11 | ISS-002 resolved — `extrafont` replaced with `sysfonts`/`showtext` (CHG-016, DEC-003) | Lato now registered at startup from bundled TTFs. Google Fonts load via `tryCatch()` — fail silently without internet. Verified: Lato, Open Sans, Roboto, Montserrat appear in selector. ISS-028 (age group sort order), ISS-029 (system fonts absent), ISS-030 (Source Sans Pro renamed) raised. |
 
 ---
 
-*Document version: 1.4 — CHG-015 implemented; ISS-004 fully resolved (48 unit tests + 7 shinytest2 integration tests passing)*
+*Document version: 1.6 — CHG-017 implemented; ISS-009/010 resolved*
