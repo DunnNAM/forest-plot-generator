@@ -166,6 +166,28 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-020 — DEC-004 Step 3: extract regression fitting to `server/regression.R`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-004 |
+
+**Files added:** `server/regression.R`  
+**Files changed:** `server.R`
+
+**Summary:**
+
+Third step of the DEC-004 file split. `fit()`, `predictors_selected()`, and `reg_table()` extracted from `server.R` into `server/regression.R`. `reg_table()` serves both data paths: the sim path calls `forestHelperR::regTabler()`; the upload path passes `data_updated()` through as a data frame. Both paths use `req()` for suspension, consistent with project convention.
+
+`server.R` source block grows to two calls; both upload and regression logic are now in named files.
+
+**Test results:** 48 unit tests, 9 integration assertions — 0 failures, 0 warnings.
+
+---
+
 ### CHG-019 — DEC-004 Step 2: extract data upload pipeline to `server/upload.R`
 
 | Field | Detail |
@@ -760,4 +782,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 1.8 — CHG-019 implemented: server/upload.R extracted*
+*Document version: 1.9 — CHG-020 implemented: server/regression.R extracted*
