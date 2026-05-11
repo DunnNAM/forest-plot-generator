@@ -32,6 +32,33 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Decisions
 
+### DEC-004 — File organisation: `source()` split + UI helper functions in place of Shiny modules
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Active |
+| **Refs** | PDEC-001 |
+
+**Decision:** Resolve PDEC-001 by implementing a `source()` file split and UI helper functions rather than full Shiny module architecture.
+
+**Planned structure:**
+- `server.R` reduced to a thin wrapper of six `source()` calls
+- `ui.R` trimmed; plot options accordion extracted to `plotOptionsUI()` in `R/ui_plot_options.R`
+- Server logic split across six files in a new `server/` directory: `upload.R`, `regression.R`, `preview.R`, `plot.R`, `export.R`, `observers.R`
+- All server files sourced inside the `server` function with `local = TRUE`, sharing the server environment — no reactive wiring required
+
+**Rationale:** The two drivers for considering modularisation were file organisation and UI authoring clarity. Both are satisfied by this lighter approach. Full Shiny module architecture solves namespace isolation and per-module testability — neither of which is a requirement. The app has no reuse requirement (modules would never be instantiated more than once), and the existing test suite already provides adequate integration coverage via `shinytest2`.
+
+**Alternatives considered:**
+- Full Shiny module architecture (four candidate modules: data upload, regression, plot, preview) — rejected. Adds `NS()`/`moduleServer()` boilerplate, requires explicit reactive-passing contracts (particularly for `reg_table()` shared between plot and preview), and solves problems the app does not have.
+- Monolith retained as-is — rejected. `server.R` at ~713 lines and `ui.R` at ~192 lines are manageable but the section structure is only communicated via comments. File-level separation makes the architecture legible without opening a file.
+
+> **Closes PDEC-001.**
+
+---
+
 ### DEC-003 — Replace `extrafont` with `sysfonts`/`showtext` for font handling
 
 | Field | Detail |
@@ -127,17 +154,41 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 | ID | Question | Refs | Priority | Target decision date |
 |---|---|---|---|---|
-| PDEC-001 | Should the app be refactored from the 3-file structure (`ui.R`, `server.R`, `global.R`) to a Shiny module architecture? Decision requires reading `server.R` to assess complexity. | FEAT-007 | Medium | After initial code review |
+| ~~PDEC-001~~ | ~~Should the app be refactored from the 3-file structure (`ui.R`, `server.R`, `global.R`) to a Shiny module architecture? Decision requires reading `server.R` to assess complexity.~~ | FEAT-007 | — | **Closed as DEC-004** |
 | ~~PDEC-003~~ | ~~Should `extrafont` be replaced with `sysfonts`/`showtext`?~~ | ISS-002 | — | **Closed as DEC-003** |
 | PDEC-004 | Should the `officer` dependency be removed from `global.R` until Word/PowerPoint export is implemented? | ISS-006, FEAT-004 | Low | Early in code review |
 | PDEC-005 | Should `forestHelperR` be moved to its own GitHub repository? | ISS-008, PKG-006 | **Deferred** — no hosting or sharing requirement at this stage. Leave package in current local location. Revisit when publication or server hosting is being planned. | When hosting/publication is scoped |
 | PDEC-006 | Should `forestHelperR` declare its dependencies more explicitly so that `.tar.gz` installs resolve them automatically, or should the install documentation be updated to instruct users to install dependencies first? | ISS-014 (app), `forestHelperR` `DESCRIPTION` | Low — parked for future package maintenance cycle | Future package release |
 
-> **Closed pending decisions:** PDEC-002 → DEC-002 (May 2026).
+> **Closed pending decisions:** PDEC-001 → DEC-004 (2026-05-11). PDEC-002 → DEC-002 (May 2026).
 
 ---
 
 ## Changes
+
+### CHG-018 — DEC-004 Step 1: extract plot options accordion to `R/ui_plot_options.R`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-004, PDEC-001 |
+
+**Files added:** `R/ui_plot_options.R`  
+**Files changed:** `ui.R`
+
+**Summary:**
+
+First step of the DEC-004 file split. The right-hand accordion (`div(h4("Plot Options"), bslib::accordion(...))`) — three accordion panels, ~105 lines — extracted from `ui.R` into a `plotOptionsUI()` helper function in `R/ui_plot_options.R`. Shiny auto-sources all `R/*.R` files at startup, so the function is available when `ui.R` assembles the layout.
+
+`ui.R` call site reduced from ~105 lines to a single `plotOptionsUI()` call. The dead `#open = "closed"` comment (which referred to an accordion parameter that was never set) was not carried forward.
+
+**No reactive changes.** UI helper functions return static tag structures — zero risk to the reactive graph.
+
+**Test results:** 48 unit tests, 7 integration tests — 0 failures, 0 warnings.
+
+---
 
 ### CHG-017 — ISS-009 / ISS-010: fix documentation placeholders in presentation repo
 
@@ -685,4 +736,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 1.6 — CHG-017 implemented; ISS-009/010 resolved*
+*Document version: 1.7 — DEC-004 recorded (PDEC-001 closed); CHG-018 implemented*
