@@ -19,14 +19,18 @@ package (already stabilised, 112 tests passing).
 - Run with: `testthat::test_file("tests/testthat/test-helpers.R")` or `testthat::test_file("tests/testthat/test-shiny-app.R")`
 
 ## Current phase
-Code review and issue resolution complete. Preparing for architecture work.
+DEC-004 file split — in progress. See `handover-dec004-file-split.md` for full context.
 
-**Completed:**
-- Batch 1: namespace qualifiers + undeclared packages (ISS-013, 014, 015)
-- Batch 2: UI label corrections (ISS-017, 018, 019, 027)
-- Batch 3: dead code removal + reactive tidying (ISS-022, 023, 024, 025, 016/026)
-- ISS-004: test suite — 48 unit tests (`tests/testthat/test-helpers.R`) + 7 shinytest2 integration tests (`tests/testthat/test-shiny-app.R`)
-- ISS-002: font handling replaced — `extrafont` → `sysfonts`/`showtext` (DEC-003)
+**Architecture decision (DEC-004):** No Shiny modules. Using `source()` split into named files in `server/` + UI helper functions in `R/`. All `server/` files sourced inside the `server` function with `local = TRUE`.
+
+**File split progress:**
+- Step 1 ✅ CHG-018: `R/ui_plot_options.R` — plot options accordion UI helper
+- Step 2 ✅ CHG-019: `server/upload.R` — data upload pipeline + column confirmation gate
+- Step 3 ✅ CHG-020: `server/regression.R` — fit(), predictors_selected(), reg_table()
+- Step 4 ✅ CHG-021: `server/preview.R` — all Review Data tab outputs
+- Step 5 ⚠️ CHG-022: `server/plot.R` — plot generation + order() + concatenate guards — **tests passing, smoke test + commit pending**
+- Step 6 🔲 CHG-023: `server/export.R` — download handlers + R code serialiser
+- Step 7 🔲 CHG-024: `server/observers.R` — misc observers (variables_displayed, sortable_cols, by_group, sigfigs)
 
 **Open issues (see `issues-register.md`):**
 - ISS-028: age group sort order in simulated data (Medium — likely in `forestHelperR`)
@@ -35,8 +39,7 @@ Code review and issue resolution complete. Preparing for architecture work.
 - ISS-031: export button layout — fourth button wraps with no spacing (Medium)
 - FEAT-009: export controls redesign — sidebar accordion panel (Medium)
 
-**Next major piece of work:**
-PDEC-001 — decide whether to refactor from 3-file structure to Shiny module architecture. This is scoped for a new chat session with a dedicated handover document.
+**Next session:** Start by reading `handover-dec004-file-split.md`. Complete Step 5 smoke test, commit, then implement Steps 6 and 7.
 
 ## Conventions
 - Always use explicit package::function() notation

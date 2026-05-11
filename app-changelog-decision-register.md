@@ -166,6 +166,28 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-022 — DEC-004 Step 5: extract plot generation to `server/plot.R`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-004 |
+
+**Files added:** `server/plot.R`  
+**Files changed:** `server.R`
+
+**Summary:**
+
+Fifth step of the DEC-004 file split. `est_type()`, `variables_excluded()`, `forest_plot_object()`, `dims()`, and `observe({output$forest})` extracted from the step 4 block, plus three plot-coupled observers relocated from the Misc section: `order()` (§f — feeds `forest_plot_object()` and `r_code_string()`), the `concatenate_est_ci` guard (§e), and the `concatenate_est_sig` guard (§g). These are co-located in `plot.R` because they are all tightly coupled to plot state.
+
+`server.R` Misc section retains only the four observers with no plot-specific coupling: `variables_displayed` update, `sortable_cols` renderUI, `by_group` auto-set, and the `sigfigs` label toggle — these will move to `observers.R` in the final step.
+
+**Test results:** 48 unit tests, 9 integration assertions — 0 failures, 0 warnings.
+
+---
+
 ### CHG-021 — DEC-004 Step 4: extract preview outputs to `server/preview.R`
 
 | Field | Detail |
@@ -802,4 +824,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 2.0 — CHG-021 implemented: server/preview.R extracted*
+*Document version: 2.1 — CHG-022 implemented: server/plot.R extracted*
