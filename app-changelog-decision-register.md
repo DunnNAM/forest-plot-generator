@@ -115,6 +115,65 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-012 — Cache simulated dataset as `dat.rds`; resolve ISS-012
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-012 |
+
+**Files changed:** `global.R`
+
+**Change:** Replaced the unconditional `source(here::here("data", "data_creation.R"))` call with a conditional block:
+
+```r
+if (file.exists(here::here("data", "dat.rds"))) {
+  dat <- readRDS(here::here("data", "dat.rds"))
+} else {
+  source(here::here("data", "data_creation.R"))
+}
+```
+
+**Rationale:** `data_creation.R` calls `mvtnorm::rmvnorm()` to generate 5,000 synthetic records on every cold start, adding unnecessary startup latency. The `.rds` path eliminates this by loading a pre-serialised object instead. The `else` fallback ensures the app still starts correctly on machines where the cache has not yet been created.
+
+**To activate the cache:** run once interactively from the project root:
+
+```r
+source(here::here("data", "data_creation.R"))
+saveRDS(dat, here::here("data", "dat.rds"))
+```
+
+Then commit `data/dat.rds`. Until the file is committed, cold-start behaviour is unchanged.
+
+**ISS-012 status:** → **Resolved**
+
+---
+
+### CHG-011 — Initialise `renv`; resolve ISS-011
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn |
+| **Status** | Implemented |
+| **Refs** | ISS-011 |
+
+**Files added:** `renv.lock`, `renv/` directory, `.Rprofile` (renv bootstrap entry)
+
+`renv::init()` run and `renv.lock` committed. All 18+ app package dependencies are now version-pinned for reproducible installs across machines and deployment targets.
+
+To restore the exact package environment on a new machine:
+
+```r
+renv::restore()
+```
+
+**ISS-011 status:** → **Resolved**
+
+---
+
 ### CHG-010 — Create `README.md`; resolve ISS-007 and ISS-008
 
 | Field | Detail |
@@ -413,7 +472,9 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | 2026-05-11 | Batch 3 fixes applied — ISS-022, ISS-023, ISS-024, ISS-025, ISS-016, ISS-026 resolved (CHG-009) | Dead code deleted (commented-out UI block, commented-out reactive); §b observer consolidated into §e with `bindEvent`; `reg_table()` `is.null` guards replaced with `req()`; font expansion vector corrected (duplicate removed, Open Sans and Montserrat added — empirical verification pending) |
 | 2026-05-11 | Batch 3 runtime testing — ISS-002 confirmed active | Font selector shows only 5 base system fonts (Helvetica, Times, Courier, Palatino, Bookman). Custom fonts absent — `extrafont` import has not been run on this machine. Silent fallback with no user-facing error, consistent with ISS-002 description. ISS-016/026 expansion factor verification blocked. Issue parked as non-critical. |
 | 2026-05-11 | `README.md` created — ISS-007, ISS-008 resolved (CHG-010) | Stub README replaced. Full install instructions, one-time font import step, `forestHelperR` both-path documentation, usage overview, known limitations, and contributing guidelines. |
+| 2026-05-11 | `renv` initialised and committed — ISS-011 resolved (CHG-011) | `renv.lock` committed. All app package dependencies version-pinned. |
+| 2026-05-11 | `dat.rds` caching logic added to `global.R` — ISS-012 resolved (CHG-012) | Conditional load: reads `data/dat.rds` if present, falls back to `source(data_creation.R)`. Cache must be created once interactively and committed to activate. |
 
 ---
 
-*Document version: 0.9 — CHG-010 implemented; ISS-007 and ISS-008 resolved; README.md created*
+*Document version: 1.1 — CHG-012 implemented; ISS-012 resolved; dat.rds caching logic added*

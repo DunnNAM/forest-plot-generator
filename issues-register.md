@@ -158,11 +158,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Medium |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-011** |
 | **File(s)** | Repository root |
 | **Description** | No `renv.lock` or equivalent. The app depends on 18+ packages. |
-| **Recommended fix** | Run `renv::init()` and commit `renv.lock`. See FEAT-005. |
-| **Resolution** | — |
+| **Resolution** | `renv` initialised and `renv.lock` committed. Package versions are now pinned for reproducible installs. |
 
 ### ISS-016 — Duplicate `"Source Sans Pro"` in font expansion check
 
@@ -296,11 +295,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Low |
-| **Status** | Open |
-| **File(s)** | `global.R`, `data/data_creation.R` |
+| **Status** | **Resolved — CHG-012** |
+| **File(s)** | `global.R` |
 | **Description** | Synthetic dataset regenerated on every cold start via `mvtnorm::rmvnorm()`. Unnecessary latency. |
-| **Recommended fix** | Save dataset as `data/dat.rds` and load at startup. See FEAT-006. |
-| **Resolution** | — |
+| **Resolution** | `global.R` updated to load `data/dat.rds` if the file exists, falling back to `source(data_creation.R)` if not. The cache must be created once interactively: `source(here::here("data", "data_creation.R")); saveRDS(dat, here::here("data", "dat.rds"))`. Until the `.rds` file is committed, cold-start behaviour is unchanged. |
 
 ### ISS-024 — Large commented-out UI block in `ui.R`
 
@@ -351,8 +349,8 @@
 | ISS-008 | Medium | Root | `forestHelperR` install undocumented | ✅ Resolved — CHG-010 |
 | ISS-009 | Low | Docs | Screenshot placeholder path | Open |
 | ISS-010 | Low | Docs | Talk date placeholder in footer | Open |
-| ISS-011 | Medium | Root | No `renv` lockfile | Open |
-| ISS-012 | Low | `global.R` | `data_creation.R` not cached | Open |
+| ISS-011 | Medium | Root | No `renv` lockfile | ✅ Resolved — CHG-011 |
+| ISS-012 | Low | `global.R` | `data_creation.R` not cached | ✅ Resolved — CHG-012 |
 | ISS-013 | High | `server.R` | `coxph()` missing `survival::` qualifier | Open |
 | ISS-014 | High | `server.R` / `global.R` | `broom`, `lmtest`, `sandwich` undeclared | Open |
 | ISS-015 | High | `server.R` | `get_wh()` missing `forestploter::` qualifier | Open |
@@ -371,4 +369,4 @@
 
 ---
 
-*Document version: 2.5 — ISS-007 and ISS-008 resolved (CHG-010): README.md created with full installation, font setup, and forestHelperR documentation*
+*Document version: 2.7 — ISS-012 resolved (CHG-012): dat.rds caching logic added to global.R*

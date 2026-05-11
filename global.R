@@ -39,7 +39,15 @@ loadfonts(device = "all")
 # No manual working directory manipulation is required (ISS-001 / CHG-004).
 
 # Load simulated data -----------------------------------------------------
-source(here::here("data", "data_creation.R"))
+# Use a cached .rds if present to avoid regenerating via mvtnorm::rmvnorm()
+# on every cold start (ISS-012). To create the cache, run once interactively:
+#   source(here::here("data", "data_creation.R"))
+#   saveRDS(dat, here::here("data", "dat.rds"))
+if (file.exists(here::here("data", "dat.rds"))) {
+  dat <- readRDS(here::here("data", "dat.rds"))
+} else {
+  source(here::here("data", "data_creation.R"))
+}
 
 
 # functions/functions.R removed — all functions now provided by forestHelperR
