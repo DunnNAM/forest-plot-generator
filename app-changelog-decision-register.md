@@ -115,6 +115,55 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-014 — ISS-004 Phase 1: testthat unit tests for pure helper functions
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-004 |
+
+**Files added:** `R/helpers.R`, `tests/testthat/test-helpers.R`, `tests/testthat/helper-setup.R`  
+**Files changed:** `server.R`, `renv.lock`
+
+**Summary:**
+
+Phase 1 of ISS-004 — unit tests for pure (non-Shiny) functions extracted from `server.R`. `shinytest2` integration testing is a separate phase (not addressed here).
+
+**Test infrastructure:**
+
+`testthat` initialised via `usethis::use_testthat()`. `tests/testthat/helper-setup.R` sources `R/helpers.R` before each test run (testthat auto-sources `helper-*.R` files). `renv::snapshot()` run after install — `testthat` and its dependencies added to `renv.lock`. `usethis` and its dependencies also captured.
+
+**Functions extracted to `R/helpers.R`** (Shiny auto-sources all `R/*.R` files):
+
+| Function | Extracted from | Logic |
+|---|---|---|
+| `is_col_included(col_name)` | `data_updated()` lines 192–212 | Returns `FALSE` for zero-length input or `"empty"` placeholder; `TRUE` otherwise |
+| `get_est_type(regression_type, inv)` | `est_type` reactive | Returns `"RR"`, `"OR"`, `"HR"`, `"1/HR"`, or `"Estimate"` |
+| `get_font_expansion(font)` | `dims()` reactive | Returns `1.2` for wide-metric fonts; `1` for all others |
+| `serialise_plot_title(plot_title)` | `r_code_string()` | `""` → `"NULL"`; otherwise quoted |
+| `serialise_by_var(by_group, group_var_name)` | `r_code_string()` | `FALSE` → `"NA"`; otherwise quoted |
+| `serialise_x_ticks(xticks, xlims)` | `r_code_string()` | No ticks in range → `"NULL"`; otherwise `c(...)` of full `xticks` |
+| `serialise_chr_vec(vec)` | `r_code_string()` | Zero-length → `"c()"`; otherwise `c("a", "b", ...)` — used for `vars_excl`, `elements`, `rj` |
+| `serialise_bg_stripe(striped_bg, bg_stripe)` | `r_code_string()` | `FALSE` → `"NA"`; otherwise quoted colour |
+| `serialise_footnote(footnote)` | `r_code_string()` | `""` → `'""'`; otherwise quoted — empty footnote passes `""` not `NULL` |
+
+**`server.R` changes:**
+
+| Location | Before | After |
+|---|---|---|
+| `data_updated()` lines 192–212 | 18-line `n_included` / `p_included` / `significance_included` if-else blocks | 3 one-liner calls to `is_col_included()` |
+| `est_type` reactive body | 9-line if-else chain | `get_est_type(input$regression_type, input$inv)` |
+| `dims()` expansion assignment | 3-line if-else | `get_font_expansion(input$font)` |
+| `r_code_string()` preamble | 16-line block with inline branching, intermediate `ticks_in_range`, `vars_excl`, `rj` assignments | 10 assignments calling named serialisation helpers |
+
+**Test results:** 48 tests, 0 failures, 0 warnings.
+
+**ISS-004 status:** → **In progress** — Phase 1 (pure function unit tests) complete. Phase 2 (`shinytest2` reactive/UI tests) pending.
+
+---
+
 ### CHG-013 — FEAT-001: R code serialiser — Copy R code / Download .R script buttons
 
 | Field | Detail |
@@ -516,7 +565,8 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | 2026-05-11 | `README.md` created — ISS-007, ISS-008 resolved (CHG-010) | Stub README replaced. Full install instructions, one-time font import step, `forestHelperR` both-path documentation, usage overview, known limitations, and contributing guidelines. |
 | 2026-05-11 | `renv` initialised and committed — ISS-011 resolved (CHG-011) | `renv.lock` committed. All app package dependencies version-pinned. |
 | 2026-05-11 | `dat.rds` caching logic added to `global.R` — ISS-012 resolved (CHG-012) | Conditional load: reads `data/dat.rds` if present, falls back to `source(data_creation.R)`. Cache must be created once interactively and committed to activate. |
+| 2026-05-11 | ISS-004 Phase 1 — test infrastructure initialised; 9 pure helpers extracted to `R/helpers.R`; 48 unit tests passing (CHG-014) | `testthat` wired up via `usethis::use_testthat()`. `renv.lock` updated. `server.R` refactored to call helpers. Phase 2 (`shinytest2`) pending. |
 
 ---
 
-*Document version: 1.2 — CHG-013 implemented; FEAT-001 R code serialiser delivered*
+*Document version: 1.3 — CHG-014 implemented; ISS-004 Phase 1 (pure function unit tests) delivered*

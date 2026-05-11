@@ -64,12 +64,12 @@
 |---|---|
 | **Source** | DOC |
 | **Severity** | High |
-| **Status** | Open |
+| **Status** | **In progress — Phase 1 complete (CHG-014)** |
 | **File(s)** | All |
 | **Description** | No unit tests exist for the reactive chain, data processing logic, or export handlers. |
 | **Risk** | Regressions will go undetected. Export handlers and column mapping logic are particularly high-risk without tests. |
 | **Recommended fix** | Introduce `shinytest2` for reactive/UI tests and `testthat` for unit tests on pure functions. Prioritise testing the two-file upload path and the column confirmation reactive chain. See FEAT-002. |
-| **Resolution** | — |
+| **Resolution** | **Phase 1 (2026-05-11):** `testthat` infrastructure initialised. 9 pure helper functions extracted from `server.R` to `R/helpers.R`. 48 unit tests written in `tests/testthat/test-helpers.R` — all passing. `renv.lock` updated. **Phase 2** (`shinytest2` reactive/UI tests) pending. |
 
 ### ISS-005 — `functions/functions.R` is orphaned but retained
 
@@ -342,7 +342,7 @@
 | ISS-001 | Critical | `global.R` | Hardcoded `setwd()` paths | ✅ Resolved — CHG-004 |
 | ISS-002 | High | `global.R` | Font import not portable | Open |
 | ISS-003 | High | `server.R` | Two-file upload `for` loop | ✅ Resolved |
-| ISS-004 | High | All | No unit tests | Open |
+| ISS-004 | High | All | No unit tests | In progress — Phase 1 complete (CHG-014) |
 | ISS-005 | High | `functions.R` | Orphaned legacy file | ✅ Resolved — DEC-002 |
 | ISS-006 | Medium | `global.R` | `officer` loaded but unused | ✅ Resolved — CHG-002 |
 | ISS-007 | Medium | Root | No `README.md` | ✅ Resolved — CHG-010 |
@@ -369,4 +369,4 @@
 
 ---
 
-*Document version: 2.8 — FEAT-001 implemented (CHG-013): R code serialiser; Copy R code and Download .R script buttons added to Plot tab*
+*Document version: 2.9 — ISS-004 Phase 1 in progress (CHG-014): testthat infrastructure; 9 helpers extracted; 48 unit tests passing*

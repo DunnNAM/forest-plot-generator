@@ -189,27 +189,9 @@ server <- function(input, output, session) {
       "p" = input$p_name,
       "significance" = input$significance_name)
     
-    n_included <- if (length(input$n_name) == 0) {
-      FALSE
-    } else if (input$n_name[1] == "empty") {
-      FALSE
-    } else {
-      TRUE
-    }
-    p_included <- if (length(input$p_name) == 0) {
-      FALSE
-    } else if (input$p_name[1] == "empty") {
-      FALSE
-    } else {
-      TRUE
-    }
-    significance_included <- if (length(input$significance_name) == 0) {
-      FALSE
-    } else if (input$significance_name[1] == "empty") {
-      FALSE
-    } else {
-      TRUE
-    }
+    n_included            <- is_col_included(input$n_name)
+    p_included            <- is_col_included(input$p_name)
+    significance_included <- is_col_included(input$significance_name)
     
     temp2 <- data_uploaded() %>%
       dplyr::select(
@@ -441,19 +423,7 @@ server <- function(input, output, session) {
   ## step 4 - plot information
   # ### a - est_type text
   est_type <- reactive({
-    
-    # poisson", "Logistic" = "logistic", "Cox proportional hazards" = "cox"
-    if (input$regression_type == "poisson") {
-      "RR"
-    } else if (input$regression_type == "logistic") {
-      "OR"
-    } else if (input$regression_type == "cox" & !input$inv) {
-      "HR"
-    } else if (input$regression_type == "cox" & input$inv) {
-      "1/HR"
-    } else {
-      "Estimate"
-    }
+    get_est_type(input$regression_type, input$inv)
   }) %>%
     bindEvent(input$regression_type, input$inv)
   variables_excluded <- reactive({
@@ -518,9 +488,7 @@ server <- function(input, output, session) {
   dims <- reactive({
     req(forest_plot_object())
     
-    expansion <- if (input$font %in% c("Lato", "Roboto", "Open Sans", "Source Sans Pro", "Montserrat")) {
-      1.2
-    } else {1}
+    expansion <- get_font_expansion(input$font)
     dims <- forestploter::get_wh(
       forest_plot_object(),
       unit = "in")
@@ -576,30 +544,16 @@ server <- function(input, output, session) {
   r_code_string <- reactive({
     req(reg_table())
 
-    ticks_in_range <- input$xticks[
-      dplyr::between(input$xticks, min(input$xlims), max(input$xlims))
-    ]
-    x_ticks_str <- if (length(ticks_in_range) == 0) {
-      "NULL"
-    } else {
-      paste0("c(", paste(input$xticks, collapse = ", "), ")")
-    }
-
-    plot_title_str <- if (input$plot_title == "") "NULL" else paste0('"', input$plot_title, '"')
-    by_var_str     <- if (!input$by_group) "NA" else paste0('"', input$group_var_name, '"')
-    vars_excl      <- variables_excluded()
-    vars_excl_str  <- if (length(vars_excl) == 0) {
-      "c()"
-    } else {
-      paste0('c("', paste(vars_excl, collapse = '", "'), '")')
-    }
-    elements_str   <- paste0('c("', paste(order(), collapse = '", "'), '")')
+    x_ticks_str    <- serialise_x_ticks(input$xticks, input$xlims)
+    plot_title_str <- serialise_plot_title(input$plot_title)
+    by_var_str     <- serialise_by_var(input$by_group, input$group_var_name)
+    vars_excl_str  <- serialise_chr_vec(variables_excluded())
+    elements_str   <- serialise_chr_vec(order())
     xlims_str      <- paste0("c(", paste(input$xlims, collapse = ", "), ")")
     by_col_str     <- paste0('c("', input$ci_colour, '", "', input$ci_colour2, '")')
-    rj             <- input$right_justify
-    rj_str         <- if (length(rj) == 0) "c()" else paste0('c("', paste(rj, collapse = '", "'), '")')
-    bg_stripe_str  <- if (input$striped_bg) paste0('"', input$bg_stripe, '"') else "NA"
-    footnote_str   <- if (input$plot_footnote == "") '""' else paste0('"', input$plot_footnote, '"')
+    rj_str         <- serialise_chr_vec(input$right_justify)
+    bg_stripe_str  <- serialise_bg_stripe(input$striped_bg, input$bg_stripe)
+    footnote_str   <- serialise_footnote(input$plot_footnote)
 
     paste0(
       'forestHelperR::forestPloter(\n',
