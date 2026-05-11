@@ -166,6 +166,30 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-019 — DEC-004 Step 2: extract data upload pipeline to `server/upload.R`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-004 |
+
+**Files added:** `server/upload.R`  
+**Files changed:** `server.R`
+
+**Summary:**
+
+Second step of the DEC-004 file split. Steps 1 and 2a — `data_uploaded()`, `output$files`, `output$sortable`, the `cols_confirmed` reactiveVal and its two observers, and `data_updated()` — extracted from `server.R` into `server/upload.R`.
+
+`server.R` replaces ~248 lines with a single `source(here::here("server", "upload.R"), local = TRUE)` call. `local = TRUE` evaluates the sourced code in the server function's environment, giving it access to `input`, `output`, and `session` and placing all defined reactives (`data_uploaded`, `data_updated`, `cols_confirmed`) in that environment for use by downstream code.
+
+The ISS-020 column confirmation gate (`cols_confirmed` reactiveVal, reset on upload, incremented on confirm, `req(cols_confirmed() > 0)` guard in `data_updated()`) is preserved exactly.
+
+**Test results:** 48 unit tests, 9 integration assertions — 0 failures, 0 warnings.
+
+---
+
 ### CHG-018 — DEC-004 Step 1: extract plot options accordion to `R/ui_plot_options.R`
 
 | Field | Detail |
@@ -736,4 +760,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 1.7 — DEC-004 recorded (PDEC-001 closed); CHG-018 implemented*
+*Document version: 1.8 — CHG-019 implemented: server/upload.R extracted*
