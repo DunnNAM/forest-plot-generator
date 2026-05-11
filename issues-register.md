@@ -64,12 +64,12 @@
 |---|---|
 | **Source** | DOC |
 | **Severity** | High |
-| **Status** | **In progress — Phase 1 complete (CHG-014)** |
+| **Status** | **Resolved — CHG-014 (Phase 1), CHG-015 (Phase 2)** |
 | **File(s)** | All |
 | **Description** | No unit tests exist for the reactive chain, data processing logic, or export handlers. |
 | **Risk** | Regressions will go undetected. Export handlers and column mapping logic are particularly high-risk without tests. |
 | **Recommended fix** | Introduce `shinytest2` for reactive/UI tests and `testthat` for unit tests on pure functions. Prioritise testing the two-file upload path and the column confirmation reactive chain. See FEAT-002. |
-| **Resolution** | **Phase 1 (2026-05-11):** `testthat` infrastructure initialised. 9 pure helper functions extracted from `server.R` to `R/helpers.R`. 48 unit tests written in `tests/testthat/test-helpers.R` — all passing. `renv.lock` updated. **Phase 2** (`shinytest2` reactive/UI tests) pending. |
+| **Resolution** | **Phase 1 (2026-05-11):** `testthat` infrastructure initialised. 9 pure helper functions extracted from `server.R` to `R/helpers.R`. 48 unit tests written in `tests/testthat/test-helpers.R` — all passing. `renv.lock` updated. **Phase 2 (2026-05-11):** `shinytest2` infrastructure added. 7 integration tests written in `tests/testthat/test-shiny-app.R` covering the column confirmation gate (ISS-020 regression guard), two-file upload, and regression type → estimate label reactive chain — all passing. Two fixture files added to `tests/fixtures/`. |
 
 ### ISS-005 — `functions/functions.R` is orphaned but retained
 
@@ -86,11 +86,11 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | High |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-007** |
 | **File(s)** | `server.R`, line 266 |
 | **Description** | The Cox model is fitted with an unqualified `coxph()` call, while the formula construction on line 263 correctly qualifies `survival::Surv()`. If `global.R` is ever refactored to remove `library(survival)`, this will produce a hard-to-diagnose error at runtime. |
 | **Recommended fix** | Replace `coxph(form2, data = dat)` with `survival::coxph(form2, data = dat)`. |
-| **Resolution** | — |
+| **Resolution** | `survival::coxph()` namespace qualifier added in `server.R`. |
 
 ### ISS-014 — `broom`, `lmtest`, and `sandwich` used but not declared in `global.R`
 
@@ -98,12 +98,12 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | High |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-007** |
 | **File(s)** | `server.R`, lines 400–412; `global.R` |
 | **Description** | `broom::tidy()`, `lmtest::coeftest()`, `lmtest::coefci()`, and `sandwich::vcovHC` are called in the robust variance preview but none of these packages appear in `global.R`. They work currently because they are accessed via `::`, but there is no startup-time check they are installed and they are invisible to dependency audits. |
 | **Risk** | On a fresh deployment, the app starts successfully but fails silently when robust variance is enabled. |
 | **Recommended fix** | Add `library(broom)`, `library(lmtest)`, and `library(sandwich)` to `global.R`. See also PDEC-006 regarding `forestHelperR` dependency declaration. |
-| **Resolution** | — |
+| **Resolution** | `library(broom)`, `library(lmtest)`, and `library(sandwich)` added to `global.R`. |
 
 ### ISS-015 — `get_wh()` called without `forestploter::` namespace qualifier
 
@@ -111,11 +111,11 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | High |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-007** |
 | **File(s)** | `server.R`, line 499 |
 | **Description** | `get_wh()` is called unqualified despite being provided by `forestploter`. Makes it unclear which package provides the function given the adjacent `forestHelperR::forestPloter()` calls. |
 | **Recommended fix** | Replace with `forestploter::get_wh(forest_plot_object(), unit = "in")`. |
-| **Resolution** | — |
+| **Resolution** | `forestploter::get_wh()` namespace qualifier added in `server.R`. |
 
 ---
 
@@ -342,7 +342,7 @@
 | ISS-001 | Critical | `global.R` | Hardcoded `setwd()` paths | ✅ Resolved — CHG-004 |
 | ISS-002 | High | `global.R` | Font import not portable | Open |
 | ISS-003 | High | `server.R` | Two-file upload `for` loop | ✅ Resolved |
-| ISS-004 | High | All | No unit tests | In progress — Phase 1 complete (CHG-014) |
+| ISS-004 | High | All | No unit tests | ✅ Resolved — CHG-014 (Phase 1), CHG-015 (Phase 2) |
 | ISS-005 | High | `functions.R` | Orphaned legacy file | ✅ Resolved — DEC-002 |
 | ISS-006 | Medium | `global.R` | `officer` loaded but unused | ✅ Resolved — CHG-002 |
 | ISS-007 | Medium | Root | No `README.md` | ✅ Resolved — CHG-010 |
@@ -351,9 +351,9 @@
 | ISS-010 | Low | Docs | Talk date placeholder in footer | Open |
 | ISS-011 | Medium | Root | No `renv` lockfile | ✅ Resolved — CHG-011 |
 | ISS-012 | Low | `global.R` | `data_creation.R` not cached | ✅ Resolved — CHG-012 |
-| ISS-013 | High | `server.R` | `coxph()` missing `survival::` qualifier | Open |
-| ISS-014 | High | `server.R` / `global.R` | `broom`, `lmtest`, `sandwich` undeclared | Open |
-| ISS-015 | High | `server.R` | `get_wh()` missing `forestploter::` qualifier | Open |
+| ISS-013 | High | `server.R` | `coxph()` missing `survival::` qualifier | ✅ Resolved — CHG-007 |
+| ISS-014 | High | `server.R` / `global.R` | `broom`, `lmtest`, `sandwich` undeclared | ✅ Resolved — CHG-007 |
+| ISS-015 | High | `server.R` | `get_wh()` missing `forestploter::` qualifier | ✅ Resolved — CHG-007 |
 | ISS-016 | Medium | `server.R` | Duplicate `"Source Sans Pro"` in expansion font list | ✅ Resolved — CHG-009 *(verification pending)* |
 | ISS-017 | Medium | `ui.R` | App title is a development placeholder | ✅ Resolved — CHG-008 |
 | ISS-018 | Medium | `ui.R` | Three `selectizeInput` labels all read `"x-axis label"` | ✅ Resolved — CHG-008 |
@@ -369,4 +369,4 @@
 
 ---
 
-*Document version: 2.9 — ISS-004 Phase 1 in progress (CHG-014): testthat infrastructure; 9 helpers extracted; 48 unit tests passing*
+*Document version: 3.0 — ISS-004 fully resolved (CHG-014 + CHG-015): 48 unit tests + 7 shinytest2 integration tests passing; ISS-013/014/015 register entries corrected to Resolved*

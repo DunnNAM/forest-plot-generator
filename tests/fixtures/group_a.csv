@@ -1,0 +1,5 @@
+variable,level,estimate,lci,uci,n,p,significance
+Sex,Male,1.23,0.98,1.54,450,0.08,
+Sex,Female (ref),1.00,NA,NA,550,NA,
+Age,50-59,1.45,1.12,1.88,320,0.005,**
+Age,60-69 (ref),1.00,NA,NA,380,NA,

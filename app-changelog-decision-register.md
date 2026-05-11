@@ -115,6 +115,48 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-015 — ISS-004 Phase 2: shinytest2 integration tests
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-004 |
+
+**Files added:** `tests/testthat/setup-shinytest2.R`, `tests/testthat/test-shiny-app.R`, `tests/fixtures/group_a.csv`, `tests/fixtures/group_b.csv`  
+**Files changed:** `renv.lock` (shinytest2, chromote, knitr, sortable and transitive dependencies pinned)
+
+**Summary:**
+
+Phase 2 of ISS-004 — `shinytest2` integration tests for reactive logic that cannot be covered by pure-function unit tests. Each test launches a headless Shiny app via `AppDriver` and drives the UI programmatically.
+
+**Infrastructure:**
+
+`tests/testthat/setup-shinytest2.R` created. `load_app_env()` intentionally omitted — `AppDriver` runs the app in a separate process and does not require the app environment sourced into the test session. `library(here)` loaded for path resolution only. Two CSV fixture files added to `tests/fixtures/` (same 8-column structure, different estimates) for use in upload and two-group tests.
+
+**Dependency resolution:** `sortable` updated to 0.6.0 (dropped `xfun` dependency); `knitr` updated to 1.51 (removed `xfun::attr` import); `shinytest2` and `chromote` pinned in `renv.lock`.
+
+**Tests written (`tests/testthat/test-shiny-app.R`):**
+
+| Scenario | Test | What it verifies |
+|---|---|---|
+| (a) Column confirmation gate | `dat_upload` suspended before confirmation | `req(cols_confirmed() > 0)` holds before button click |
+| (a) Column confirmation gate | `dat_upload` renders after confirmation | Gate releases on button click |
+| (a) ISS-020 regression guard | `dat_upload` reverts to suspended after new upload | `cols_confirmed` resets to 0 on new file; old mapping cannot silently apply |
+| (b) Two-file upload | `by_group` set to TRUE on two-file upload | `observe()` §d fires when `nrow(input$upload) > 1` |
+| (b) Two-file upload | `dat_upload` non-suspended after two-file confirmation | Two-file data path processes cleanly end-to-end |
+| (c) Estimate label | "RR" in table header for poisson | Reactive binding wired correctly |
+| (c) Estimate label | "OR" / "HR" after switching regression type | `input$regression_type` → `dat_summary` header update |
+
+**Helper added:** `is_suspended()` — detects both `NULL` and the `shiny.silent.error` / `validation` character vector that `shinytest2` returns when `req()` suspends an output.
+
+**Test results:** 7 tests, 0 failures, 0 warnings.
+
+**ISS-004 status:** → **Resolved**
+
+---
+
 ### CHG-014 — ISS-004 Phase 1: testthat unit tests for pure helper functions
 
 | Field | Detail |
@@ -566,7 +608,8 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | 2026-05-11 | `renv` initialised and committed — ISS-011 resolved (CHG-011) | `renv.lock` committed. All app package dependencies version-pinned. |
 | 2026-05-11 | `dat.rds` caching logic added to `global.R` — ISS-012 resolved (CHG-012) | Conditional load: reads `data/dat.rds` if present, falls back to `source(data_creation.R)`. Cache must be created once interactively and committed to activate. |
 | 2026-05-11 | ISS-004 Phase 1 — test infrastructure initialised; 9 pure helpers extracted to `R/helpers.R`; 48 unit tests passing (CHG-014) | `testthat` wired up via `usethis::use_testthat()`. `renv.lock` updated. `server.R` refactored to call helpers. Phase 2 (`shinytest2`) pending. |
+| 2026-05-11 | ISS-004 Phase 2 — `shinytest2` integration tests (CHG-015) | 7 integration tests passing across 3 scenarios: column confirmation gate (incl. ISS-020 regression guard), two-file upload, and regression type → estimate label. `renv.lock` updated (sortable, knitr, shinytest2 pinned). ISS-004 fully resolved. ISS-013/014/015 register entries corrected to Resolved (were incorrectly showing Open). |
 
 ---
 
-*Document version: 1.3 — CHG-014 implemented; ISS-004 Phase 1 (pure function unit tests) delivered*
+*Document version: 1.4 — CHG-015 implemented; ISS-004 fully resolved (48 unit tests + 7 shinytest2 integration tests passing)*
