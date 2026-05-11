@@ -115,6 +115,37 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-007 — Fix ISS-013, ISS-014, ISS-015: namespace qualifiers and undeclared package declarations
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-013, ISS-014, ISS-015 |
+
+**Files changed:** `server.R`, `global.R`
+
+**Summary of changes:**
+
+| ISS | File | Location | Before | After |
+|---|---|---|---|---|
+| ISS-013 | `server.R` | Line 291 | `coxph(form2, data = dat)` | `survival::coxph(form2, data = dat)` |
+| ISS-015 | `server.R` | Line 526 | `get_wh(forest_plot_object(), unit = "in")` | `forestploter::get_wh(forest_plot_object(), unit = "in")` |
+| ISS-014 | `global.R` | After `library(colourpicker)` | — | `library(broom)`, `library(lmtest)`, `library(sandwich)` added |
+
+**Rationale:**
+
+- **ISS-013:** `coxph()` is exported by the `survival` package, which is loaded via `library(survival)`. Without an explicit qualifier the call relies on search-path resolution, which can break if package load order changes or if another package exports a symbol with the same name. Convention requires `package::function()` throughout.
+- **ISS-015:** `get_wh()` is exported by `forestploter`. Same rationale as ISS-013.
+- **ISS-014:** `broom`, `lmtest`, and `sandwich` are used in `output$robust` (`broom::tidy()`, `lmtest::coeftest()`, `lmtest::coefci()`, `sandwich::vcovHC`) but were not declared in `global.R`. The app relied on these packages being present as indirect dependencies of other loaded packages, which is not guaranteed. Explicit `library()` calls make the dependency contract clear and ensure the app fails loudly at startup if any package is missing rather than silently at runtime.
+
+**ISS-013 status:** → **Resolved**  
+**ISS-014 status:** → **Resolved**  
+**ISS-015 status:** → **Resolved**
+
+---
+
 ### CHG-006 — Fix ISS-020: reset column confirmation on new file upload
 
 | Field | Detail |
@@ -282,8 +313,9 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | May 2026 | ISS-020 resolved (CHG-006) — column confirmation reset on new file upload | Initial implementation required a follow-up fix: `req(cols_confirmed() > 0)` added after crash observed on sequential file upload. Tested with File A → File B sequence. Pass. |
 | May 2026 | Two-group upload UX clarified during ISS-020 testing | Confirmed by design: both files must be selected simultaneously in the file picker for two-group comparison. Sequential upload replaces the previous file. ISS-027 raised as a low-priority UX clarification item. |
 | May 2026 | `forestHelperR` v0.2.0 built as `.tar.gz` and installed locally | Four undeclared dependencies (`extrafont`, `forestploter`, `lmtest`, `sandwich`) required manual pre-installation. PDEC-006 raised to address in a future package maintenance cycle. |
-| — | Remaining open issues (ISS-013 to ISS-026 excluding resolved) | Pending — to be addressed in subsequent sessions |
+| 2026-05-11 | Batch 1 fixes applied — ISS-013, ISS-014, ISS-015 resolved (CHG-007) | `survival::coxph()`, `forestploter::get_wh()` qualified; `broom`, `lmtest`, `sandwich` declared in `global.R` |
+| — | Remaining open issues (ISS-016 to ISS-027 excluding resolved) | Pending — Batch 2 (ISS-017, 018, 019, 027) and Batch 3 (ISS-022, 023, 024, 025, 016/026) to be addressed in subsequent sessions |
 
 ---
 
-*Document version: 0.5 — CHG-005 and CHG-006 implemented and tested; ISS-020 and ISS-021 resolved; ISS-027 and PDEC-006 raised; two-group upload UX behaviour documented*
+*Document version: 0.6 — CHG-007 implemented; ISS-013, ISS-014, ISS-015 resolved; Batch 1 complete*

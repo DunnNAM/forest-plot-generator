@@ -288,7 +288,7 @@ server <- function(input, output, session) {
       form2 <- as.formula(paste0("survival::Surv(",
                                  stringr::str_replace(input$response_var, "IND_", "Time_"),
                                  ",",input$response_var, "_bin) ", form))
-      fit <- coxph(form2,
+      fit <- survival::coxph(form2,
                    data = dat)
     }
     fit
@@ -523,7 +523,7 @@ server <- function(input, output, session) {
     expansion <- if (input$font %in% c("Lato", "Roboto", "Source Sans Pro", "Source Sans Pro")) {
       1.2
     } else {1}
-    dims <- get_wh(
+    dims <- forestploter::get_wh(
       forest_plot_object(),
       unit = "in")
     
