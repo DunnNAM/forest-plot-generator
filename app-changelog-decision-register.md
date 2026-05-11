@@ -115,6 +115,48 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-013 — FEAT-001: R code serialiser — Copy R code / Download .R script buttons
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-001 |
+
+**Files changed:** `global.R`, `ui.R`, `server.R`
+
+**Summary of changes:**
+
+| File | Change |
+|---|---|
+| `global.R` | `library(glue)` and `library(clipr)` added after `library(forestHelperR)` |
+| `ui.R` | Two buttons added to the Plot tab alongside the existing download buttons: `actionButton("copy_r_code", "Copy R code")` and `downloadButton("download_r_code", "Download .R script")` |
+| `server.R` | `r_code_string()` reactive added; `observeEvent(input$copy_r_code)` added; `output$download_r_code` download handler added |
+
+**`r_code_string()` reactive — edge cases handled:**
+
+| Argument | Rule |
+|---|---|
+| `plot_title` | `NULL` in output string when `input$plot_title == ""`; otherwise quoted |
+| `x_axis_ticks` | `NULL` when no `input$xticks` values fall within `input$xlims`; otherwise `c(...)` of the full `input$xticks` vector (mirrors `forest_plot_object` logic exactly) |
+| `by_var` | `NA` when `input$by_group` is `FALSE`; otherwise quoted `input$group_var_name` |
+| `variables_excluded` | `c()` when none excluded; otherwise `c("...", ...)` |
+| `elements` | Serialised from `order()` reactive to preserve user column ordering |
+| `right_justify` | `c()` when empty; otherwise `c("...", ...)` |
+| `bg_stripe` | `NA` when `input$striped_bg` is `FALSE`; otherwise quoted colour string |
+| Character args | Quoted in output string |
+| Logical and numeric args | Unquoted in output string |
+| `table` | `your_data` placeholder — the underlying data frame cannot be serialised from the GUI |
+
+**Copy handler:** `clipr::write_clip()` wrapped in `tryCatch()`; `shiny::showNotification()` fired on both success and failure (e.g. headless server with no clipboard).
+
+**Download handler:** `writeLines(r_code_string(), file)` writes a `.R` file named `forestplot_code.R`.
+
+**`req(reg_table())`** added at the top of `r_code_string()` to suspend the reactive until data is available, consistent with project convention.
+
+---
+
 ### CHG-012 — Cache simulated dataset as `dat.rds`; resolve ISS-012
 
 | Field | Detail |
@@ -477,4 +519,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 1.1 — CHG-012 implemented; ISS-012 resolved; dat.rds caching logic added*
+*Document version: 1.2 — CHG-013 implemented; FEAT-001 R code serialiser delivered*

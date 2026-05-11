@@ -27,6 +27,8 @@ library(sandwich)
 library(sortable)
 library(shinyWidgets)
 library(forestHelperR)
+library(glue)
+library(clipr)
 
 
 # Setup -------------------------------------------------------------------

@@ -369,4 +369,4 @@
 
 ---
 
-*Document version: 2.7 — ISS-012 resolved (CHG-012): dat.rds caching logic added to global.R*
+*Document version: 2.8 — FEAT-001 implemented (CHG-013): R code serialiser; Copy R code and Download .R script buttons added to Plot tab*

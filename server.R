@@ -572,6 +572,98 @@ server <- function(input, output, session) {
         height = dims()[2])
     })
   
+  ### c - R code serialiser
+  r_code_string <- reactive({
+    req(reg_table())
+
+    ticks_in_range <- input$xticks[
+      dplyr::between(input$xticks, min(input$xlims), max(input$xlims))
+    ]
+    x_ticks_str <- if (length(ticks_in_range) == 0) {
+      "NULL"
+    } else {
+      paste0("c(", paste(input$xticks, collapse = ", "), ")")
+    }
+
+    plot_title_str <- if (input$plot_title == "") "NULL" else paste0('"', input$plot_title, '"')
+    by_var_str     <- if (!input$by_group) "NA" else paste0('"', input$group_var_name, '"')
+    vars_excl      <- variables_excluded()
+    vars_excl_str  <- if (length(vars_excl) == 0) {
+      "c()"
+    } else {
+      paste0('c("', paste(vars_excl, collapse = '", "'), '")')
+    }
+    elements_str   <- paste0('c("', paste(order(), collapse = '", "'), '")')
+    xlims_str      <- paste0("c(", paste(input$xlims, collapse = ", "), ")")
+    by_col_str     <- paste0('c("', input$ci_colour, '", "', input$ci_colour2, '")')
+    rj             <- input$right_justify
+    rj_str         <- if (length(rj) == 0) "c()" else paste0('c("', paste(rj, collapse = '", "'), '")')
+    bg_stripe_str  <- if (input$striped_bg) paste0('"', input$bg_stripe, '"') else "NA"
+    footnote_str   <- if (input$plot_footnote == "") '""' else paste0('"', input$plot_footnote, '"')
+
+    paste0(
+      'forestHelperR::forestPloter(\n',
+      '  table                    = your_data,\n',
+      '  est_text                 = "', est_type(), '",\n',
+      '  plot_width               = ', input$plotting_width, ',\n',
+      '  x_lims                   = ', xlims_str, ',\n',
+      '  variables_excluded       = ', vars_excl_str, ',\n',
+      '  x_axis_text              = "', input$xaxis_text, '",\n',
+      '  x_axis_ticks             = ', x_ticks_str, ',\n',
+      '  by_var                   = ', by_var_str, ',\n',
+      '  by_var_colours           = ', by_col_str, ',\n',
+      '  font                     = "', input$font, '",\n',
+      '  font_size                = ', input$base_size, ',\n',
+      '  font_colour              = "', input$base_font_colour, '",\n',
+      '  variable_font_face       = "', input$variable_font_face, '",\n',
+      '  variable_font_colour     = "', input$variable_font_colour, '",\n',
+      '  p_value_font_face        = "', input$pval_font_face, '",\n',
+      '  plot_title               = ', plot_title_str, ',\n',
+      '  plot_title_wrap          = ', input$plot_title_wrap, ',\n',
+      '  plot_title_centre        = ', input$plot_title_centre, ',\n',
+      '  footnote                 = ', footnote_str, ',\n',
+      '  footnote_long            = ', input$long_footnote, ',\n',
+      '  footnote_wrap            = ', input$footnote_wrap, ',\n',
+      '  table_background_transparent = ', input$transparent_table_bg, ',\n',
+      '  table_background         = "', input$table_bg_colour, '",\n',
+      '  plot_background_transparent = ', input$transparent_plot_bg, ',\n',
+      '  plot_background          = "', input$plot_bg_colour, '",\n',
+      '  bg_stripe                = ', bg_stripe_str, ',\n',
+      '  ci_colour                = "', input$ci_colour, '",\n',
+      '  reference_colour         = "', input$reference_colour, '",\n',
+      '  digits                   = ', input$digits, ',\n',
+      '  sigfigs                  = ', input$sigfigs, ',\n',
+      '  displayname_label_height = ', input$gaps, ',\n',
+      '  indent                   = ', input$indent, ',\n',
+      '  elements                 = ', elements_str, ',\n',
+      '  right_justify            = ', rj_str, ',\n',
+      '  n_display                = "', input$n_display, '",\n',
+      '  concatenate_est_ci       = ', input$concatenate_est_ci, ',\n',
+      '  concatenate_est_sig      = ', input$concatenate_est_sig, ',\n',
+      '  significance_symbol      = ', input$significance, '\n',
+      ')'
+    )
+  })
+
+  observeEvent(input$copy_r_code, {
+    tryCatch({
+      clipr::write_clip(r_code_string())
+      shiny::showNotification("R code copied to clipboard.", type = "message")
+    }, error = function(e) {
+      shiny::showNotification(
+        "Could not copy to clipboard — clipboard unavailable on this server.",
+        type = "warning"
+      )
+    })
+  })
+
+  output$download_r_code <- downloadHandler(
+    filename = "forestplot_code.R",
+    content = function(file) {
+      writeLines(r_code_string(), file)
+    }
+  )
+
   ## Misc
   ### a - update selected plotted variables based on regression variables
   observe({
