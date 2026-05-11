@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Read", "Glob", "Grep",        // file reading/searching tools, always allowed,
+      "Write(*.R)",
+      "Write(*.md)",
+      "Edit(src/**)",                // edits within src/
+      "Write(src/**)"               // writes within src/
+      // "Bash(npm run:*)"             // any npm run script
+      // "Bash(git:*)"                 // any git command
+      // "Bash(make:*)"                // any make target
+    ],
+    "deny": [
+      "Bash(rm *)",
+      "Bash(git push *)",
+      "Read(.env*)",                // blocks reading any .env file
+      "Read(secrets/**)",           // blocks reading anything in secrets/
+      "Bash(rm -rf:*)",             // blocks destructive deletes
+      "Bash(sudo:*)",               // blocks sudo commands
+      "Edit(package-lock.json)",    // prevents lockfile tampering
+      "Edit(.git/**)"               // prevents git internals modification
+    ],
+    "ask": [
+      "WebFetch",                    // any web fetch
+      "Bash(curl:*)",                // any curl command
+      "Bash(docker:*)"              // any docker command
+    ]  
+  },
+  "hooks": {
+  "PostToolUse": [{
+    "matcher": "Edit|Write",
+    "hooks": [{
+      "type": "command",
+      "command": "npx prettier --write \"$FILE_PATH\""
+    }]
+  }]
+  },
+  "statusLine": {
+  "type": "command",
+  "command": "~/.claude/statusline.sh",
+  "padding": 2
+  }
+}

@@ -2,7 +2,7 @@
 ui <- page_sidebar(
   tags$head(
     tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")),
-  title = "Forest plot function testing",
+  title = "Forest Plot Builder",
   theme = bs_theme(version = 5, bootswatch = "flatly"),
   sidebar = sidebar(
     radioButtons("dataset_selected", "Data set",
@@ -14,7 +14,7 @@ ui <- page_sidebar(
       strong("Comparison of two regressions"),
       materialSwitch("by_group", "", value = FALSE, status = "primary"),
       hr(),
-      fileInput("upload", "Upload one or two files with regression output (csv/tsv required).", multiple = TRUE),
+      fileInput("upload", "Upload one or two files with regression output (csv/tsv required). To compare two regressions, select both files at once using Ctrl+click (Windows) or Cmd+click (Mac).", multiple = TRUE),
       DT::dataTableOutput("files", width = "100%")
     ),
     radioButtons("regression_type", "Regression type selected",
@@ -117,7 +117,7 @@ ui <- page_sidebar(
           colourpicker::colourInput("ci_colour", "Confidence interval colour", value = "#444444"),
           conditionalPanel(
             condition = "input.by_group==1",
-            colourpicker::colourInput("ci_colour2", "Confidence interval colour", value = "#E07653")
+            colourpicker::colourInput("ci_colour2", "Group 2 confidence interval colour", value = "#E07653")
           ),
           colourpicker::colourInput("reference_colour", "Reference level colour", value = "#C43D4D"),
           shinyWidgets::noUiSliderInput("xlims", "Domain", range = log_scale,
@@ -177,95 +177,10 @@ ui <- page_sidebar(
                           max = 200, value = 120, step = 1, width = "200px",
                           ticks = FALSE))),
           colourpicker::colourInput("variable_font_colour", "Variable font colour", value = "#2047A7"),
-          selectizeInput("variable_font_face", "x-axis label", choices = faces, selected = "bold"),
-          selectizeInput("pval_font_face", "x-axis label", choices = faces, selected = "plain")
+          selectizeInput("variable_font_face", "Variable header font face", choices = faces, selected = "bold"),
+          selectizeInput("pval_font_face", "p-value font face", choices = faces, selected = "plain")
         )
       )
     )
   )
 )
-
-
-
-# this code works and shows no grey box! but not pretty
-# page_sidebar(
-#   title = "Plot Options",
-#   sidebar = sidebar(
-#     conditionalPanel(
-#       condition = "true",
-#       checkboxGroupInput("variables_displayed", "Variables plotted", choices = c()),
-#       checkboxGroupInput("elements", "Elements included",
-#                          choices = c("Counts" = "n", "Estimate" = "est", "Confidence interval" = "lci",
-#                                      "p-value" = "p"),
-#                          selected = c("n", "est", "lci", "p")),
-#       conditionalPanel(
-#         condition = "input.elements.includes('n')",
-#         radioButtons("n_display", "Count display", choices = c("n", "n/N", "% (n/N)"), selected = "n")
-#       ),
-#       conditionalPanel(
-#         condition = "input.elements.includes('est')||input.elements.includes('lci')",
-#         strong("Combine estimate and CI"),
-#         materialSwitch("concatenate_est_ci", "", value = TRUE, status = "primary")
-#       ),
-#       conditionalPanel(
-#         condition = "input.significance == 1",
-#         strong("Combine estimate and significance symbol"),
-#         materialSwitch("concatenate_est_sig", "", value = FALSE, status = "primary")
-#       ),
-#       strong("Include significance symbol"),
-#       materialSwitch("significance", "", value = TRUE, status = "primary"),
-#       conditionalPanel(
-#         condition = "input.regression_type == 'cox'",
-#         strong("Plot inverse hazard ratio"),
-#         materialSwitch("inv", "", value = FALSE, status = "primary")
-#       )
-#     ),
-#     conditionalPanel(
-#       condition = "true",
-#       sliderInput("plotting_width", "Width of plotting area", min = 20, max = 250, value = 120, step = 1, ticks = TRUE),
-#       colourpicker::colourInput("ci_colour", "Confidence interval colour", value = "#444444"),
-#       conditionalPanel(
-#         condition = "input.by_group==1",
-#         colourpicker::colourInput("ci_colour2", "Confidence interval colour", value = "#E07653")
-#       ),
-#       colourpicker::colourInput("reference_colour", "Reference level colour", value = "#C43D4D"),
-#       shinyWidgets::noUiSliderInput("xlims", "Domain", range = log_scale,
-#                                     value = c(0.25, 4), min = 0.05, max = 20),
-#       strong("Table background transparent"),
-#       materialSwitch("transparent_table_bg", "", value = TRUE, status = "primary"),
-#       conditionalPanel(
-#         condition = "input.transparent_table_bg==0",
-#         colourpicker::colourInput("table_bg_colour", "Table background colour"),
-#         strong("Striped background"),
-#         materialSwitch("striped_bg", "", value = FALSE, status = "primary"),
-#         conditionalPanel(
-#           condition = "input.striped_bg==1",
-#           colourpicker::colourInput("bg_stripe", "Stripe colour", value = "#EBEBEB")
-#         )
-#       ),
-#       strong("Plot background transparent"),
-#       materialSwitch("transparent_plot_bg", "", value = TRUE, status = "primary"),
-#       conditionalPanel(
-#         condition = "input.transparent_plot_bg==0",
-#         colourpicker::colourInput("plot_bg_colour", "Plot background colour")
-#       ),
-#       strong("Space between variables"),
-#       sliderInput("gaps", "", value = 0.8, min = 0.5, max = 2, step = 0.1, ticks = FALSE),
-#       strong("Indent of levels"),
-#       sliderInput("indent", "", value = 0.5, min = 0, max = 2, step = 0.1, ticks = FALSE),
-#       shinyWidgets::noUiSliderInput("xticks", "x-axis ticks", log_scale,
-#                                     connect = FALSE, value = c(0.1, 0.25, 0.5, 2, 4, 10), min = 0.05, max = 20)
-#     ),
-#     conditionalPanel(
-#       condition = "true",
-#       textInput("plot_title", "Title", placeholder = "Plot title text"),
-#       selectInput("font", "Font", choices = fonts()),
-#       sliderInput("base_size", "Font size", min = 8, max = 18, value = 11, step = 1, post = "pt", ticks = FALSE),
-#       colourpicker::colourInput("base_font_colour", "Text colour", value = "#444444"),
-#       selectizeInput("xaxis_text", "x-axis label", choices = labels_axis, options = list(create = TRUE)),
-#       textInput("plot_footnote", "Footnote", placeholder = "Plot footnote text"),
-#       strong("Long footnote"),
-#       materialSwitch("long_footnote", "", right = TRUE, value = TRUE, status = "primary"),
-#       colourpicker::colourInput("variable_font_colour", "Variable font colour", value = "#2047A7")
-#     )
-#   )

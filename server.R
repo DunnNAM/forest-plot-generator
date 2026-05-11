@@ -304,27 +304,25 @@ server <- function(input, output, session) {
     debounce(1000)
   
   reg_table <- reactive({
-    
+
     if (input$dataset_selected == "sim") {
-      if (!is.null(fit())) {
-        
-        forestHelperR::regTabler(
-          fit = fit(),
-          type = ifelse(!is.null(summary(fit())$family$family),
-                        summary(fit())$family$family,"cox"),
-          predictor = predictors_selected(),
-          response = input$response_var,
-          df = forestHelperR::dat,
-          robust_variance_poisson = input$robust_variance,
-          robust_variance_method = "HC0",
-          inv_HR = input$inv)
-      }
+      req(fit())
+
+      forestHelperR::regTabler(
+        fit = fit(),
+        type = ifelse(!is.null(summary(fit())$family$family),
+                      summary(fit())$family$family,"cox"),
+        predictor = predictors_selected(),
+        response = input$response_var,
+        df = forestHelperR::dat,
+        robust_variance_poisson = input$robust_variance,
+        robust_variance_method = "HC0",
+        inv_HR = input$inv)
     } else {
-      if (!is.null(data_updated())) {
-        data_updated() %>%
-          as.data.frame() %>%
-          dplyr::select(-where(is.logical))
-      }
+      req(data_updated())
+      data_updated() %>%
+        as.data.frame() %>%
+        dplyr::select(-where(is.logical))
     }
   })
   
@@ -520,7 +518,7 @@ server <- function(input, output, session) {
   dims <- reactive({
     req(forest_plot_object())
     
-    expansion <- if (input$font %in% c("Lato", "Roboto", "Source Sans Pro", "Source Sans Pro")) {
+    expansion <- if (input$font %in% c("Lato", "Roboto", "Open Sans", "Source Sans Pro", "Montserrat")) {
       1.2
     } else {1}
     dims <- forestploter::get_wh(
@@ -588,19 +586,7 @@ server <- function(input, output, session) {
       selected = variables
     )
   })
-  ### b - update to split out est and CI if est deselected
-  observe({
-    
-    if (!("est" %in% input$elements)) {
-      updateMaterialSwitch(
-        session,
-        "concatenate_est_ci",
-        value = FALSE
-      )
-    }
-  }) %>%
-    bindEvent(input$elements)
-  ### c - update order based on selected columns
+  ### b - update order based on selected columns
   output$sortable_cols <- renderUI({
     req(input$reorder)
     
@@ -636,14 +622,15 @@ server <- function(input, output, session) {
                            value = TRUE)
     }
   })
-  ### e - if deselect estimate or ci then deselected combine estimate and ci
+  ### e - if estimate or CI deselected, unset concatenate_est_ci
   observe({
     if (!("est" %in% (input$elements)) | !("lci" %in% (input$elements))) {
       updateMaterialSwitch(session,
                            inputId = "concatenate_est_ci",
                            value = FALSE)
     }
-  })
+  }) %>%
+    bindEvent(input$elements)
   ### f - select order and/or elements to include
   order <- reactive({
     
@@ -675,48 +662,5 @@ server <- function(input, output, session) {
     }
   }) %>%
     bindEvent(input$sigfigs)
-  ### h - options
-  # display_option_update <- reactive({
-  #   req(input$cols)
-  #
-  #   n_included <- if (length(input$n_name) == 0) {
-  #     FALSE
-  #   } else if (input$n_name[1] == "empty") {
-  #     FALSE
-  #   } else {
-  #     TRUE
-  #   }
-  #   p_included <- if (length(input$p_name) == 0) {
-  #     FALSE
-  #   } else if (input$p_name[1] == "empty") {
-  #     FALSE
-  #   } else {
-  #     TRUE
-  #   }
-  #   significance_included <- if (length(input$significance_name) == 0) {
-  #     FALSE
-  #   } else if (input$n_name[1] == "empty") {
-  #     FALSE
-  #   } else {
-  #     TRUE
-  #   }
-  #   temp <- display_option
-  #   if (n_included) {
-  #     temp <- temp[-which(temp == "n")]
-  #   }
-  #   if (!p_included & !significance_included) {
-  #     temp <- temp[-which(temp == "p")]
-  #   }
-  #   temp
-  # })
-  # ### i - when no significance provided
-  # observe({
-  #   updateCheckboxGroupInput(
-  #     inputId = "elements",
-  #     choices = display_option_update(),
-  #     selected = unname(display_option_update())
-  #   )
-  # }) %>%
-  #   bindEvent(display_option_update())
-  
+
 }

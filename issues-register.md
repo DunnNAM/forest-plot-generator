@@ -41,11 +41,12 @@
 |---|---|
 | **Source** | DOC |
 | **Severity** | High |
-| **Status** | Open |
+| **Status** | Open — **RUNTIME CONFIRMED 2026-05-11** |
 | **File(s)** | `global.R` |
 | **Description** | `extrafont::font_import()` is commented out. `loadfonts()` will silently fail on any machine where fonts have not been pre-imported interactively. Lato font files are bundled in the `Lato/` directory but the import step is not automated. |
 | **Risk** | Font rendering will fall back silently on new machines, producing plots with incorrect fonts without any error message to the user. |
 | **Recommended fix** | Add a startup check: if the target font is not found in `extrafont::fonts()`, emit a clear `warning()` or `message()` in the UI. Document the one-time setup step clearly in a `README.md`. Consider whether `sysfonts` / `showtext` would be a more portable alternative (see PDEC-003). |
+| **Runtime observation (2026-05-11)** | Confirmed during Batch 3 testing. Font selector shows only 5 base R/system fonts (Helvetica, Times, Courier, Palatino, Bookman). Custom fonts (Lato, Roboto, Open Sans, Source Sans Pro, Montserrat) are absent — consistent with `extrafont` fonts not having been imported on this machine. The silent fallback means no error is surfaced to the user. ISS-016/026 empirical verification (1.2× expansion factor for Open Sans and Montserrat) is blocked until this issue is resolved. **Parked as non-critical for now.** |
 | **Resolution** | — |
 
 ### ISS-003 — Two-file upload uses fragile `for` loop pattern
@@ -135,11 +136,10 @@
 |---|---|
 | **Source** | DOC |
 | **Severity** | Medium |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-010** |
 | **File(s)** | Repository root |
-| **Description** | No `README.md` for the Shiny app project. Setup steps (font import, `forestHelperR` installation, how to run) are not documented in an onboarding-friendly format. |
-| **Recommended fix** | Create a `README.md` covering: project purpose, installation, one-time setup steps, how to run locally, and known limitations. See FEAT-003. |
-| **Resolution** | — |
+| **Description** | No `README.md` for the Shiny app project. Setup steps (font import, `forestHelperR` installation, how to run) were not documented in an onboarding-friendly format. |
+| **Resolution** | `README.md` created at the project root. Covers: project purpose, prerequisites, installation (app dependencies, `forestHelperR`, one-time font import), how to run locally, usage overview, known limitations, project structure, and contributing guidelines. |
 
 ### ISS-008 — `forestHelperR` install path undocumented in app project
 
@@ -147,10 +147,10 @@
 |---|---|
 | **Source** | DOC |
 | **Severity** | Medium |
-| **Status** | Open — partially mitigated |
+| **Status** | **Resolved — CHG-010** |
 | **File(s)** | Repository root |
-| **Description** | `forestHelperR` is the core dependency but its install source is not documented in the app project. The package `README.md` contains correct install instructions; these should be mirrored in the app `README.md` when ISS-007 is resolved. |
-| **Resolution** | — |
+| **Description** | `forestHelperR` is the core dependency but its install source was not documented in the app project. The package `README.md` contained correct install instructions; these needed to be mirrored in the app `README.md`. |
+| **Resolution** | `README.md` documents both install paths: (A) CAQ internal repository for CAQ staff, (B) `.tar.gz` install for others. Pre-installation of undeclared `forestHelperR` dependencies (`extrafont`, `forestploter`, `lmtest`, `sandwich`) also documented, consistent with PDEC-006. |
 
 ### ISS-011 — No `renv` or dependency lockfile
 
@@ -170,11 +170,11 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Medium |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-009** |
 | **File(s)** | `server.R`, line 496 |
 | **Description** | `"Source Sans Pro"` appears twice in the font expansion vector. The duplicate is harmless but suggests a fourth font (possibly `"Open Sans"` or `"Montserrat"`) was intended. See also ISS-026. |
 | **Recommended fix** | Confirm the intended expansion font list and correct the vector. |
-| **Resolution** | — |
+| **Resolution** | Duplicate `"Source Sans Pro"` removed. `"Open Sans"` and `"Montserrat"` added to the 1.2× expansion group. **Empirical verification pending** — the 1.2× factor for these two fonts has not been tested with actual plot output. Verify before treating as final. |
 
 ### ISS-017 — App title is a development placeholder
 
@@ -182,11 +182,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Medium |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-008** |
 | **File(s)** | `ui.R`, line 5 |
 | **Description** | App title reads `"Forest plot function testing"` — visible in the browser tab and page header. |
-| **Recommended fix** | Update to a descriptive title, e.g. `"Forest Plot Builder"`. |
-| **Resolution** | — |
+| **Resolution** | Title updated to `"Forest Plot Builder"`. |
 
 ### ISS-018 — Three `selectizeInput` labels all read `"x-axis label"`
 
@@ -194,11 +193,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Medium |
-| **Status** | Open |
-| **File(s)** | `ui.R`, lines 169, 180, 181 |
+| **Status** | **Resolved — CHG-008** |
+| **File(s)** | `ui.R`, lines 180, 181 |
 | **Description** | `input$variable_font_face` (line 180) and `input$pval_font_face` (line 181) both display `"x-axis label"` due to copy-paste. Users cannot identify the purpose of these controls. |
-| **Recommended fix** | Correct line 180 to `"Variable header font face"` and line 181 to `"p-value font face"`. |
-| **Resolution** | — |
+| **Resolution** | Line 180 label corrected to `"Variable header font face"`; line 181 label corrected to `"p-value font face"`. |
 
 ### ISS-019 — `ci_colour2` label identical to `ci_colour`
 
@@ -206,11 +204,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Medium |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-008** |
 | **File(s)** | `ui.R`, line 120 |
 | **Description** | Both CI colour pickers display `"Confidence interval colour"` when `by_group` is enabled. Users cannot distinguish which applies to which group. |
-| **Recommended fix** | Update `ci_colour2` label to `"Group 2 confidence interval colour"`. |
-| **Resolution** | — |
+| **Resolution** | `ci_colour2` label updated to `"Group 2 confidence interval colour"`. |
 
 ### ISS-020 — Column confirmation not reset on new file upload
 
@@ -238,11 +235,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Medium |
-| **Status** | Open |
-| **File(s)** | `server.R`, lines 613–619 |
-| **Description** | The observer that unsets `concatenate_est_ci` when `est` or `lci` is deselected has no `bindEvent()`, causing it to fire on every reactive flush. There is also functional overlap with the §b observer. |
-| **Recommended fix** | Add `bindEvent(input$elements)`. Evaluate consolidating §b and §e into a single observer. |
-| **Resolution** | — |
+| **Status** | **Resolved — CHG-009** |
+| **File(s)** | `server.R` |
+| **Description** | The observer that unsets `concatenate_est_ci` when `est` or `lci` is deselected had no `bindEvent()`, causing it to fire on every reactive flush. There was also functional overlap with the §b observer (which fired on `!est` only — a strict subset of §e's `!est | !lci` condition). |
+| **Resolution** | §b observer deleted (redundant — §e's condition is a superset). `bindEvent(input$elements)` added to §e so it fires only when `input$elements` changes. |
 
 ### ISS-023 — `reg_table()` returns `NULL` silently; fragile pattern
 
@@ -250,11 +246,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Medium |
-| **Status** | Open |
-| **File(s)** | `server.R`, lines 281–304 |
-| **Description** | `reg_table()` uses `if (!is.null(...))` guards rather than `req()`, returning `NULL` silently when conditions are not met. The pattern is fragile — any future reactive that does not guard against `NULL` will produce a confusing error. |
-| **Recommended fix** | Replace `if (!is.null(...))` pattern with `req()` calls at the top of the `sim` and `upload` branches. |
-| **Resolution** | — |
+| **Status** | **Resolved — CHG-009** |
+| **File(s)** | `server.R` |
+| **Description** | `reg_table()` used `if (!is.null(...))` guards rather than `req()`, returning `NULL` silently when conditions were not met. `fit()` and `data_updated()` both use `req()` internally, so neither can return `NULL` — the guards were protecting an unreachable state. |
+| **Resolution** | `if (!is.null(fit()))` replaced with `req(fit())`; `if (!is.null(data_updated()))` replaced with `req(data_updated())`. `req()` suspends cleanly and is consistent with the project convention. |
 
 ### ISS-027 — Two-group upload workflow not discoverable from UI
 
@@ -262,12 +257,10 @@
 |---|---|
 | **Source** | RUNTIME — identified during ISS-020 testing |
 | **Severity** | Low |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-008** |
 | **File(s)** | `ui.R` |
 | **Description** | The two-group comparison feature requires both files to be selected simultaneously in the file picker. This is not explained anywhere in the UI — the file input label reads only `"Upload one or two files with regression output (csv/tsv required)."` with no indication that simultaneous selection is required. Users who upload files sequentially (a natural assumption) will find the first file replaced by the second with no feedback explaining why or how to use the two-group feature correctly. |
-| **Risk** | Users may not discover the two-group comparison feature, or may be confused when sequential uploads replace rather than combine data. |
-| **Recommended fix** | Add a short helper text beneath the file input explaining the simultaneous selection requirement, e.g.: *"To compare two regressions side by side, select both files at once using Ctrl+click (Windows) or Cmd+click (Mac) in the file picker."* Could also be addressed as part of ISS-007 (README). |
-| **Resolution** | — |
+| **Resolution** | `fileInput` label extended to include: `"To compare two regressions, select both files at once using Ctrl+click (Windows) or Cmd+click (Mac)."` |
 
 ---
 
@@ -315,11 +308,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Low |
-| **Status** | Open |
-| **File(s)** | `ui.R`, lines 190–272 |
+| **Status** | **Resolved — CHG-009** |
+| **File(s)** | `ui.R` |
 | **Description** | 83-line commented-out `page_sidebar()` alternative layout. Dead code with a development note. |
-| **Recommended fix** | Delete the block. Preserve the note in the changelog or a `dev-notes.md` if needed. |
-| **Resolution** | — |
+| **Resolution** | Block deleted. The development note ("this code works and shows no grey box! but not pretty") is recorded here for traceability. |
 
 ### ISS-025 — Large commented-out reactive block in `server.R`
 
@@ -327,11 +319,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Low |
-| **Status** | Open |
-| **File(s)** | `server.R`, lines 652–693 |
-| **Description** | 42-line commented-out `display_option_update` reactive with an incomplete implementation and a copy-paste bug (`input$n_name` checked instead of `input$significance_name`). |
-| **Recommended fix** | Delete the block and raise a clean feature request if the dynamic element filtering behaviour is wanted. |
-| **Resolution** | — |
+| **Status** | **Resolved — CHG-009** |
+| **File(s)** | `server.R` |
+| **Description** | 42-line commented-out `display_option_update` reactive with an incomplete implementation and a copy-paste bug (`input$n_name` checked instead of `input$significance_name` in the `significance_included` branch). |
+| **Resolution** | Block deleted. If dynamic element filtering is wanted in future, raise a clean feature request and implement from scratch. |
 
 ### ISS-026 — `"Open Sans"` likely missing from font expansion group
 
@@ -339,10 +330,10 @@
 |---|---|
 | **Source** | REVIEW |
 | **Severity** | Low |
-| **Status** | Open |
-| **File(s)** | `server.R`, `global.R` |
-| **Description** | `"Open Sans"` is available in the font selector (present in `global.R` fonts vector) but not in the 1.2× expansion group in `server.R`. Has similar character metrics to `"Lato"` and `"Roboto"`. Resolve as part of ISS-016. |
-| **Resolution** | — |
+| **Status** | **Resolved — CHG-009** |
+| **File(s)** | `server.R` |
+| **Description** | `"Open Sans"` was available in the font selector but absent from the 1.2× expansion group. Has similar character metrics to `"Lato"` and `"Roboto"`. |
+| **Resolution** | `"Open Sans"` added to the expansion group (resolved alongside ISS-016). **Empirical verification pending** — confirm the 1.2× factor produces correct sizing for `"Open Sans"` with actual plot output. |
 
 ---
 
@@ -356,8 +347,8 @@
 | ISS-004 | High | All | No unit tests | Open |
 | ISS-005 | High | `functions.R` | Orphaned legacy file | ✅ Resolved — DEC-002 |
 | ISS-006 | Medium | `global.R` | `officer` loaded but unused | ✅ Resolved — CHG-002 |
-| ISS-007 | Medium | Root | No `README.md` | Open |
-| ISS-008 | Medium | Root | `forestHelperR` install undocumented | Open |
+| ISS-007 | Medium | Root | No `README.md` | ✅ Resolved — CHG-010 |
+| ISS-008 | Medium | Root | `forestHelperR` install undocumented | ✅ Resolved — CHG-010 |
 | ISS-009 | Low | Docs | Screenshot placeholder path | Open |
 | ISS-010 | Low | Docs | Talk date placeholder in footer | Open |
 | ISS-011 | Medium | Root | No `renv` lockfile | Open |
@@ -365,19 +356,19 @@
 | ISS-013 | High | `server.R` | `coxph()` missing `survival::` qualifier | Open |
 | ISS-014 | High | `server.R` / `global.R` | `broom`, `lmtest`, `sandwich` undeclared | Open |
 | ISS-015 | High | `server.R` | `get_wh()` missing `forestploter::` qualifier | Open |
-| ISS-016 | Medium | `server.R` | Duplicate `"Source Sans Pro"` in expansion font list | Open |
-| ISS-017 | Medium | `ui.R` | App title is a development placeholder | Open |
-| ISS-018 | Medium | `ui.R` | Three `selectizeInput` labels all read `"x-axis label"` | Open |
-| ISS-019 | Medium | `ui.R` | `ci_colour2` has same label as `ci_colour` | Open |
+| ISS-016 | Medium | `server.R` | Duplicate `"Source Sans Pro"` in expansion font list | ✅ Resolved — CHG-009 *(verification pending)* |
+| ISS-017 | Medium | `ui.R` | App title is a development placeholder | ✅ Resolved — CHG-008 |
+| ISS-018 | Medium | `ui.R` | Three `selectizeInput` labels all read `"x-axis label"` | ✅ Resolved — CHG-008 |
+| ISS-019 | Medium | `ui.R` | `ci_colour2` has same label as `ci_colour` | ✅ Resolved — CHG-008 |
 | ISS-020 | Medium | `server.R` | Column confirmation not reset on new file upload | ✅ Resolved — CHG-006 |
 | ISS-021 | Medium | `server.R` | UCI/LCI labels swapped; column count fragile | ✅ Resolved — CHG-005 |
-| ISS-022 | Medium | `server.R` | `observe()` at §e missing `bindEvent()` | Open |
-| ISS-023 | Medium | `server.R` | `reg_table()` returns `NULL` silently | Open |
-| ISS-024 | Low | `ui.R` | 83-line commented-out layout block | Open |
-| ISS-025 | Low | `server.R` | 42-line commented-out reactive with copy-paste bug | Open |
-| ISS-026 | Low | `server.R` / `global.R` | `"Open Sans"` missing from font expansion group | Open |
-| ISS-027 | Low | `ui.R` | Two-group upload workflow not discoverable from UI | Open |
+| ISS-022 | Medium | `server.R` | `observe()` at §e missing `bindEvent()` | ✅ Resolved — CHG-009 |
+| ISS-023 | Medium | `server.R` | `reg_table()` returns `NULL` silently | ✅ Resolved — CHG-009 |
+| ISS-024 | Low | `ui.R` | 83-line commented-out layout block | ✅ Resolved — CHG-009 |
+| ISS-025 | Low | `server.R` | 42-line commented-out reactive with copy-paste bug | ✅ Resolved — CHG-009 |
+| ISS-026 | Low | `server.R` / `global.R` | `"Open Sans"` missing from font expansion group | ✅ Resolved — CHG-009 *(verification pending)* |
+| ISS-027 | Low | `ui.R` | Two-group upload workflow not discoverable from UI | ✅ Resolved — CHG-008 |
 
 ---
 
-*Document version: 2.1 — ISS-020 resolved (CHG-006); ISS-021 resolved (CHG-005); ISS-027 added (two-group UX); summary table updated*
+*Document version: 2.5 — ISS-007 and ISS-008 resolved (CHG-010): README.md created with full installation, font setup, and forestHelperR documentation*

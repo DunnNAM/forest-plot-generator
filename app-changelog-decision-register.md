@@ -115,6 +115,100 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-010 — Create `README.md`; resolve ISS-007 and ISS-008
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-007, ISS-008 |
+
+**Files added:** `README.md` (project root) — replaces the two-line stub that existed previously.
+
+**Sections:**
+
+| Section | Content |
+|---|---|
+| Project purpose | Upload and simulated data modes; `forestHelperR` dependency described |
+| Prerequisites | R ≥ 4.1, RStudio, `forestHelperR` |
+| Installation | Clone; `forestHelperR` install (CAQ internal repo and `.tar.gz` paths documented); app package list; one-time `extrafont::font_import()` step with the silent-fallback caveat (ISS-002) |
+| Running the app | RStudio, R console, and terminal invocations |
+| Usage overview | 6-step walkthrough of the upload → confirm → plot → export flow |
+| Known limitations | ISS-002 (fonts), ISS-004 (no tests), ISS-011 (no renv), ISS-012 (startup latency) |
+| Project structure | Annotated directory tree |
+| Contributing | Bug reporting via issues register; conventions summary |
+
+**ISS-007 status:** → **Resolved**
+**ISS-008 status:** → **Resolved**
+
+---
+
+### CHG-009 — Batch 3: dead code removal + reactive tidying (ISS-022, 023, 024, 025, 016/026)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-022, ISS-023, ISS-024, ISS-025, ISS-016, ISS-026 |
+
+**Files changed:** `server.R`, `ui.R`
+
+**Summary of changes:**
+
+| ISS | File | Change |
+|---|---|---|
+| ISS-024 | `ui.R` | Deleted 83-line commented-out `page_sidebar()` alternative layout (lines 190–272). Dead code with a development note; preserved in this register for traceability. |
+| ISS-025 | `server.R` | Deleted 42-line commented-out `display_option_update` reactive and associated `observe()` (§h / §i, lines 679–720). Implementation was incomplete and contained a copy-paste bug (`input$n_name` checked instead of `input$significance_name` in the `significance_included` branch). |
+| ISS-022 | `server.R` | Deleted redundant §b observer (`!("est" %in% input$elements)` → unset `concatenate_est_ci`). Its condition is a strict subset of §e's (`!est \| !lci`), making §b dead in practice. Added `bindEvent(input$elements)` to §e so it no longer fires on every reactive flush. |
+| ISS-023 | `server.R` | Replaced `if (!is.null(fit()))` and `if (!is.null(data_updated()))` guards in `reg_table()` with `req(fit())` and `req(data_updated())`. Both callees already use `req()` internally so cannot return `NULL`; the `is.null` checks were guarding an unreachable state. `req()` suspends cleanly and is consistent with the project convention. |
+| ISS-016/026 | `server.R` | Removed duplicate `"Source Sans Pro"` from the 1.2× font expansion vector in `dims()`; added `"Open Sans"` and `"Montserrat"`, which have similar character metrics and are available in the font selector. **Verification required:** the 1.2× multiplier for `"Open Sans"` and `"Montserrat"` has not been empirically tested — render a test plot with each font and confirm sizing before treating this list as final. |
+
+**ISS-022 status:** → **Resolved**
+**ISS-023 status:** → **Resolved**
+**ISS-024 status:** → **Resolved**
+**ISS-025 status:** → **Resolved**
+**ISS-016 status:** → **Resolved** *(empirical verification of Open Sans / Montserrat expansion factor pending)*
+**ISS-026 status:** → **Resolved** *(empirical verification of Open Sans expansion factor pending)*
+
+---
+
+### CHG-008 — Fix ISS-017, ISS-018, ISS-019, ISS-027: UI label corrections (Batch 2)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-05-11 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-017, ISS-018, ISS-019, ISS-027 |
+
+**Files changed:** `ui.R`
+
+**Summary of changes:**
+
+| ISS | Location | Before | After |
+|---|---|---|---|
+| ISS-017 | `ui.R`, line 5 | `title = "Forest plot function testing"` | `title = "Forest Plot Builder"` |
+| ISS-018 | `ui.R`, line 180 | `selectizeInput("variable_font_face", "x-axis label", ...)` | label → `"Variable header font face"` |
+| ISS-018 | `ui.R`, line 181 | `selectizeInput("pval_font_face", "x-axis label", ...)` | label → `"p-value font face"` |
+| ISS-019 | `ui.R`, line 120 | `colourInput("ci_colour2", "Confidence interval colour", ...)` | label → `"Group 2 confidence interval colour"` |
+| ISS-027 | `ui.R`, line 17 | `fileInput` label — no instruction on simultaneous selection | Appended: `"To compare two regressions, select both files at once using Ctrl+click (Windows) or Cmd+click (Mac)."` |
+
+**Rationale:**
+
+- **ISS-017:** Development placeholder title was visible in the browser tab and page header.
+- **ISS-018:** `variable_font_face` and `pval_font_face` both displayed `"x-axis label"` due to copy-paste, making the controls unidentifiable to users.
+- **ISS-019:** Both CI colour pickers showed identical `"Confidence interval colour"` labels when `by_group` was enabled, preventing users from distinguishing which group each controlled.
+- **ISS-027:** The file input gave no indication that simultaneous selection is required for two-group comparison; users attempting sequential upload received no feedback.
+
+**ISS-017 status:** → **Resolved**
+**ISS-018 status:** → **Resolved**
+**ISS-019 status:** → **Resolved**
+**ISS-027 status:** → **Resolved**
+
+---
+
 ### CHG-007 — Fix ISS-013, ISS-014, ISS-015: namespace qualifiers and undeclared package declarations
 
 | Field | Detail |
@@ -314,8 +408,12 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | May 2026 | Two-group upload UX clarified during ISS-020 testing | Confirmed by design: both files must be selected simultaneously in the file picker for two-group comparison. Sequential upload replaces the previous file. ISS-027 raised as a low-priority UX clarification item. |
 | May 2026 | `forestHelperR` v0.2.0 built as `.tar.gz` and installed locally | Four undeclared dependencies (`extrafont`, `forestploter`, `lmtest`, `sandwich`) required manual pre-installation. PDEC-006 raised to address in a future package maintenance cycle. |
 | 2026-05-11 | Batch 1 fixes applied — ISS-013, ISS-014, ISS-015 resolved (CHG-007) | `survival::coxph()`, `forestploter::get_wh()` qualified; `broom`, `lmtest`, `sandwich` declared in `global.R` |
-| — | Remaining open issues (ISS-016 to ISS-027 excluding resolved) | Pending — Batch 2 (ISS-017, 018, 019, 027) and Batch 3 (ISS-022, 023, 024, 025, 016/026) to be addressed in subsequent sessions |
+| 2026-05-11 | Batch 2 fixes applied — ISS-017, ISS-018, ISS-019, ISS-027 resolved (CHG-008) | App title corrected; font face labels fixed; ci_colour2 label disambiguated; fileInput label expanded with two-file selection instruction |
+| — | Remaining open issues | Pending — Batch 3 (ISS-022, 023, 024, 025, 016/026) to be addressed in subsequent sessions |
+| 2026-05-11 | Batch 3 fixes applied — ISS-022, ISS-023, ISS-024, ISS-025, ISS-016, ISS-026 resolved (CHG-009) | Dead code deleted (commented-out UI block, commented-out reactive); §b observer consolidated into §e with `bindEvent`; `reg_table()` `is.null` guards replaced with `req()`; font expansion vector corrected (duplicate removed, Open Sans and Montserrat added — empirical verification pending) |
+| 2026-05-11 | Batch 3 runtime testing — ISS-002 confirmed active | Font selector shows only 5 base system fonts (Helvetica, Times, Courier, Palatino, Bookman). Custom fonts absent — `extrafont` import has not been run on this machine. Silent fallback with no user-facing error, consistent with ISS-002 description. ISS-016/026 expansion factor verification blocked. Issue parked as non-critical. |
+| 2026-05-11 | `README.md` created — ISS-007, ISS-008 resolved (CHG-010) | Stub README replaced. Full install instructions, one-time font import step, `forestHelperR` both-path documentation, usage overview, known limitations, and contributing guidelines. |
 
 ---
 
-*Document version: 0.6 — CHG-007 implemented; ISS-013, ISS-014, ISS-015 resolved; Batch 1 complete*
+*Document version: 0.9 — CHG-010 implemented; ISS-007 and ISS-008 resolved; README.md created*
