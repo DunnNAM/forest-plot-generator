@@ -410,7 +410,7 @@
 | ISS-032 | Low | `Rplots.pdf` | Tracked build artifact | ✅ Resolved — CHG-023 |
 | ISS-033 | Low | `server/plot.R` | `output$forest` registered inside `observe()` | ✅ Resolved — CHG-024 |
 | ISS-034 | Medium | `server.R` / `server/regression.R` | Unqualified `ggsave()`, `glm()`, `as.formula()` | ✅ Resolved — CHG-025 |
-| ISS-035 | Medium | `server/export.R`, `renv.lock` | `svglite` not installed; SVG export will error at runtime | Open |
+| ISS-035 | Medium | `server/export.R`, `renv.lock` | `svglite` not installed; SVG export will error at runtime | ✅ Resolved — CHG-028 |
 | FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | Open |
 
 ---
@@ -466,12 +466,11 @@
 |---|---|
 | **Source** | RUNTIME — discovered while resolving ISS-034 |
 | **Severity** | Medium |
-| **Status** | Open |
+| **Status** | **Resolved — CHG-028** |
 | **File(s)** | `server/export.R`, `renv.lock` |
 | **Description** | `ggplot2::ggsave(device = "svg")` requires the `svglite` package. `svglite` appears in `renv.lock` only as a transitive dependency string of other packages — it is **not** itself installed in `renv/library`. Clicking "Download svg" will error at runtime on any machine using this lockfile. |
 | **Risk** | Silent-until-clicked export failure; no test currently exercises the SVG download handler, so this would not be caught by the existing suite. |
-| **Recommended fix** | Install `svglite` and run `renv::snapshot()` to pin it explicitly, or switch the SVG handler to `grDevices::svg()` if a lighter dependency is preferred. Requires a `renv.lock` change — CLAUDE.md forbids modifying `renv.lock` without explicit sign-off, so this was raised rather than fixed. |
-| **Resolution** | — |
+| **Resolution** | `svglite` (2.2.2), `systemfonts` (1.3.2), and `textshaping` (1.0.5, a hard dependency of `svglite`) installed. `codetools` (missing, required by `globals`) installed alongside since it blocked a general `renv::snapshot()`. Rather than a full `renv::snapshot()` — which rewrote the CRAN mirror URL and ~40 unrelated `Repository` fields, and separately, when scoped with `packages=`, destructively stripped the lockfile down to 11 entries because renv's implicit-type snapshot doesn't detect `svglite` as "used" (nothing calls `svglite::` directly in code) — used `renv::record()` to add exactly the three new package records to `renv.lock` with no other changes. Verified via shinytest2 smoke test that `output$download_svg` now produces a real SVG file instead of erroring. |
 
 ---
 
@@ -490,4 +489,4 @@
 
 ---
 
-*Document version: 3.4 — ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised (svglite not installed, SVG export will error)*
+*Document version: 3.5 — ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite/systemfonts/textshaping/codetools installed, renv.lock updated via renv::record())*

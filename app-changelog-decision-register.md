@@ -168,6 +168,31 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-028 — ISS-035: install `svglite` and dependencies, pin in `renv.lock`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-035 |
+
+**Files changed:** `renv.lock`
+
+**Summary:**
+
+Installed `svglite` (2.2.2) and its dependencies `systemfonts` (1.3.2) and `textshaping` (1.0.5) into the project library, plus `codetools` (missing, required by `globals`, blocking a general snapshot). Two broader approaches were tried and rejected before landing on the minimal fix:
+
+1. `renv::snapshot(packages = c("svglite", ...))` — the `packages` filter restricts the *entire* implicit-type dependency scan to just the named packages rather than adding to the existing set, and since renv's implicit scan only detects packages referenced via `library()`/`::` in code (nothing calls `svglite::` directly — it's invoked indirectly via `ggplot2::ggsave(device = "svg")`), this collapsed the lockfile from 135 packages down to 11. Reverted immediately via `git checkout`, no commit made.
+2. A full unscoped `renv::snapshot(force = TRUE)` (needed `force` to bypass a pre-existing, already-accepted "unknown source" warning for `forestHelperR`) succeeded but rewrote the top-level CRAN mirror URL (`packagemanager.posit.co` → `cloud.r-project.org`, picked up from the R session's default repo option rather than the lockfile's configured mirror) and ~40 unrelated packages' `Repository` field, and bumped `codetools` to a newer patch version — all incidental noise unrelated to this fix. Reverted, no commit made.
+3. `renv::record(list(svglite = "svglite@2.2.2", systemfonts = "systemfonts@1.3.2", textshaping = "textshaping@1.0.5"))` — updates only the named package records directly, no re-scan of the rest of the lockfile. Produced a clean 15-line diff: three new entries in correct alphabetical position, nothing else touched. `"Repository": "CRAN"` added by hand to each new entry afterward for consistency with existing `Source: "Repository"` entries.
+
+**Verified:** `renv.lock` parses as valid JSON (138 packages, up from 135). shinytest2 smoke test confirms `output$download_svg` now produces a real SVG file instead of erroring at runtime.
+
+**Test results:** 48 unit tests, 9/9 integration assertions passing.
+
+---
+
 ### CHG-027 — DEC-004 Step 7: extract misc observers to `server/observers.R`
 
 | Field | Detail |
@@ -928,4 +953,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 2.2 — CHG-022 through CHG-027 implemented: DEC-004 file split complete*
+*Document version: 2.3 — CHG-022 through CHG-028 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved*
