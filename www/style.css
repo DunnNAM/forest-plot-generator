@@ -247,6 +247,18 @@ body > .container-fluid {
   gap: 8px;
 }
 
+/* ── Export panel (FEAT-009) — colour-separated graph/code sections ──────── */
+
+.export-section {
+  border-left: 4px solid #d0d4d8;
+  padding: 4px 0 4px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.export-section--graph { border-left-color: #426175; }
+.export-section--code  { border-left-color: #56958F; }
+
 /* ── Drawer internals ─────────────────────────────────────────────────────── */
 
 .drawer-header {

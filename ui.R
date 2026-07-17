@@ -35,27 +35,6 @@ ui <- page_navbar(
               conditionalPanel(condition = "input.dataset_selected == 'upload'", DT::dataTableOutput("dat_upload")))),
           nav_panel(
             "Plot",
-            fluidRow(
-              column(
-                4,
-                div(
-                  style="display:inline-block; margin-right: 10px;",
-                  downloadButton("download_png", "Download png", icon = icon("download"))),
-                div(
-                  style="display:inline-block; margin-right: 10px;",
-                  downloadButton("download_svg", "Download svg", icon = icon("file-export"))),
-                div(
-                  style="display:inline-block; margin-right: 10px;",
-                  actionButton("copy_r_code", "Copy R code", icon = icon("copy"))),
-                div(
-                  style="display:inline-block;",
-                  downloadButton("download_r_code", "Download .R script")))),
-            fluidRow(
-              column(
-                6,
-                strong("Reorder columns"),
-                checkboxInput("reorder", "", value = FALSE),
-                conditionalPanel(condition = "input.reorder==1", uiOutput("sortable_cols")))),
             fluidRow(plotOutput("forest")))
         )
       ),

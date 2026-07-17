@@ -189,6 +189,37 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-033 — DEC-005 Step 5: Order panel + Export redesign (FEAT-009, ISS-031)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-005, FEAT-009, ISS-031 |
+
+**Files changed:** `R/ui_plot_options.R`, `R/ui_drawers.R`, `ui.R`, `server/export.R`, `server/drawers.R`, `www/style.css`
+
+**Summary:**
+
+Fifth step of the DEC-005 restyle, and the one step the plan flagged as touching test fixtures. `orderPanelUI()` moves the `reorder` checkbox + `sortable_cols` rank list from the Plot tab into the Order drawer panel, unchanged. `exportPanelUI()` implements the FEAT-009 redesign: a colour-separated "Export graph" section (`export_format` radio — PNG/SVG — plus a single `download_plot` button) and an "Export code" section (unchanged `copy_r_code`/`download_r_code`). `download_png` and `download_svg` are retired.
+
+`server/export.R`: the two separate `downloadHandler`s collapsed into one `output$download_plot`, branching on `input$export_format` for both the `ggplot2::ggsave()` device and the filename extension.
+
+`ui.R`: the Plot tab's export-button `fluidRow` and reorder `fluidRow` removed — the Plot tab is now just the plot itself.
+
+`www/style.css`: `.export-section`/`.export-section--graph`/`.export-section--code` added (4px left-border accent, `#426175` for graph / `#56958F` for code) for the colour-separated layout FEAT-009 asked for.
+
+**Test fixtures:** checked `tests/` for any reference to `download_png`/`download_svg`/`export_format`/`download_plot` — none exists. The plan anticipated this step would be the one place fixtures needed updating; in practice no test touches the export buttons at all, so no fixture changes were needed.
+
+**Bug found and fixed during verification, not just assumed away:** the same hidden-drawer-panel risk that hit `output$files`/`output$sortable_cols` in Steps 4 turned out to also affect **any** `downloadButton`, not just data/UI outputs. Confirmed directly: with the Export panel `display:none` by default, both the new `download_plot` and the untouched, pre-existing `download_r_code` rendered as `<a class="... disabled ...", href="">` — Shiny's suspend-when-hidden behaviour disables download links exactly like any other suspended output. Fixed by adding `outputOptions(output, "download_plot", suspendWhenHidden = FALSE)` and the same for `download_r_code` in `server/drawers.R`.
+
+**Test results:** 48 unit tests, 9/9 integration assertions passing. Targeted shinytest2 smoke test verified: the old `download_png`/`download_svg` buttons are gone; the Order panel contains `reorder` and correctly shows `sortable_cols` when checked; the Export panel contains `export_format`, `download_plot`, `copy_r_code`, `download_r_code`; downloading with each format selected produces a file with the correct extension and non-zero size.
+
+**Register updates:** ISS-031 marked resolved (this fix). FEAT-009 marked implemented, with its originally-proposed location (sidebar accordion) superseded by the Export drawer panel — the design itself (radio + single button; separate copy/download for code) is unchanged from the feature request.
+
+---
+
 ### CHG-032 — DEC-005 Step 4: move sidebar into the Data drawer panel
 
 | Field | Detail |
@@ -1074,4 +1105,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 2.7 — CHG-022 through CHG-032 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-4 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired) implemented*
+*Document version: 2.8 — CHG-022 through CHG-033 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-5 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign) implemented*

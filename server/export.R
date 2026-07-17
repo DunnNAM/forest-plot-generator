@@ -1,32 +1,33 @@
   ## step 5 - export image
-  ### a - download png
-  output$download_png <- downloadHandler(
-    filename = "Forestplot.png",
+  ### a - download plot (DEC-005 FEAT-009: one handler, format from input$export_format;
+  ### retires download_png/download_svg)
+  output$download_plot <- downloadHandler(
+    filename = function() {
+      paste0("Forestplot.", input$export_format)
+    },
     content = function(file) {
-      ggplot2::ggsave(file,
-             plot = forest_plot_object(),
-             device = "png",
-             bg = ifelse(input$transparent_plot_bg,
-                         "transparent",
-                         input$plot_bg_colour),
-             width = dims()[1]*1.1,
-             height = dims()[2],
-             units = "in",
-             dpi = 144)
-    })
-  ### download svg
-  output$download_svg <- downloadHandler(
-    filename = "Forestplot.svg",
-    content = function(file) {
-      ggplot2::ggsave(
-        file,
-        plot = forest_plot_object(),
-        device = "svg",
-        bg = ifelse(input$transparent_plot_bg,
-                    "transparent",
-                    input$plot_bg_colour),
-        width = dims()[1]*1.1,
-        height = dims()[2])
+      if (input$export_format == "png") {
+        ggplot2::ggsave(file,
+               plot = forest_plot_object(),
+               device = "png",
+               bg = ifelse(input$transparent_plot_bg,
+                           "transparent",
+                           input$plot_bg_colour),
+               width = dims()[1]*1.1,
+               height = dims()[2],
+               units = "in",
+               dpi = 144)
+      } else {
+        ggplot2::ggsave(
+          file,
+          plot = forest_plot_object(),
+          device = "svg",
+          bg = ifelse(input$transparent_plot_bg,
+                      "transparent",
+                      input$plot_bg_colour),
+          width = dims()[1]*1.1,
+          height = dims()[2])
+      }
     })
 
   ### c - R code serialiser

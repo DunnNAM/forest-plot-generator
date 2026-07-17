@@ -406,12 +406,12 @@
 | ISS-028 | Medium | `data_creation.R` / `forestHelperR` | Age group levels not sorted in expected clinical order | Open |
 | ISS-029 | Low | `global.R` | OS system fonts absent from selector after `sysfonts` migration | Open |
 | ISS-030 | Low | `global.R` / `R/helpers.R` | `"Source Sans Pro"` renamed on Google Fonts; silently absent | Open |
-| ISS-031 | Medium | `ui.R` | Export button layout: fourth button wraps with no spacing | Open |
+| ISS-031 | Medium | `ui.R` | Export button layout: fourth button wraps with no spacing | ✅ Resolved — CHG-033 |
 | ISS-032 | Low | `Rplots.pdf` | Tracked build artifact | ✅ Resolved — CHG-023 |
 | ISS-033 | Low | `server/plot.R` | `output$forest` registered inside `observe()` | ✅ Resolved — CHG-024 |
 | ISS-034 | Medium | `server.R` / `server/regression.R` | Unqualified `ggsave()`, `glm()`, `as.formula()` | ✅ Resolved — CHG-025 |
 | ISS-035 | Medium | `server/export.R`, `renv.lock` | `svglite` not installed; SVG export will error at runtime | ✅ Resolved — CHG-028 |
-| FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | Open |
+| FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | ✅ Implemented — CHG-033 (location amended to Export drawer panel) |
 
 ---
 
@@ -421,11 +421,10 @@
 |---|---|
 | **Source** | RUNTIME |
 | **Severity** | Medium |
-| **Status** | Open |
-| **File(s)** | `ui.R` — Plot tab export button block |
+| **Status** | **Resolved — CHG-033** |
+| **File(s)** | `ui.R` — Plot tab export button block (now `R/ui_plot_options.R`'s `exportPanelUI()`) |
 | **Description** | The Plot tab contains four action/download buttons: Download PNG, Download SVG, Copy R code, and Download .R script. The first three sit on one line; the fourth wraps to a new row with no vertical gap, appearing hard against the bottom of the first button. The layout degrades without CSS or flex controls to keep all four on one row (or wrap cleanly with spacing). |
-| **Recommended fix** | See FEAT-009. Preferred solution is a redesigned Export panel in the right sidebar accordion rather than a layout patch in the current location. Short-term patch: add `margin-top` or `gap` CSS to the button group, or use `shiny::fluidRow()` / `bslib` layout helpers to keep buttons on one row up to the minimum supported screen width. |
-| **Resolution** | — |
+| **Resolution** | Superseded by the FEAT-009 redesign as part of the DEC-005 restyle: the four-button block is retired entirely for a colour-separated Export drawer panel (format radio + single download button; separate copy/download for code). No layout-patch fix needed since the buttons no longer share a cramped `fluidRow`. |
 
 ### ISS-032 — `Rplots.pdf` tracked build artifact
 
@@ -480,13 +479,13 @@
 |---|---|
 | **Source** | USER |
 | **Severity** | Medium |
-| **Status** | Open |
-| **File(s)** | `ui.R`, `server.R` |
-| **Description** | Replace the current four-button export block in the Plot tab with a dedicated "Export graph / code" accordion section in the right-hand sidebar. Proposed structure: **(1) Export graph** — a single export button whose output format (PNG / SVG) is controlled by a `radioButtons()` input above it; **(2) Export code** — two buttons side-by-side, "Copy R code" and "Download .R script", representing distinct functionalities that cannot be merged. Colour-code the two sections to visually separate plot export from code export. |
-| **Design notes** | Radio button + single button approach for graph export reduces cognitive load vs. two separate download buttons. Two buttons remain necessary for code export since clipboard copy and file download are distinct actions. Using the sidebar accordion (vs. fixing the Plot tab layout) removes export controls from the main view and groups them logically with other settings. |
-| **Dependencies** | ISS-031 (current layout bug, resolved by this feature). Sidebar accordion requires `bslib::accordion()` or similar — confirm available in current bslib version. |
+| **Status** | **Implemented — CHG-033 (location amended)** |
+| **File(s)** | `R/ui_plot_options.R` (`exportPanelUI()`), `server/export.R` |
+| **Description** | Replace the current four-button export block in the Plot tab with a dedicated "Export graph / code" section. Proposed structure: **(1) Export graph** — a single export button whose output format (PNG / SVG) is controlled by a `radioButtons()` input above it; **(2) Export code** — two buttons side-by-side, "Copy R code" and "Download .R script", representing distinct functionalities that cannot be merged. Colour-code the two sections to visually separate plot export from code export. |
+| **Design notes** | Radio button + single button approach for graph export reduces cognitive load vs. two separate download buttons. Two buttons remain necessary for code export since clipboard copy and file download are distinct actions. |
+| **Resolution** | Implemented exactly as designed, with one amendment: the DEC-005 restyle replaced the originally-proposed **sidebar accordion** location with the **Export drawer panel** (the sidebar itself was retired in Step 4). `export_format` radio (PNG/SVG) + single `download_plot` button in a `.export-section--graph` block; `copy_r_code` + `download_r_code` unchanged in a `.export-section--code` block; both colour-separated via a left-border accent. `download_png`/`download_svg` retired. Resolves ISS-031. |
 | **Resolution** | — |
 
 ---
 
-*Document version: 3.5 — ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite/systemfonts/textshaping/codetools installed, renv.lock updated via renv::record())*
+*Document version: 3.6 — ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite installed); ISS-031 resolved and FEAT-009 implemented (CHG-033: Export drawer panel redesign)*

@@ -1,9 +1,12 @@
-# Drawer panel UI — DEC-005 Steps 3-4. The three accordion panels this file used
+# Drawer panel UI — DEC-005 Steps 3-5. The three accordion panels this file used
 # to build for the right-hand sidebar column are now three drawer panel
 # functions consumed by drawerUI() (Step 3); dataPanelUI() (Step 4) is the old
-# left-hand page_sidebar() content, moved verbatim into the Data drawer panel.
-# No input IDs changed anywhere — every input is exactly the one the sidebar/
-# accordion version had, just laid out in a `.drawer-columns` responsive grid.
+# left-hand page_sidebar() content, moved verbatim into the Data drawer panel;
+# orderPanelUI()/exportPanelUI() (Step 5) are the former Plot-tab reorder
+# control and the FEAT-009 export redesign. No input IDs changed anywhere
+# except download_png/download_svg, which Step 5 retires for export_format +
+# download_plot — every other input is exactly the one the sidebar/accordion/
+# Plot-tab version had, just laid out in a `.drawer-columns` responsive grid.
 # `strong()` + `materialSwitch()` label pairs are wrapped in `.drawer-field` so
 # they don't look ragged when a grid column is narrower than the accordion
 # column was (restyle plan §9).
@@ -165,6 +168,50 @@ textPanelUI <- function() {
       colourpicker::colourInput("variable_font_colour", "Variable font colour", value = "#2047A7"),
       selectizeInput("variable_font_face", "Variable header font face", choices = faces, selected = "bold"),
       selectizeInput("pval_font_face", "p-value font face", choices = faces, selected = "plain")
+    )
+  )
+}
+
+orderPanelUI <- function() {
+  tagList(
+    h4(class = "drawer-header", "Order"),
+    div(
+      class = "drawer-columns",
+      div(class = "drawer-field",
+          strong("Reorder columns"),
+          checkboxInput("reorder", "", value = FALSE)),
+      conditionalPanel(condition = "input.reorder==1", uiOutput("sortable_cols"))
+    )
+  )
+}
+
+# Export panel — FEAT-009 redesign, resolves ISS-031 (four-button layout wrapped
+# with no spacing). Format radio + single download button for graph export;
+# separate copy/download buttons for code export, since clipboard-copy and
+# file-download are genuinely distinct actions that can't be merged. Sections
+# are colour-separated (.export-section--graph/--code in www/style.css).
+exportPanelUI <- function() {
+  tagList(
+    h4(class = "drawer-header", "Export"),
+    div(
+      class = "drawer-columns",
+      div(
+        class = "export-section export-section--graph",
+        strong("Export graph"),
+        radioButtons("export_format", NULL,
+                     choices = c("PNG" = "png", "SVG" = "svg"),
+                     selected = "png", inline = TRUE),
+        downloadButton("download_plot", "Download", icon = icon("download"))
+      ),
+      div(
+        class = "export-section export-section--code",
+        strong("Export code"),
+        div(
+          class = "drawer-btnrow",
+          actionButton("copy_r_code", "Copy R code", icon = icon("copy")),
+          downloadButton("download_r_code", "Download .R script")
+        )
+      )
     )
   )
 }
