@@ -57,6 +57,8 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 > **Closes PDEC-001.**
 
+**File split status (2026-07-17): complete.** All seven steps implemented and committed — `server.R` is now the six-`source()` wrapper this decision specified. See CHG-018 through CHG-027.
+
 ---
 
 ### DEC-003 — Replace `extrafont` with `sysfonts`/`showtext` for font handling
@@ -166,11 +168,111 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-027 — DEC-004 Step 7: extract misc observers to `server/observers.R`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-004 |
+
+**Files added:** `server/observers.R`  
+**Files changed:** `server.R`
+
+**Summary:**
+
+Final step of the DEC-004 file split. The four remaining misc observers — `variables_displayed` update, `sortable_cols` renderUI, `by_group` auto-set on multi-file upload, and the `sigfigs` label toggle — moved from `server.R` into `server/observers.R`. `server.R` is now the thin six-source wrapper the plan targeted from the start.
+
+Committed together with CHG-026 (Step 6, `server/export.R`) in the same session.
+
+**Test results:** 48 unit tests, 9/9 integration assertions passing (two known environment flakes — a chromote startup timeout and a transient renv-library file lock — were reproduced and confirmed unrelated to this change before this commit). A targeted smoke test additionally exercised the moved `copy_r_code` / `download_r_code` path directly.
+
+---
+
+### CHG-026 — DEC-004 Step 6: extract export handlers to `server/export.R`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-004 |
+
+**Files added:** `server/export.R`  
+**Files changed:** `server.R`
+
+**Summary:**
+
+Sixth step of the DEC-004 file split. `output$download_png`, `output$download_svg`, `r_code_string()`, the `copy_r_code` observer, and `output$download_r_code` extracted from `server.R` into `server/export.R`.
+
+**Test results:** 48 unit tests, 9/9 integration assertions passing (see CHG-027 note on flakes).
+
+---
+
+### CHG-025 — ISS-034: qualify `ggsave()`, `glm()`, `as.formula()`, `poisson()`/`binomial()`
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-034 |
+
+**Files changed:** `server.R`, `server/regression.R`
+
+**Summary:**
+
+`ggsave()` → `ggplot2::ggsave()` in both download handlers in `server.R`. `glm()` → `stats::glm()`, `as.formula()` → `stats::as.formula()`, and the family constructors `"poisson"(...)`/`"binomial"(...)` → `stats::poisson()`/`stats::binomial()` in `server/regression.R`. Brings these calls in line with the explicit `package::function()` convention (CLAUDE.md). No new `library()` call needed — `::` only requires the package be installed, not attached, and `ggplot2` is already an implicit dependency via `forestploter`/`forestHelperR`.
+
+**Finding raised, not fixed here:** while verifying the SVG export path, confirmed `svglite` is **not** actually installed in `renv/library` despite appearing as a transitive dependency elsewhere in `renv.lock`. `ggplot2::ggsave(device = "svg")` will error at runtime when a user clicks "Download svg". Fixing this requires a `renv.lock` change, which CLAUDE.md forbids without explicit sign-off — raised as **ISS-035** instead.
+
+**Test results:** 48 unit tests pass; shinytest2 suite passes 9/9 on rerun (one run showed a chromote startup flake on this same suite, reproduced as pre-existing and unrelated).
+
+---
+
+### CHG-024 — ISS-033: `output$forest` registered outside `observe()`, function-valued dims
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-033 |
+
+**Files changed:** `server/plot.R`
+
+**Summary:**
+
+`output$forest` was assigned inside an `observe()` block solely so `width`/`height` could read the reactive `dims()` — re-registering the render function on every invalidation, a known Shiny anti-pattern. `renderPlot()` accepts function-valued `width`/`height` directly (`function() dims()[1]*72*1.5`), which is the supported idiom. The outer `req(forest_plot_object())` guard was removed — `forest_plot_object()`'s own internal `req()` already suspends rendering cleanly when its inputs aren't ready.
+
+**Test results:** 48 unit tests pass. Verified via automated shinytest2 smoke test that the forest plot still renders correctly in simulated-data mode after the change.
+
+---
+
+### CHG-023 — ISS-032: untrack `Rplots.pdf` build artifact
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-032 |
+
+**Files changed:** `.gitignore`  
+**Files removed from tracking:** `Rplots.pdf`
+
+**Summary:**
+
+`Rplots.pdf` is headless plot-device output regenerated on every local R session and was churning on every commit with no useful history value. `git rm --cached` run; `Rplots.pdf` added to `.gitignore`.
+
+---
+
 ### CHG-022 — DEC-004 Step 5: extract plot generation to `server/plot.R`
 
 | Field | Detail |
 |---|---|
-| **Date** | 2026-05-11 |
+| **Date** | 2026-05-11 (committed 2026-07-17) |
 | **Author** | Nathan Dunn / Claude (Anthropic) |
 | **Status** | Implemented |
 | **Refs** | DEC-004 |
@@ -183,6 +285,8 @@ Entries are listed in reverse chronological order (newest first) within each sec
 Fifth step of the DEC-004 file split. `est_type()`, `variables_excluded()`, `forest_plot_object()`, `dims()`, and `observe({output$forest})` extracted from the step 4 block, plus three plot-coupled observers relocated from the Misc section: `order()` (§f — feeds `forest_plot_object()` and `r_code_string()`), the `concatenate_est_ci` guard (§e), and the `concatenate_est_sig` guard (§g). These are co-located in `plot.R` because they are all tightly coupled to plot state.
 
 `server.R` Misc section retains only the four observers with no plot-specific coupling: `variables_displayed` update, `sortable_cols` renderUI, `by_group` auto-set, and the `sigfigs` label toggle — these will move to `observers.R` in the final step.
+
+**Note (2026-07-17):** the code for this step had been sitting uncommitted since 2026-05-11 pending a smoke test. The smoke test (simulated-data forest plot renders, `concatenate_est_ci` resets on element deselect, reorder checkbox reveals rank-list) was completed via an automated shinytest2 script this session, and the commit was made. See CHG-023 through CHG-027 for the remainder of this session's work, which finishes DEC-004.
 
 **Test results:** 48 unit tests, 9 integration assertions — 0 failures, 0 warnings.
 
@@ -824,4 +928,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 2.1 — CHG-022 implemented: server/plot.R extracted*
+*Document version: 2.2 — CHG-022 through CHG-027 implemented: DEC-004 file split complete*

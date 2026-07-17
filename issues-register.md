@@ -407,6 +407,10 @@
 | ISS-029 | Low | `global.R` | OS system fonts absent from selector after `sysfonts` migration | Open |
 | ISS-030 | Low | `global.R` / `R/helpers.R` | `"Source Sans Pro"` renamed on Google Fonts; silently absent | Open |
 | ISS-031 | Medium | `ui.R` | Export button layout: fourth button wraps with no spacing | Open |
+| ISS-032 | Low | `Rplots.pdf` | Tracked build artifact | ✅ Resolved — CHG-023 |
+| ISS-033 | Low | `server/plot.R` | `output$forest` registered inside `observe()` | ✅ Resolved — CHG-024 |
+| ISS-034 | Medium | `server.R` / `server/regression.R` | Unqualified `ggsave()`, `glm()`, `as.formula()` | ✅ Resolved — CHG-025 |
+| ISS-035 | Medium | `server/export.R`, `renv.lock` | `svglite` not installed; SVG export will error at runtime | Open |
 | FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | Open |
 
 ---
@@ -423,6 +427,54 @@
 | **Recommended fix** | See FEAT-009. Preferred solution is a redesigned Export panel in the right sidebar accordion rather than a layout patch in the current location. Short-term patch: add `margin-top` or `gap` CSS to the button group, or use `shiny::fluidRow()` / `bslib` layout helpers to keep buttons on one row up to the minimum supported screen width. |
 | **Resolution** | — |
 
+### ISS-032 — `Rplots.pdf` tracked build artifact
+
+| Field | Detail |
+|---|---|
+| **Source** | REVIEW — `2026-06-10_restyle-readiness-review.md` |
+| **Severity** | Low |
+| **Status** | **Resolved — CHG-023** |
+| **File(s)** | `Rplots.pdf`, `.gitignore` |
+| **Description** | `Rplots.pdf` was committed and showed as modified on every run — headless plot device output regenerated every R session. Churned in every commit and bloated history. |
+| **Resolution** | `git rm --cached Rplots.pdf`; added to `.gitignore`. |
+
+### ISS-033 — `output$forest` registered inside `observe()`
+
+| Field | Detail |
+|---|---|
+| **Source** | REVIEW — `2026-06-10_restyle-readiness-review.md` |
+| **Severity** | Low |
+| **Status** | **Resolved — CHG-024** |
+| **File(s)** | `server/plot.R` |
+| **Description** | `output$forest <- renderPlot(...)` was assigned inside an `observe()` block so that `width`/`height` could read the reactive `dims()`. This re-registers the render function on every invalidation — a known Shiny anti-pattern. |
+| **Resolution** | Moved to a direct `output$forest <- renderPlot(...)` call using function-valued `width`/`height` (`function() dims()[1]*72*1.5`), the supported idiom. Verified via automated shinytest2 smoke test that the plot still renders correctly. |
+
+### ISS-034 — Unqualified `ggsave()`, `glm()`, `as.formula()` calls
+
+| Field | Detail |
+|---|---|
+| **Source** | REVIEW — `2026-06-10_restyle-readiness-review.md` |
+| **Severity** | Medium |
+| **Status** | **Resolved — CHG-025** |
+| **File(s)** | `server.R` (now `server/export.R`), `server/regression.R` |
+| **Description** | `ggsave()` called unqualified in both download handlers with `ggplot2` not loaded anywhere in `global.R` — worked only because a dependency (`forestploter`/`forestHelperR`) attaches it transitively. `glm()` and `as.formula()` also called unqualified in `server/regression.R`. |
+| **Resolution** | `ggsave()` → `ggplot2::ggsave()`; `glm()` → `stats::glm()`; `as.formula()` → `stats::as.formula()`; family constructors `"poisson"(...)`/`"binomial"(...)` → `stats::poisson()`/`stats::binomial()`. No `library(ggplot2)` added — `::` only requires the package be installed. |
+
+### ISS-035 — `svglite` not installed; SVG export will error at runtime
+
+| Field | Detail |
+|---|---|
+| **Source** | RUNTIME — discovered while resolving ISS-034 |
+| **Severity** | Medium |
+| **Status** | Open |
+| **File(s)** | `server/export.R`, `renv.lock` |
+| **Description** | `ggplot2::ggsave(device = "svg")` requires the `svglite` package. `svglite` appears in `renv.lock` only as a transitive dependency string of other packages — it is **not** itself installed in `renv/library`. Clicking "Download svg" will error at runtime on any machine using this lockfile. |
+| **Risk** | Silent-until-clicked export failure; no test currently exercises the SVG download handler, so this would not be caught by the existing suite. |
+| **Recommended fix** | Install `svglite` and run `renv::snapshot()` to pin it explicitly, or switch the SVG handler to `grDevices::svg()` if a lighter dependency is preferred. Requires a `renv.lock` change — CLAUDE.md forbids modifying `renv.lock` without explicit sign-off, so this was raised rather than fixed. |
+| **Resolution** | — |
+
+---
+
 ### FEAT-009 — Redesign export controls into a dedicated sidebar accordion panel
 
 | Field | Detail |
@@ -438,4 +490,4 @@
 
 ---
 
-*Document version: 3.3 — ISS-009/010 resolved (CHG-017): screenshot comment removed, talk date filled in*
+*Document version: 3.4 — ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised (svglite not installed, SVG export will error)*
