@@ -91,16 +91,12 @@
   })
 
   ### e - show plot
-  observe({
-    req(forest_plot_object())
-
-    output$forest <- renderPlot({
-      forest_plot_object()
-    },
-    width = dims()[1]*72*1.5,
-    height = dims()[2]*72*1.5,
-    res = 72*1.5)
-  })
+  output$forest <- renderPlot({
+    forest_plot_object()
+  },
+  width  = function() dims()[1]*72*1.5,
+  height = function() dims()[2]*72*1.5,
+  res = 72*1.5)
 
   ### f - if estimate or CI deselected, unset concatenate_est_ci
   observe({
