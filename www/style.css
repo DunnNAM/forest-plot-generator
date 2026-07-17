@@ -239,6 +239,14 @@ body > .container-fluid {
   width: 100%;
 }
 
+/* strong() + materialSwitch() label pairs, so they don't look ragged as a
+   grid cell narrower than the old accordion column (restyle plan §9) */
+.drawer-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ── Drawer internals ─────────────────────────────────────────────────────── */
 
 .drawer-header {

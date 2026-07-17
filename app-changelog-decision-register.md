@@ -189,6 +189,31 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-031 — DEC-005 Step 3: move Variables/Display/Text into drawer panels
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-005 |
+
+**Files changed:** `R/ui_plot_options.R`, `R/ui_drawers.R`, `ui.R`, `www/style.css`
+
+**Summary:**
+
+Third and largest step of the DEC-005 restyle. `R/ui_plot_options.R`'s single `plotOptionsUI()` (an `bslib::accordion()` with three panels) retired in favour of three functions — `variablesPanelUI()`, `displayPanelUI()`, `textPanelUI()` — each returning a `.drawer-header` title plus a `.drawer-columns` responsive grid. Every input is unchanged (same ID, same default, same `conditionalPanel` gating); `strong()` + `materialSwitch()` label pairs are wrapped in a new `.drawer-field` flex class (added to `www/style.css`) per the plan's §9 risk note, so they don't look ragged as a grid cell narrower than the old single-column accordion. File kept as `R/ui_plot_options.R` rather than renamed — the content changed but the file's role (plot-option UI definitions) didn't.
+
+`R/ui_drawers.R`: the Variables/Display/Text placeholder panels from Step 2 now call the three new panel functions. Data/Order/Export remain placeholders (Steps 4–5).
+
+`ui.R`: the `layout_columns(col_widths = c(9, 3), navset_card_tab(...), plotOptionsUI())` wrapper removed — `navset_card_tab()` now sits directly in `content-area` at full width, since there's no second column left.
+
+**Risk verified, not just assumed:** the plan's §9 flags that `shinyWidgets::noUiSliderInput` (`xlims`, `xticks`) initialised inside a `display:none` container can render with zero width. Checked directly: both sliders render at ~288px width (not zero) after first opening the Display panel, confirming the `resize` event dispatch added to `www/drawer.js` in Step 1 correctly mitigates this.
+
+**Test results:** 48 unit tests, 9/9 integration assertions passing. Targeted shinytest2 smoke test verified: no `bslib::accordion` remains in the DOM; the forest plot renders before any drawer is opened; `plotting_width` still defaults to 120; `xlims`/`xticks` sliders have non-zero rendered width; the plot re-renders after changing an input from the Display panel (`base_size`) and from the Text panel (`plot_title`); the `n_display` `conditionalPanel` correctly hides when `"n"` is deselected from `elements` in the Variables panel.
+
+---
+
 ### CHG-030 — DEC-005 Step 2: rail + drawer shell, empty panels
 
 | Field | Detail |
@@ -1026,4 +1051,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 2.5 — CHG-022 through CHG-030 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-2 (theme/navbar shell, rail/drawer) implemented*
+*Document version: 2.6 — CHG-022 through CHG-031 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-3 (theme/navbar shell, rail/drawer, Variables/Display/Text panels) implemented*

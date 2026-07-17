@@ -47,53 +47,50 @@ ui <- page_navbar(
       class = "dashboard-body",
       div(
         class = "content-area",
-        layout_columns(
-          col_widths = c(9, 3),
-          navset_card_tab(
-            nav_panel(
-              "Review data",
-              br(),
+        navset_card_tab(
+          nav_panel(
+            "Review data",
+            br(),
+            conditionalPanel(
+              condition = "input.dataset_selected == 'upload'",
+              uiOutput("sortable")),
+            wellPanel(
               conditionalPanel(
-                condition = "input.dataset_selected == 'upload'",
-                uiOutput("sortable")),
-              wellPanel(
+                condition = "input.dataset_selected == 'sim'",
+                radioButtons("preview_type", "Preview type",
+                             choices = c("Extract of simulated data" = "head", "Regression output" = "reg_summary"),
+                             selected = c("head")),
+                DT::dataTableOutput("dat_summary", width = "100%"),
+                verbatimTextOutput("regression_details"),
                 conditionalPanel(
-                  condition = "input.dataset_selected == 'sim'",
-                  radioButtons("preview_type", "Preview type",
-                               choices = c("Extract of simulated data" = "head", "Regression output" = "reg_summary"),
-                               selected = c("head")),
-                  DT::dataTableOutput("dat_summary", width = "100%"),
-                  verbatimTextOutput("regression_details"),
-                  conditionalPanel(
-                    condition = "input.robust_variance && input.regression_type == 'poisson'",
-                    strong("With robust variance"),
-                    verbatimTextOutput("robust"))),
-                conditionalPanel(condition = "input.dataset_selected == 'upload'", DT::dataTableOutput("dat_upload")))),
-            nav_panel(
-              "Plot",
-              fluidRow(
-                column(
-                  4,
-                  div(
-                    style="display:inline-block; margin-right: 10px;",
-                    downloadButton("download_png", "Download png", icon = icon("download"))),
-                  div(
-                    style="display:inline-block; margin-right: 10px;",
-                    downloadButton("download_svg", "Download svg", icon = icon("file-export"))),
-                  div(
-                    style="display:inline-block; margin-right: 10px;",
-                    actionButton("copy_r_code", "Copy R code", icon = icon("copy"))),
-                  div(
-                    style="display:inline-block;",
-                    downloadButton("download_r_code", "Download .R script")))),
-              fluidRow(
-                column(
-                  6,
-                  strong("Reorder columns"),
-                  checkboxInput("reorder", "", value = FALSE),
-                  conditionalPanel(condition = "input.reorder==1", uiOutput("sortable_cols")))),
-              fluidRow(plotOutput("forest")))),
-          plotOptionsUI()
+                  condition = "input.robust_variance && input.regression_type == 'poisson'",
+                  strong("With robust variance"),
+                  verbatimTextOutput("robust"))),
+              conditionalPanel(condition = "input.dataset_selected == 'upload'", DT::dataTableOutput("dat_upload")))),
+          nav_panel(
+            "Plot",
+            fluidRow(
+              column(
+                4,
+                div(
+                  style="display:inline-block; margin-right: 10px;",
+                  downloadButton("download_png", "Download png", icon = icon("download"))),
+                div(
+                  style="display:inline-block; margin-right: 10px;",
+                  downloadButton("download_svg", "Download svg", icon = icon("file-export"))),
+                div(
+                  style="display:inline-block; margin-right: 10px;",
+                  actionButton("copy_r_code", "Copy R code", icon = icon("copy"))),
+                div(
+                  style="display:inline-block;",
+                  downloadButton("download_r_code", "Download .R script")))),
+            fluidRow(
+              column(
+                6,
+                strong("Reorder columns"),
+                checkboxInput("reorder", "", value = FALSE),
+                conditionalPanel(condition = "input.reorder==1", uiOutput("sortable_cols")))),
+            fluidRow(plotOutput("forest")))
         )
       ),
       drawerUI(),
