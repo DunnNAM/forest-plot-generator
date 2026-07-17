@@ -403,19 +403,48 @@ body > .container-fluid {
   padding-left: 11px;
 }
 
-/* ── Accordion: no focus outline; open = accent colour; closed = white ───── */
-.accordion-button:focus,
-.accordion-button:focus-visible {
-  box-shadow: none !important;
-  outline: none !important;
-  --bs-accordion-btn-focus-box-shadow: none;
+/* ── sortable::bucket_list / rank_list (Step 6 — merged from www/styles.css,
+   recoloured #2c3e50 → #426175 to match the CAQ palette) ────────────────── */
+
+.default-sortable.rank-list-container {
+  flex: 1 0 120px !important;
+  padding: 0px !important;
+  margin: 0px !important;
 }
-.accordion-button:not(.collapsed) {
-  background-color: #eef3f6;
-  color: #426175;
-  box-shadow: none !important;
+
+p.rank-list-title {
+  margin: 5px 5px 0px !important;
 }
-.accordion-button.collapsed {
-  background-color: #fff;
-  color: inherit;
+
+p.bucket-list-header {
+  font-weight: bold;
+}
+
+.noUi-tooltip {
+  color: #fff !important;
+  font-size: 9px !important;
+  border: none !important;
+  padding: 2px !important;
+  background-color: #426175 !important;
+}
+
+.noUi-connect {
+  background: #426175 !important;
+}
+
+.noUi-horizontal {
+  height: 8px !important;
+}
+
+.noUi-handle:before, .noUi-handle:after {
+  height: 0px !important;
+  width: 0px !important;
+}
+
+.noUi-horizontal .noUi-handle {
+  width: 16px !important;
+  height: 16px !important;
+  right: -5px !important;
+  top: -5px !important;
+  background-color: #dedede !important;
 }

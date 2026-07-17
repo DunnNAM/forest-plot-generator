@@ -32,13 +32,13 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Decisions
 
-### DEC-005 — Restyle: MDT theme + bottom rail/drawer layout (in progress)
+### DEC-005 — Restyle: MDT theme + bottom rail/drawer layout
 
 | Field | Detail |
 |---|---|
 | **Date** | 2026-07-17 |
 | **Author** | Nathan Dunn / Claude (Anthropic) |
-| **Status** | Active — implementation in progress |
+| **Status** | Active — core migration (Steps 1-6) complete; Step 7 phase-2 not started |
 | **Refs** | DEC-004 (prerequisite, complete), `restyle-implementation-plan.md` |
 
 **Decision:** Restyle the app using the `mdt-activity-dashboard` project's visual language (CAQ palette, cream background, navbar, card treatment) and its rail + drawer + focused-picker interaction model — with the rail relocated from MDT's left side to a **full-width bar at the bottom** of the viewport, and the drawer sliding **up** from the rail instead of out from the side. Forest plots are wide; removing both the left sidebar and the right-hand plot-options column gives the plot the full viewport width, and the widest control (the 10-bucket column-mapping `bucket_list`) fits a full-width bottom drawer naturally.
@@ -47,7 +47,7 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 **Key implementation choice:** drawer panels are rendered **statically** in `ui.R` (not via `renderUI`/staged `reactiveValues` as MDT does) — this app has ~45 always-live inputs consumed directly by `forest_plot_object()`/`r_code_string()`, and staging them would be a rewrite of the entire reactive surface for no user benefit. The active panel is chosen by toggling a CSS class; every input ID stays in the DOM from app start, so the existing shinytest2 suite (which targets IDs, not containers) should survive unmodified except where the plan explicitly retires an ID (export button IDs, in a later step).
 
-**Migration:** 7 shippable steps (see `restyle-implementation-plan.md` §8), each gated on tests passing. Step 1 (this entry) adds the ported stylesheet/JS, the CAQ theme, and wraps the existing sidebar+content layout in a `page_navbar`/`dashboard-body`/`content-area` shell — the sidebar and plot-options column are still present and functionally unchanged, just reskinned.
+**Migration:** 7 shippable steps (see `restyle-implementation-plan.md` §8), each gated on tests passing. Steps 1-6 (theme/navbar shell → rail/drawer shell → Variables/Display/Text panels → Data panel/sidebar retired → Order panel + FEAT-009 export redesign → CSS merge/polish) are complete — see CHG-029 through CHG-034. Step 7 (status chips, rail badges, Help nav) is explicitly phase-2/optional per the plan and has not been started.
 
 **Alternatives considered:** see `restyle-implementation-plan.md` §1 for the side-rail-vs-bottom-rail rationale, and its companion review `reviews/architecture/2026-06-10_restyle-readiness-review.md` for the pre-restyle codebase audit.
 
@@ -188,6 +188,33 @@ Entries are listed in reverse chronological order (newest first) within each sec
 ---
 
 ## Changes
+
+### CHG-034 — DEC-005 Step 6: CSS merge/polish, dead-code prune, viewport smoke test
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-005 |
+
+**Files added:** none  
+**Files removed:** `www/styles.css`  
+**Files changed:** `www/style.css`, `ui.R`
+
+**Summary:**
+
+Final polish step of the DEC-005 restyle. `www/styles.css` (the pre-restyle `sortable::bucket_list`/`noUiSlider` tweaks) merged into `www/style.css` and deleted — the app now serves one stylesheet instead of two. Colours recoloured to the CAQ palette: `#2c3e50` → `#426175` in the `noUi-tooltip`/`noUi-connect` rules (the `noUi-handle` grey `#dedede` and sizing rules are unchanged, not palette-driven).
+
+**Dead-code audit:** the `.accordion-button` rules ported from MDT in Step 1 are removed — `bslib::accordion()` was retired from the codebase in Step 3 (confirmed via `grep`, no `accordion` calls remain anywhere in `R/`), so these rules were pure dead weight.
+
+`ui.R`'s stylesheet link cache-buster bumped `?v=dec005-1` → `?v=dec005-2` to reflect this round of CSS changes (per review finding F-4, addressed in Step 1 and maintained here).
+
+**Test results:** 48 unit tests, 9/9 integration assertions passing. Smoke test verified: the old stylesheet link is gone and the new one loads with the bumped cache-buster; the `noUi-connect` slider fill renders at the recoloured `#426175` (not the old `#2c3e50`); no horizontal overflow at either 1366×768 or 2560×1440; the bottom rail stays flush with the viewport edge at 1366×768; and the `.drawer-columns` responsive grid correctly expands to more columns at the wide viewport.
+
+**DEC-005 status:** Steps 1–6 (the plan's core migration) are now complete. Step 7 (status chips, rail badges, Help nav) is explicitly phase-2/optional in the plan and has not been started — "ship the core first," per the plan's own framing.
+
+---
 
 ### CHG-033 — DEC-005 Step 5: Order panel + Export redesign (FEAT-009, ISS-031)
 
@@ -1105,4 +1132,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 2.8 — CHG-022 through CHG-033 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-5 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign) implemented*
+*Document version: 2.9 — CHG-022 through CHG-034 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-6 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish) complete — core migration done, Step 7 phase-2 remains*

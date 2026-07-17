@@ -3,8 +3,7 @@ ui <- page_navbar(
   title = "Forest Plot Builder",
   theme = theme,
   header = tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
-    tags$link(rel = "stylesheet", type = "text/css", href = "style.css?v=dec005-1"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "style.css?v=dec005-2"),
     tags$script(src = "drawer.js")
   ),
   nav_panel(
