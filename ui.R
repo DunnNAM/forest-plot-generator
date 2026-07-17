@@ -95,7 +95,9 @@ ui <- page_navbar(
               fluidRow(plotOutput("forest")))),
           plotOptionsUI()
         )
-      )
+      ),
+      drawerUI(),
+      railUI()
     )
   )
 )

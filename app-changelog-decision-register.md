@@ -189,6 +189,32 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-030 — DEC-005 Step 2: rail + drawer shell, empty panels
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-005 |
+
+**Files added:** `R/ui_rail.R`, `R/ui_drawers.R`, `server/drawers.R`  
+**Files changed:** `ui.R`, `server.R`
+
+**Summary:**
+
+Second step of the DEC-005 restyle. `railUI()` in `R/ui_rail.R` renders the six bottom-rail buttons (Data, Variables, Display, Text, Order, spacer, Export) — plain `tags$button()` elements, no `NS()`/`moduleServer()`, each setting `input$rail_key` via `Shiny.setInvalue(...)` on click exactly as the plan specifies. Icons use `shiny::icon()` (Font Awesome) rather than the plan's suggested `bsicons` package, which is not installed — avoids adding a new dependency for a cosmetic choice; icon names map 1:1 to the plan's `bsicons` suggestions (`database`, `list-check`, `sliders`, `font`, `arrows-left-right`, `download`).
+
+`drawerUI()` in `R/ui_drawers.R` renders the scrim + a single drawer containing six statically-rendered `.drawer-panel` divs (one per rail key), each currently just a placeholder header — panel content moves in during Steps 3–5.
+
+`server/drawers.R`: `rv_drawer` reactiveVal holds the currently-open key (`NULL` = closed). `input$rail_key` observer implements toggle semantics (clicking the open key closes it). `input$drawer_close` (scrim click) always closes. A third observer pushes `session$sendCustomMessage("drawer-open", list(drawerId, scrimId, open, key))` on every `rv_drawer()` change — `www/drawer.js` (added in Step 1) picks this up to toggle the `open`/`active` CSS classes.
+
+`ui.R`: `drawerUI()` and `railUI()` added as siblings of `content-area` inside `dashboard-body`. `server.R`: `source(here::here("server", "drawers.R"), local = TRUE)` added as the seventh source call.
+
+**Test results:** 48 unit tests, 9/9 integration assertions passing. Targeted shinytest2 smoke test verified: rail renders with all 6 items; drawer starts closed; clicking a rail item opens the drawer with the matching panel and rail item marked active; clicking the same item again closes it (toggle); clicking a different item switches the active panel; clicking the scrim closes the drawer.
+
+---
+
 ### CHG-029 — DEC-005 Step 1: stylesheet, theme swap, `page_navbar` shell
 
 | Field | Detail |
@@ -1000,4 +1026,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 2.4 — CHG-022 through CHG-029 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Step 1 (theme/navbar shell) implemented*
+*Document version: 2.5 — CHG-022 through CHG-030 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-2 (theme/navbar shell, rail/drawer) implemented*

@@ -6,5 +6,6 @@ server <- function(input, output, session) {
   source(here::here("server", "plot.R"),       local = TRUE)
   source(here::here("server", "export.R"),     local = TRUE)
   source(here::here("server", "observers.R"),  local = TRUE)
+  source(here::here("server", "drawers.R"),    local = TRUE)
 
 }
