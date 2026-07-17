@@ -1,10 +1,51 @@
-# Plot options — DEC-005 Step 3. The three accordion panels this file used to
-# build for the right-hand sidebar column are now three drawer panel functions
-# consumed by drawerUI(). No input IDs changed — every input is exactly the one
-# the accordion version had, just laid out in a `.drawer-columns` responsive
-# grid instead of a single-column accordion. `strong()` + `materialSwitch()`
-# label pairs are wrapped in `.drawer-field` so they don't look ragged when a
-# grid column is narrower than the accordion column was (restyle plan §9).
+# Drawer panel UI — DEC-005 Steps 3-4. The three accordion panels this file used
+# to build for the right-hand sidebar column are now three drawer panel
+# functions consumed by drawerUI() (Step 3); dataPanelUI() (Step 4) is the old
+# left-hand page_sidebar() content, moved verbatim into the Data drawer panel.
+# No input IDs changed anywhere — every input is exactly the one the sidebar/
+# accordion version had, just laid out in a `.drawer-columns` responsive grid.
+# `strong()` + `materialSwitch()` label pairs are wrapped in `.drawer-field` so
+# they don't look ragged when a grid column is narrower than the accordion
+# column was (restyle plan §9).
+
+dataPanelUI <- function() {
+  tagList(
+    h4(class = "drawer-header", "Data"),
+    div(
+      class = "drawer-columns",
+      radioButtons("dataset_selected", "Data set",
+                   choices = c("Regression output" = "upload", "Simulated data" = "sim"),
+                   selected = "upload"),
+      conditionalPanel(
+        condition = "input.dataset_selected == 'upload'",
+        div(class = "drawer-field",
+            strong("Comparison of two regressions"),
+            materialSwitch("by_group", "", value = FALSE, status = "primary")),
+        fileInput("upload", "Upload one or two files with regression output (csv/tsv required). To compare two regressions, select both files at once using Ctrl+click (Windows) or Cmd+click (Mac).", multiple = TRUE),
+        DT::dataTableOutput("files", width = "100%")
+      ),
+      radioButtons("regression_type", "Regression type selected",
+                   choices = c("Poisson" = "poisson", "Logistic" = "logistic", "Cox proportional hazards" = "cox"),
+                   selected = "poisson"),
+      conditionalPanel(
+        condition = "input.dataset_selected == 'upload' && input.by_group==1",
+        textInput("group_var_name", "Group variable display name", value = "Group"),
+        textInput("group_var_values", "Group variable levels", value = NULL,
+                  placeholder = "(in order they appear, separated by ',')")
+      ),
+      conditionalPanel(
+        condition = "input.dataset_selected == 'sim'",
+        selectInput("response_var", "Response variable", choices = responses),
+        checkboxGroupInput("predictor_vars", "Predictor variables",
+                           choices = predictors, selected = c("AgeGroupAtDiagnosis"))
+      ),
+      conditionalPanel(
+        condition = "input.regression_type == 'poisson'",
+        materialSwitch("robust_variance", "Robust variance", value = TRUE, status = "primary")
+      )
+    )
+  )
+}
 
 variablesPanelUI <- function() {
   tagList(

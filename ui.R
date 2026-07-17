@@ -7,40 +7,6 @@ ui <- page_navbar(
     tags$link(rel = "stylesheet", type = "text/css", href = "style.css?v=dec005-1"),
     tags$script(src = "drawer.js")
   ),
-  sidebar = sidebar(
-    radioButtons("dataset_selected", "Data set",
-                 choices = c("Regression output" = "upload", "Simulated data" = "sim"),
-                 selected = "upload"),
-    conditionalPanel(
-      condition = "input.dataset_selected == 'upload'",
-      hr(),
-      strong("Comparison of two regressions"),
-      materialSwitch("by_group", "", value = FALSE, status = "primary"),
-      hr(),
-      fileInput("upload", "Upload one or two files with regression output (csv/tsv required). To compare two regressions, select both files at once using Ctrl+click (Windows) or Cmd+click (Mac).", multiple = TRUE),
-      DT::dataTableOutput("files", width = "100%")
-    ),
-    radioButtons("regression_type", "Regression type selected",
-                 choices = c("Poisson" = "poisson", "Logistic" = "logistic", "Cox proportional hazards" = "cox"),
-                 selected = "poisson"),
-    conditionalPanel(
-      condition = "input.dataset_selected == 'upload' && input.by_group==1",
-      textInput("group_var_name", "Group variable display name", value = "Group"),
-      textInput("group_var_values", "Group variable levels", value = NULL,
-                placeholder = "(in order they appear, separated by ',')")
-    ),
-    conditionalPanel(
-      condition = "input.dataset_selected == 'sim'",
-      selectInput("response_var", "Response variable", choices = responses),
-      checkboxGroupInput("predictor_vars", "Predictor variables",
-                         choices = predictors, selected = c("AgeGroupAtDiagnosis"))
-    ),
-    conditionalPanel(
-      condition = "input.regression_type == 'poisson'",
-      materialSwitch("robust_variance", "Robust variance", value = TRUE, status = "primary")
-    )
-  ),
-
   nav_panel(
     "Builder",
     div(

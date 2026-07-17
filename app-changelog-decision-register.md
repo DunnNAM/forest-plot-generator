@@ -189,6 +189,29 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-032 — DEC-005 Step 4: move sidebar into the Data drawer panel
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-005 |
+
+**Files changed:** `R/ui_plot_options.R`, `R/ui_drawers.R`, `ui.R`, `server/drawers.R`
+
+**Summary:**
+
+Fourth step of the DEC-005 restyle. `dataPanelUI()` added to `R/ui_plot_options.R`, moving the entire former `page_navbar(sidebar = ...)` content verbatim: `dataset_selected`, the `by_group` switch + `upload` fileInput + `files` DT (conditional on upload mode), `regression_type`, `group_var_name`/`group_var_values` (conditional on upload + by_group), `response_var`/`predictor_vars` (conditional on sim), and `robust_variance` (conditional on poisson). No input IDs or defaults changed. `sidebar = sidebar(...)` removed from `ui.R`'s `page_navbar()` call entirely — the app no longer has any sidebar-style layout.
+
+`R/ui_drawers.R`'s Data panel placeholder now calls `dataPanelUI()`.
+
+`server/drawers.R` gains `outputOptions(output, "files", suspendWhenHidden = FALSE)` — `output$files` now lives inside the Data drawer panel, which is `display:none` until first opened, and this is one of the two hidden-output cases the plan's §3/§9 flagged needing an explicit suspend override (the other, `sortable_cols`, is Step 5's concern).
+
+**Test results:** 48 unit tests, 9/9 integration assertions passing — critically, the existing upload/confirm shinytest2 scenarios (which exercise `input$upload`, `input$cols`, `input$by_group`, `input$regression_type` — all now living in the Data drawer panel) pass **unmodified**, confirming Shiny inputs work correctly regardless of their container's visibility, exactly as the plan's §3 assumption predicted. An additional targeted smoke test confirmed: no sidebar layout remains; opening the Data panel shows `dataset_selected` and `upload`; the `files` DT renders correctly after upload (verifying the `suspendWhenHidden` fix); and the full upload → confirm → `dat_upload` preview flow works end-to-end from within the new panel location.
+
+---
+
 ### CHG-031 — DEC-005 Step 3: move Variables/Display/Text into drawer panels
 
 | Field | Detail |
@@ -1051,4 +1074,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 2.6 — CHG-022 through CHG-031 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-3 (theme/navbar shell, rail/drawer, Variables/Display/Text panels) implemented*
+*Document version: 2.7 — CHG-022 through CHG-032 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-4 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired) implemented*

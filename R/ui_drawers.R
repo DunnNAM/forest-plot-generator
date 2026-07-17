@@ -3,8 +3,8 @@
 # class by www/drawer.js in response to the "drawer-open" custom message, per the
 # static-drawer approach in restyle-implementation-plan.md (all ~45 plot-option
 # inputs must stay live in the DOM, not be staged/rebuilt per panel).
-# Variables/Display/Text (Step 3) have real content from R/ui_plot_options.R.
-# Data (Step 4) and Order/Export (Step 5) are still placeholders.
+# Data/Variables/Display/Text (Steps 3-4) have real content from
+# R/ui_plot_options.R. Order/Export (Step 5) are still placeholders.
 drawerUI <- function() {
   tagList(
     div(
@@ -18,7 +18,7 @@ drawerUI <- function() {
       div(
         class = "filter-drawer-inner",
         div(class = "drawer-panel", "data-key" = "data",
-            h4(class = "drawer-header", "Data")),
+            dataPanelUI()),
         div(class = "drawer-panel", "data-key" = "variables",
             variablesPanelUI()),
         div(class = "drawer-panel", "data-key" = "display",
