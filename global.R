@@ -75,6 +75,17 @@ if (file.exists(here::here("data", "dat.rds"))) {
 # package. The legacy file has been deleted (PDEC-002 / CHG-003).
 
 
+# Theme (DEC-005 restyle) --------------------------------------------------
+# CAQ palette, ported from mdt-activity-dashboard/themed-template/R/theme.R.
+# Replaces the previous bootswatch "flatly" theme.
+theme <- bslib::bs_theme(
+  version = 5,
+  bg = "#f7f4ec", fg = "#3A3A3A",
+  primary = "#426175", secondary = "#5B89A6",
+  success = "#56958F", warning = "#F4D35E", danger = "#993366"
+)
+
+
 # Global objects ----------------------------------------------------------
 responses <- colnames(dat)[which(stringr::str_detect(
   colnames(forestHelperR::dat), "IND_\\d$"))]

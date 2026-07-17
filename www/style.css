@@ -1,0 +1,401 @@
+/* Forest Plot Builder — restyle stylesheet (DEC-005)
+   Ported from mdt-activity-dashboard/themed-template/www/style.css, adapted for a
+   bottom rail + slide-up drawer (this app has no left side rail — plots are wide,
+   so both side columns are removed to give the plot the full viewport width). */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #f7f4ec;
+}
+
+body > .container-fluid {
+  padding: 0;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  min-height: 56px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.navbar-brand {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.navbar-nav .nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.78;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 56px;
+  border-bottom: 3px solid transparent;
+}
+
+.navbar-nav .nav-link.active {
+  font-weight: 600;
+  opacity: 1;
+  border-bottom-color: #F0DC9A;
+}
+
+/* Remove bslib's default tab-content padding/margin so dashboard-body sits flush under the navbar */
+.tab-content > .tab-pane {
+  padding: 0 !important;
+  margin-top: 0 !important;
+}
+
+.card {
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 1px 10px rgba(0,0,0,0.06);
+}
+
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  font-weight: 600;
+}
+
+/* ── navset_card_tab sub-tabs (Review data / Plot) ───────────────────────── */
+
+.card-header:has(.nav-tabs) {
+  background: #fafbfc;
+  padding: 0 12px;
+}
+
+.card-header .nav-tabs {
+  border-bottom: none;
+  gap: 0;
+}
+
+.card-header .nav-tabs .nav-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a4a4a;
+  padding: 10px 16px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+}
+
+.card-header .nav-tabs .nav-link:hover {
+  color: var(--page-accent, #426175);
+  border-bottom-color: color-mix(in srgb, var(--page-accent, #426175) 25%, transparent);
+  background: transparent;
+}
+
+.card-header .nav-tabs .nav-link.active {
+  color: var(--page-accent, #426175);
+  border-bottom-color: var(--page-accent, #426175);
+  background: transparent;
+}
+
+/* Propagate the card's fixed height down to the plot. */
+.card[style*="height"] .tab-pane,
+.card[style*="height"] .tab-pane > .shiny-html-output {
+  height: 100%;
+}
+
+/* ── Dashboard layout — bottom rail (side→bottom adaptation) ─────────────── */
+
+.dashboard-body {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 56px);
+  border-top: 4px solid var(--page-accent, #426175);
+}
+
+.content-area {
+  flex: 1;
+  padding: 16px;
+  padding-bottom: 76px; /* clear the fixed 60px rail */
+  min-width: 0;
+}
+
+/* ── Filter rail: fixed full-width bar at the bottom ─────────────────────── */
+
+.filter-rail {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  height: 60px;
+  background: #426175;
+  color: #f3eedb;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 14px;
+  gap: 6px;
+  border-top: 1px solid rgba(0,0,0,0.12);
+  z-index: 1029; /* under the sticky navbar (1030) */
+}
+
+.rail-grow { flex: 1; } /* pushes Export to the right edge */
+
+.rail-item {
+  width: auto;
+  min-width: 64px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: #f3eedb;
+  cursor: pointer;
+  transition: background 0.15s;
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  font-family: inherit;
+  position: relative;
+}
+.rail-item:hover  { background: #4f7286; }
+.rail-item.active { background: #f3eedb; color: #426175; }
+.rail-item .ico   { font-size: 18px; line-height: 1; }
+.rail-item .lbl   { font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+.rail-item.action { border: 1px solid rgba(243,238,219,0.35); }
+
+.rail-item:focus-visible {
+  outline: 2px solid #F0DC9A;
+  outline-offset: 2px;
+}
+
+.rail-badge {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 9px;
+  background: #993366;
+  color: #fff;
+  pointer-events: none;
+  display: inline-block;
+}
+
+/* ── Overlay scrim + drawer (slides UP from the rail) ────────────────────── */
+
+.drawer-scrim {
+  display: none;
+  position: fixed;
+  left: 0; right: 0;
+  top: 56px; bottom: 60px;
+  z-index: 98;
+  background: rgba(0,0,0,0.28);
+  cursor: pointer;
+}
+.drawer-scrim.active { display: block; }
+
+.filter-drawer {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: 60px; /* sits on the rail */
+  top: auto;
+  width: auto;
+  height: 0;
+  overflow: hidden;
+  z-index: 1028;
+  background: #F0F4F8;
+  border-top: 1px solid #d8e0e8;
+  transition: height 0.18s ease;
+  display: flex;
+  flex-direction: column;
+}
+.filter-drawer.open { height: min(48vh, 480px); }
+
+/* Drawer panels: all rendered statically, one visible at a time */
+.drawer-panel { display: none; }
+.drawer-panel.active { display: block; }
+
+.filter-drawer-inner {
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Responsive multi-column grid for drawer panel content */
+.drawer-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Drawer internals ─────────────────────────────────────────────────────── */
+
+.drawer-header {
+  margin: 0;
+  font-size: 16px;
+  color: #426175;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: #426175;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.drawer-search {
+  background: #fff;
+  border: 1px solid #d8e0e8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #8b8e92;
+}
+.drawer-search .shiny-input-container { flex: 1; margin-bottom: 0; }
+.drawer-search .form-group            { margin-bottom: 0; }
+.drawer-search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  color: #4a4a4a;
+}
+
+.drawer-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8b8e92;
+  margin: 10px 0 4px;
+}
+
+.drawer-btnrow {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-top: 12px;
+}
+
+.drawer-btn {
+  border: 1px solid #d0d4d8;
+  background: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #4a4a4a;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+.drawer-btn:hover { border-color: #426175; }
+.drawer-btn.primary { background: #426175; color: #fff; border-color: #426175; }
+.drawer-btn.primary:hover { background: #375263; }
+.drawer-btn.block { flex: 1; justify-content: center; }
+
+.drawer-btn:focus-visible {
+  outline: 2px solid #F0DC9A;
+  outline-offset: 2px;
+}
+
+/* ── Chip strip (phase 2 — status chips, not wired up yet) ───────────────── */
+
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 10px rgba(0,0,0,0.06);
+}
+
+.chips-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8b8e92;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.chips-right {
+  margin-left: auto;
+  font-size: 11px;
+  color: #8b8e92;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d0d4d8;
+  background: #fff;
+  color: #1c1c1c;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.filter-chip:hover { border-color: #426175; color: #1c1c1c; }
+.filter-chip.active { background: #426175; color: #fff; border-color: #426175; }
+.filter-chip.add { background: transparent; border-style: dashed; color: #8b8e92; }
+.filter-chip .caret { font-size: 10px; color: #8b8e92; }
+.filter-chip.active .caret { color: rgba(255,255,255,0.7); }
+
+.filter-chip:focus-visible {
+  outline: 2px solid #F0DC9A;
+  outline-offset: 2px;
+}
+
+.filter-chips:has(.filter-chip.active) {
+  border-left: 4px solid #993366;
+  padding-left: 11px;
+}
+
+/* ── Accordion: no focus outline; open = accent colour; closed = white ───── */
+.accordion-button:focus,
+.accordion-button:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+  --bs-accordion-btn-focus-box-shadow: none;
+}
+.accordion-button:not(.collapsed) {
+  background-color: #eef3f6;
+  color: #426175;
+  box-shadow: none !important;
+}
+.accordion-button.collapsed {
+  background-color: #fff;
+  color: inherit;
+}

@@ -32,6 +32,27 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Decisions
 
+### DEC-005 — Restyle: MDT theme + bottom rail/drawer layout (in progress)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Active — implementation in progress |
+| **Refs** | DEC-004 (prerequisite, complete), `restyle-implementation-plan.md` |
+
+**Decision:** Restyle the app using the `mdt-activity-dashboard` project's visual language (CAQ palette, cream background, navbar, card treatment) and its rail + drawer + focused-picker interaction model — with the rail relocated from MDT's left side to a **full-width bar at the bottom** of the viewport, and the drawer sliding **up** from the rail instead of out from the side. Forest plots are wide; removing both the left sidebar and the right-hand plot-options column gives the plot the full viewport width, and the widest control (the 10-bucket column-mapping `bucket_list`) fits a full-width bottom drawer naturally.
+
+**Key constraint carried over from DEC-004:** no Shiny modules. MDT's `mod_filter_rail`/`mod_filter_drawer` pattern is adapted as plain UI helper functions (`R/ui_rail.R`, `R/ui_drawers.R`) and a `server/drawers.R` sourced with `local = TRUE`, consistent with the rest of the app.
+
+**Key implementation choice:** drawer panels are rendered **statically** in `ui.R` (not via `renderUI`/staged `reactiveValues` as MDT does) — this app has ~45 always-live inputs consumed directly by `forest_plot_object()`/`r_code_string()`, and staging them would be a rewrite of the entire reactive surface for no user benefit. The active panel is chosen by toggling a CSS class; every input ID stays in the DOM from app start, so the existing shinytest2 suite (which targets IDs, not containers) should survive unmodified except where the plan explicitly retires an ID (export button IDs, in a later step).
+
+**Migration:** 7 shippable steps (see `restyle-implementation-plan.md` §8), each gated on tests passing. Step 1 (this entry) adds the ported stylesheet/JS, the CAQ theme, and wraps the existing sidebar+content layout in a `page_navbar`/`dashboard-body`/`content-area` shell — the sidebar and plot-options column are still present and functionally unchanged, just reskinned.
+
+**Alternatives considered:** see `restyle-implementation-plan.md` §1 for the side-rail-vs-bottom-rail rationale, and its companion review `reviews/architecture/2026-06-10_restyle-readiness-review.md` for the pre-restyle codebase audit.
+
+---
+
 ### DEC-004 — File organisation: `source()` split + UI helper functions in place of Shiny modules
 
 | Field | Detail |
@@ -167,6 +188,32 @@ Entries are listed in reverse chronological order (newest first) within each sec
 ---
 
 ## Changes
+
+### CHG-029 — DEC-005 Step 1: stylesheet, theme swap, `page_navbar` shell
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-07-17 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-005 |
+
+**Files added:** `www/style.css`, `www/drawer.js`  
+**Files changed:** `global.R`, `ui.R`
+
+**Summary:**
+
+First step of the DEC-005 restyle. `www/style.css` ported from `mdt-activity-dashboard/themed-template/www/style.css` per the plan's keep/drop/adapt rules: kept the navbar/card/accordion/drawer-internals rules verbatim; dropped MDT-specific blocks not applicable here (`.cancer-tree`, `.htu-*`, `.kpi-*`, `.proj-select`, `.dfl-*`, per-page accent variants, year-style toggle); replaced `.dashboard-body`/`.content-area`/`.filter-rail`/`.rail-item`/`.drawer-scrim`/`.filter-drawer`/`.filter-drawer-inner` with the bottom-rail adaptations from the plan's §7, and added `.drawer-panel`/`.drawer-columns` for the static-panel approach. `www/drawer.js` ported with the two additional lines (active-panel toggle, resize dispatch) the plan's static-drawer approach requires.
+
+`global.R` gains a `theme` object — explicit CAQ `bs_theme()` (bg/fg/primary/secondary/success/warning/danger) replacing the previous `bootswatch = "flatly"` inline in `ui.R`.
+
+`ui.R` restructured: `page_sidebar()` → `bslib::page_navbar()` with the existing `sidebar()` content moved into the `sidebar` argument unchanged, and the existing `layout_columns()` (navset_card_tab + `plotOptionsUI()`) wrapped in `div.dashboard-body > div.content-area`, inside a single `nav_panel("Builder", ...)`. Stylesheet link gains a `?v=` cache-buster (resolves review finding F-4). The old `www/styles.css` (sortable/noUiSlider tweaks) is kept as a separate link for now — merging it into `style.css` and recolouring is deferred to the final polish step (§8 step 6), per the plan.
+
+No input/output IDs changed; the rail and drawer markup do not exist yet (Step 2) so the new CSS classes are currently inert — the app is functionally identical, just reskinned and under a navbar.
+
+**Test results:** 48 unit tests, 9/9 integration assertions passing. Visual check: app launches, navbar renders with "Forest Plot Builder" title and CAQ colours, sidebar and plot-options column present and functional, forest plot still renders in both upload and simulated-data modes.
+
+---
 
 ### CHG-028 — ISS-035: install `svglite` and dependencies, pin in `renv.lock`
 
@@ -953,4 +1000,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 2.3 — CHG-022 through CHG-028 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved*
+*Document version: 2.4 — CHG-022 through CHG-029 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Step 1 (theme/navbar shell) implemented*
