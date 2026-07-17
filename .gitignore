@@ -48,6 +48,9 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+# Headless plot device output (ISS-032)
+Rplots.pdf
+
 library/
 local/
 cellar/
