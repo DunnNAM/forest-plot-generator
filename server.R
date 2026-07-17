@@ -11,7 +11,7 @@ server <- function(input, output, session) {
   output$download_png <- downloadHandler(
     filename = "Forestplot.png",
     content = function(file) {
-      ggsave(file,
+      ggplot2::ggsave(file,
              plot = forest_plot_object(),
              device = "png",
              bg = ifelse(input$transparent_plot_bg,
@@ -26,7 +26,7 @@ server <- function(input, output, session) {
   output$download_svg <- downloadHandler(
     filename = "Forestplot.svg",
     content = function(file) {
-      ggsave(
+      ggplot2::ggsave(
         file,
         plot = forest_plot_object(),
         device = "svg",

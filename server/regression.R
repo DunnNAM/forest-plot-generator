@@ -7,17 +7,17 @@
     form <- paste0(" ~ ",
                    paste0(input$predictor_vars, collapse = " + "))
     if (input$regression_type == "poisson") {
-      form2 <- as.formula(paste0(input$response_var, "_bin ", form))
-      fit <- glm(form2,
-                 family = "poisson"(link = "log"),
+      form2 <- stats::as.formula(paste0(input$response_var, "_bin ", form))
+      fit <- stats::glm(form2,
+                 family = stats::poisson(link = "log"),
                  data = dat)
     } else if (input$regression_type == "logistic") {
-      form2 <- as.formula(paste0(input$response_var, "_bin ", form))
-      fit <- glm(form2,
-                 family = "binomial"(link = "logit"),
+      form2 <- stats::as.formula(paste0(input$response_var, "_bin ", form))
+      fit <- stats::glm(form2,
+                 family = stats::binomial(link = "logit"),
                  data = dat)
     } else if (input$regression_type == "cox") {
-      form2 <- as.formula(paste0("survival::Surv(",
+      form2 <- stats::as.formula(paste0("survival::Surv(",
                                  stringr::str_replace(input$response_var, "IND_", "Time_"),
                                  ",",input$response_var, "_bin) ", form))
       fit <- survival::coxph(form2,
