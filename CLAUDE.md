@@ -65,6 +65,7 @@ suspends any output inside them — including `downloadButton`s, which render as
 - ISS-028: age group sort order in simulated data (Medium — likely in `forestHelperR`)
 - ISS-029: OS system fonts absent from selector after sysfonts migration (Low)
 - ISS-030: `"Source Sans Pro"` renamed on Google Fonts, silently absent (Low)
+- FEAT-010: DEC-005 Step 7 phase-2 — status chips, rail badges, Help nav (Low)
 
 **Next session:** Core restyle is shipped and committed. Either pick up DEC-005
 Step 7, or address the open issues above. `handover-dec004-file-split.md` is now

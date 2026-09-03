@@ -412,6 +412,7 @@
 | ISS-034 | Medium | `server.R` / `server/regression.R` | Unqualified `ggsave()`, `glm()`, `as.formula()` | ✅ Resolved — CHG-025 |
 | ISS-035 | Medium | `server/export.R`, `renv.lock` | `svglite` not installed; SVG export will error at runtime | ✅ Resolved — CHG-028 |
 | FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | ✅ Implemented — CHG-033 (location amended to Export drawer panel) |
+| FEAT-010 | Low | `ui.R`, `R/ui_rail.R`, `www/style.css` | DEC-005 Step 7 (phase 2): status-chip strip, rail badges, Help nav panel | Open |
 
 ---
 
@@ -488,4 +489,19 @@
 
 ---
 
-*Document version: 3.6 — ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite installed); ISS-031 resolved and FEAT-009 implemented (CHG-033: Export drawer panel redesign)*
+### FEAT-010 — DEC-005 Step 7 (phase 2): status chips, rail badges, Help nav
+
+| Field | Detail |
+|---|---|
+| **Source** | `restyle-implementation-plan.md` §8, deferred at plan time |
+| **Severity** | Low |
+| **Status** | **Open** — not started |
+| **File(s)** | `ui.R`, `R/ui_rail.R`, `www/style.css` |
+| **Description** | The three polish items the DEC-005 restyle plan explicitly held back as optional phase 2, now that Steps 0-6 have shipped: **(1) status-chip strip** — the `div.dashboard-body` status strip placeholder added in Step 1 is still empty and renders nothing; **(2) rail badges** — MDT-style counts on `.rail-item` (e.g. number of hidden/excluded variables), for which `.rail-item` inner styling already carries a `badge` slot in `www/style.css`; **(3) Help nav panel** — the second `page_navbar` nav item, alongside *Builder*, using MDT's How-to-Use pattern. |
+| **Design notes** | All three are additive — none changes an existing input ID, reactive, or the drawer mechanism, so the shinytest2 suite should be unaffected. The CSS hooks (`chip-strip`, `.rail-item` badge slot) were deliberately ported in Step 1/6 so this work would not need another stylesheet pass. Anything rendered inside a hidden drawer panel needs `outputOptions(..., suspendWhenHidden = FALSE)` — see CHG-033. |
+| **Raised** | 2026-09-03 — CHG-036. Registered so the deferred work is visible in the open-items list rather than living only in DEC-005 prose and the plan's own step table. |
+| **Resolution** | — |
+
+---
+
+*Document version: 3.7 — ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite installed); ISS-031 resolved and FEAT-009 implemented (CHG-033: Export drawer panel redesign); FEAT-010 raised (CHG-036: DEC-005 Step 7 phase-2 work registered)*

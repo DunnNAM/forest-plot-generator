@@ -38,7 +38,7 @@ Entries are listed in reverse chronological order (newest first) within each sec
 |---|---|
 | **Date** | 2026-07-17 |
 | **Author** | Nathan Dunn / Claude (Anthropic) |
-| **Status** | Active — core migration (Steps 1-6) complete; Step 7 phase-2 not started |
+| **Status** | Active — core migration (Steps 1-6) complete; Step 7 phase-2 not started, tracked as FEAT-010 |
 | **Refs** | DEC-004 (prerequisite, complete), `restyle-implementation-plan.md` |
 
 **Decision:** Restyle the app using the `mdt-activity-dashboard` project's visual language (CAQ palette, cream background, navbar, card treatment) and its rail + drawer + focused-picker interaction model — with the rail relocated from MDT's left side to a **full-width bar at the bottom** of the viewport, and the drawer sliding **up** from the rail instead of out from the side. Forest plots are wide; removing both the left sidebar and the right-hand plot-options column gives the plot the full viewport width, and the widest control (the 10-bucket column-mapping `bucket_list`) fits a full-width bottom drawer naturally.
@@ -188,6 +188,60 @@ Entries are listed in reverse chronological order (newest first) within each sec
 ---
 
 ## Changes
+
+### CHG-036 — Track the restyle plan and readiness review; register DEC-005 Step 7 as FEAT-010
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-03 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-005, FEAT-010 |
+
+**Files added (now tracked):** `restyle-implementation-plan.md`, `reviews/README.md`, `reviews/architecture/2026-06-10_restyle-readiness-review.md`
+**Files changed:** `restyle-implementation-plan.md`, `issues-register.md`, `CLAUDE.md`
+
+**Summary:**
+
+Documentation-only. No application source, test, or `renv.lock` change.
+
+**The design documents were never committed.** `restyle-implementation-plan.md` and the
+whole `reviews/` directory had sat untracked since 2026-06-10, despite DEC-005 citing the
+plan twice and naming
+`reviews/architecture/2026-06-10_restyle-readiness-review.md` as its companion review —
+both references dangled for anyone cloning the repository. The plan is the design rationale
+for the app's entire current layout (bottom rail, static drawers, the no-`renderUI`
+decision), so losing it would mean losing the *why* behind DEC-005. Both are now tracked.
+
+**The plan's status header was materially misleading.** It still read:
+
+> **Status:** PLAN — nothing implemented. Becomes DEC-005 when accepted into
+> `app-changelog-decision-register.md`.
+
+That was true on 2026-06-10 and wrong from 2026-07-17 onward, by which point Steps 0-6 had
+shipped. Anyone opening the file — including a fresh Claude Code session — would reasonably
+conclude the restyle was still to do. Header rewritten to record acceptance as DEC-005,
+completion of Steps 0-6, and the outstanding Step 7, with an explicit note that the document
+is retained as design rationale rather than a to-do list.
+
+**§8 migration table annotated.** A Status column maps each planned step to the change that
+delivered it — Step 0 → CHG-023/024, Steps 1-6 → CHG-029 through CHG-034, Step 7 → not
+started. The plan-to-commit correspondence is now readable from the plan itself instead of
+having to be reconstructed from the register.
+
+**FEAT-010 raised.** DEC-005 Step 7 (status-chip strip, rail badges, Help nav panel) existed
+only in DEC-005's prose and the plan's own step table, so it appeared in no open-items list
+and was effectively invisible — which is how it came to be mistaken for unstarted work more
+broadly. Registered as FEAT-010 (Low, Open) with the three sub-items described, and added to
+the open-issues list in `CLAUDE.md`. The CSS hooks for two of the three (`chip-strip`, the
+`.rail-item` badge slot) were already ported in Steps 1/6, so the work needs no further
+stylesheet pass.
+
+**Note on scope:** the plan is now a historical record. Step 7 is tracked in
+`issues-register.md`, which is where future work on it should be managed — the plan should
+not be edited to add new scope.
+
+---
 
 ### CHG-035 — Claude Code settings repair, R formatting hook, stale worktree cleanup
 
@@ -1223,7 +1277,8 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | 2026-05-11 | ISS-004 Phase 2 — `shinytest2` integration tests (CHG-015) | 7 integration tests passing across 3 scenarios: column confirmation gate (incl. ISS-020 regression guard), two-file upload, and regression type → estimate label. `renv.lock` updated (sortable, knitr, shinytest2 pinned). ISS-004 fully resolved. ISS-013/014/015 register entries corrected to Resolved (were incorrectly showing Open). |
 | 2026-05-11 | ISS-002 resolved — `extrafont` replaced with `sysfonts`/`showtext` (CHG-016, DEC-003) | Lato now registered at startup from bundled TTFs. Google Fonts load via `tryCatch()` — fail silently without internet. Verified: Lato, Open Sans, Roboto, Montserrat appear in selector. ISS-028 (age group sort order), ISS-029 (system fonts absent), ISS-030 (Source Sans Pro renamed) raised. |
 | 2026-09-03 | Tooling housekeeping — Claude Code settings repaired, stale DEC-004 worktree removed, `CLAUDE.md` refreshed for DEC-005 (CHG-035) | `.claude/settings.json` was invalid JSON and silently inert; comments stripped, dead rules removed, permission patterns normalised. Orphaned worktree (145 files) deleted after verifying every blob existed in history — `git fetch` now clean. `styler` hook built and tested but left disabled: it reformats the codebase against its own house style. No app source, test, or `renv.lock` change. |
+| 2026-09-03 | Restyle plan and readiness review brought under version control; DEC-005 Step 7 registered (CHG-036) | `restyle-implementation-plan.md` and `reviews/` had been untracked since 2026-06-10 despite DEC-005 citing both. Plan header still read “PLAN — nothing implemented”, four months after Steps 0-6 shipped; corrected, and §8 annotated with the CHG that delivered each step. Step 7 raised as FEAT-010 so the deferred work appears in the open-items list. Documentation only. |
 
 ---
 
-*Document version: 3.0 — CHG-022 through CHG-035 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-6 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish) complete — core migration done, Step 7 phase-2 remains. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed.*
+*Document version: 3.1 — CHG-022 through CHG-036 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-6 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish) complete — core migration done, Step 7 phase-2 remains. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010.*
