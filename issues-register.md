@@ -485,7 +485,6 @@
 | **Description** | Replace the current four-button export block in the Plot tab with a dedicated "Export graph / code" section. Proposed structure: **(1) Export graph** — a single export button whose output format (PNG / SVG) is controlled by a `radioButtons()` input above it; **(2) Export code** — two buttons side-by-side, "Copy R code" and "Download .R script", representing distinct functionalities that cannot be merged. Colour-code the two sections to visually separate plot export from code export. |
 | **Design notes** | Radio button + single button approach for graph export reduces cognitive load vs. two separate download buttons. Two buttons remain necessary for code export since clipboard copy and file download are distinct actions. |
 | **Resolution** | Implemented exactly as designed, with one amendment: the DEC-005 restyle replaced the originally-proposed **sidebar accordion** location with the **Export drawer panel** (the sidebar itself was retired in Step 4). `export_format` radio (PNG/SVG) + single `download_plot` button in a `.export-section--graph` block; `copy_r_code` + `download_r_code` unchanged in a `.export-section--code` block; both colour-separated via a left-border accent. `download_png`/`download_svg` retired. Resolves ISS-031. |
-| **Resolution** | — |
 
 ---
 
