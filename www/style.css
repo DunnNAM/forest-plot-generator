@@ -186,6 +186,15 @@ body > .container-fluid {
   display: inline-block;
 }
 
+/* Dot variant — flags a non-default setting without a count (FEAT-010) */
+.rail-badge.dot {
+  padding: 0;
+  width: 8px;
+  height: 8px;
+  min-width: 0;
+  border-radius: 50%;
+}
+
 /* ── Overlay scrim + drawer (slides UP from the rail) ────────────────────── */
 
 .drawer-scrim {
@@ -344,7 +353,7 @@ body > .container-fluid {
   outline-offset: 2px;
 }
 
-/* ── Chip strip (phase 2 — status chips, not wired up yet) ───────────────── */
+/* ── Chip strip (FEAT-010 — read-only status, click a chip to open its drawer) ─ */
 
 .filter-chips {
   display: flex;
@@ -356,6 +365,7 @@ body > .container-fluid {
   border-radius: 12px;
   padding: 10px 14px;
   box-shadow: 0 1px 10px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
 }
 
 .chips-label {
@@ -383,6 +393,7 @@ body > .container-fluid {
   border-radius: 99px;
   font-size: 12px;
   font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
   text-decoration: none;
   transition: border-color 0.15s;

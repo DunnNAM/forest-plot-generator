@@ -414,7 +414,7 @@
 | ISS-036 | Medium | `renv.lock` | `forestHelperR` recorded as `Source: "unknown"`; blocks `renv::restore()` | Open |
 | ISS-037 | Medium | `CLAUDE.md`, test docs | Documented test command silently skips all 6 integration tests | ✅ Resolved — CHG-037 |
 | FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | ✅ Implemented — CHG-033 (location amended to Export drawer panel) |
-| FEAT-010 | Low | `ui.R`, `R/ui_rail.R`, `www/style.css` | DEC-005 Step 7 (phase 2): status-chip strip, rail badges, Help nav panel | Open |
+| FEAT-010 | Low | `ui.R`, `R/ui_rail.R`, `R/ui_help.R`, `www/style.css` | DEC-005 Step 7 (phase 2): status-chip strip, rail badges, Help nav panel | ✅ Implemented — CHG-038 |
 
 ---
 
@@ -524,13 +524,13 @@
 |---|---|
 | **Source** | `restyle-implementation-plan.md` §8, deferred at plan time |
 | **Severity** | Low |
-| **Status** | **Open** — not started |
-| **File(s)** | `ui.R`, `R/ui_rail.R`, `www/style.css` |
+| **Status** | **Implemented — CHG-038** |
+| **File(s)** | `ui.R`, `R/ui_rail.R`, `R/ui_help.R` (new), `server/drawers.R`, `www/style.css` |
 | **Description** | The three polish items the DEC-005 restyle plan explicitly held back as optional phase 2, now that Steps 0-6 have shipped: **(1) status-chip strip** — the `div.dashboard-body` status strip placeholder added in Step 1 is still empty and renders nothing; **(2) rail badges** — MDT-style counts on `.rail-item` (e.g. number of hidden/excluded variables), for which `.rail-item` inner styling already carries a `badge` slot in `www/style.css`; **(3) Help nav panel** — the second `page_navbar` nav item, alongside *Builder*, using MDT's How-to-Use pattern. |
 | **Design notes** | All three are additive — none changes an existing input ID, reactive, or the drawer mechanism, so the shinytest2 suite should be unaffected. The CSS hooks (`chip-strip`, `.rail-item` badge slot) were deliberately ported in Step 1/6 so this work would not need another stylesheet pass. Anything rendered inside a hidden drawer panel needs `outputOptions(..., suspendWhenHidden = FALSE)` — see CHG-033. |
 | **Raised** | 2026-09-03 — CHG-036. Registered so the deferred work is visible in the open-items list rather than living only in DEC-005 prose and the plan's own step table. |
-| **Resolution** | — |
+| **Resolution** | Implemented 2026-09-04 (CHG-038). **Chip strip:** `output$status_chips` (`server/drawers.R`) renders read-only chips (Dataset, Regression type, Variables/predictor count, Font) above `navset_card_tab`; clicking a chip sets a new `input$chip_open_key` which always opens (not toggles) the matching drawer — deliberately distinct from the rail buttons' own toggle semantics. **Rail badges:** `uiOutput("rail_badge_<key>")` nested in `rail_button()` (`R/ui_rail.R`); wired for *Variables* (count of variables hidden from the plot, via `reg_table()` vs `input$variables_displayed`) and *Display* (a dot when any of a fixed set of display inputs differs from its `ui_plot_options.R` default). Both render `NULL` (nothing) in the common case, so unbadged/at-default state looks identical to before. **Help nav panel:** `helpPanelUI()` (new file `R/ui_help.R`) — static content only, no reactive inputs; reuses the `.card`/`.card-header` rules already kept in `www/style.css` rather than the dropped MDT `.htu-*` classes. Verified: 48/48 unit assertions and 9/9 integration assertions pass unmodified (additive change, no existing ID touched). |
 
 ---
 
-*Document version: 3.8 — ISS-036 raised (CHG-037: `forestHelperR` unresolvable in `renv.lock`); ISS-037 raised and resolved (CHG-037: NOT_CRAN skip); previously: ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite installed); ISS-031 resolved and FEAT-009 implemented (CHG-033: Export drawer panel redesign); FEAT-010 raised (CHG-036: DEC-005 Step 7 phase-2 work registered)*
+*Document version: 3.9 — FEAT-010 implemented (CHG-038: DEC-005 Step 7 — status-chip strip, rail badges, Help nav panel); previously: ISS-036 raised (CHG-037: `forestHelperR` unresolvable in `renv.lock`); ISS-037 raised and resolved (CHG-037: NOT_CRAN skip); ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite installed); ISS-031 resolved and FEAT-009 implemented (CHG-033: Export drawer panel redesign); FEAT-010 raised (CHG-036: DEC-005 Step 7 phase-2 work registered)*

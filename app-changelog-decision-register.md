@@ -231,6 +231,80 @@ manual retry also fails.
 
 ## Changes
 
+### CHG-038 — DEC-005 Step 7: status-chip strip, rail badges, Help nav panel (FEAT-010)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | DEC-005, FEAT-010 |
+
+**Files changed:** `ui.R`, `R/ui_rail.R`, `server/drawers.R`, `www/style.css`, `CLAUDE.md`,
+`restyle-implementation-plan.md`, `issues-register.md`
+
+**Files added:** `R/ui_help.R`
+
+**Summary:**
+
+Implements the three items the DEC-005 restyle plan deliberately deferred as optional
+phase 2 (§8 Step 7 / FEAT-010), now that the core restyle (Steps 0-6) has been settled
+for several weeks. All additive — no existing input ID, reactive, or the drawer
+open/close mechanism changed.
+
+**1. Status-chip strip.** `output$status_chips` (new, `server/drawers.R`) renders a
+read-only chip row above `navset_card_tab`, filling the placeholder left empty since
+Step 1: Dataset (simulated/upload), Regression type, a Variables/predictor count, and
+Font. Clicking a chip sets a new `input$chip_open_key`, handled by a new observer that
+always opens the matching drawer — deliberately *not* the rail buttons' toggle
+semantics, since a chip is a shortcut to a setting rather than an open/close control for
+a drawer the user probably hasn't touched yet.
+
+**2. Rail badges.** `rail_button()` (`R/ui_rail.R`) gained an optional `badge` slot —
+`uiOutput("rail_badge_<key>", container = tags$span)` nested inside the button, so the
+server-rendered badge doesn't add its own wrapping `<div>` and break the button's flex
+layout. Wired for two items:
+- **Variables** — a count badge (`.rail-badge`) showing how many variables from the
+  current `reg_table()` are unselected in `input$variables_displayed`. Uses `req()`,
+  consistent with the existing `req(reg_table())` pattern in `server/observers.R`.
+- **Display** — a dot badge (`.rail-badge.dot`, new CSS variant) shown when any of a
+  fixed set of display inputs (`plotting_width`, `ci_colour`, `reference_colour`,
+  `transparent_table_bg`, `transparent_plot_bg`, `gaps`, `indent`, `sigfigs`, `digits`,
+  `right_justify`) differs from its `R/ui_plot_options.R` default.
+
+Both `renderUI`s return `NULL` in the common case (nothing hidden / all defaults), so an
+unbadged rail item looks identical to before this change.
+
+**3. Help nav panel.** New `R/ui_help.R` — `helpPanelUI()`, a second `page_navbar` nav
+item alongside *Builder*. Static content only (no reactive inputs, no server-side
+rendering): one section per rail item plus a short workflow note, built with
+`bslib::card()`/`card_header()`/`card_body()` to reuse the `.card`/`.card-header` CSS
+rules already kept from the MDT port, rather than the MDT `.htu-*` How-to-Use classes,
+which the restyle plan explicitly dropped (plan §7 — "not applicable" to a single-page
+app).
+
+**CSS changes:** `.rail-badge.dot` variant added; `.filter-chips` gained
+`margin-bottom: 16px` (previously unused, no layout context); `.filter-chip` gained
+`font-family: inherit` (the chips are `<button>`s, not the `<a>`s the rule was
+originally written for — without it they'd render in the browser's default UI font).
+Both `.filter-chips`/`.filter-chip` and `.rail-badge` blocks already existed,
+pre-ported and unused, since Steps 1/6 — this change is what wires them up. No other
+rule touched.
+
+**Testing:** `parse()` clean on all changed/added R files. Full suite run under R 4.3.3:
+48/48 unit assertions (`test-helpers.R`), 9/9 integration assertions with
+`NOT_CRAN=true` (`test-shiny-app.R`) — both unchanged from the pre-change baseline,
+confirming the change is additive as intended.
+
+**FEAT-010 status:** → **Implemented**
+
+**Docs:** `CLAUDE.md` §Current phase and §Key files updated (DEC-005 now complete
+including phase 2; `R/ui_help.R` added to the file map; FEAT-010 dropped from the open
+issues list). `restyle-implementation-plan.md` §8 Step 7 marked done. `issues-register.md`
+FEAT-010 entry and summary table row marked Implemented.
+
+---
+
 ### CHG-037 — Test-count reconciliation, session-handoff refresh, failed R 4.5.2 migration attempt
 
 | Field | Detail |
@@ -1430,7 +1504,8 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | 2026-09-03 | Tooling housekeeping — Claude Code settings repaired, stale DEC-004 worktree removed, `CLAUDE.md` refreshed for DEC-005 (CHG-035) | `.claude/settings.json` was invalid JSON and silently inert; comments stripped, dead rules removed, permission patterns normalised. Orphaned worktree (145 files) deleted after verifying every blob existed in history — `git fetch` now clean. `styler` hook built and tested but left disabled: it reformats the codebase against its own house style. No app source, test, or `renv.lock` change. |
 | 2026-09-03 | Restyle plan and readiness review brought under version control; DEC-005 Step 7 registered (CHG-036) | `restyle-implementation-plan.md` and `reviews/` had been untracked since 2026-06-10 despite DEC-005 citing both. Plan header still read “PLAN — nothing implemented”, four months after Steps 0-6 shipped; corrected, and §8 annotated with the CHG that delivered each step. Step 7 raised as FEAT-010 so the deferred work appears in the open-items list. Documentation only. |
 | 2026-09-03 | Test baseline established; handoff refreshed; R 4.5.2 migration attempted and failed (CHG-037, DEC-006) | Suite run to settle three conflicting test counts: 23 blocks/48 assertions and 6 blocks/9 assertions, all passing under R 4.3.3. Doing so exposed ISS-037 — the documented test command skips every integration test and still exits 0. `session-handoff.md` (335 lines, four phases out of date) rewritten. `renv::restore()` under 4.5.2 failed on 12 packages; ISS-036 raised (`forestHelperR` has no resolvable source, so no restore can succeed). `renv.lock` untouched, R 4.3.x environment intact, no app source changed. Rtools43 removed as a side effect of installing Rtools45. Manual retry planned 2026-09-04. |
+| 2026-09-04 | DEC-005 Step 7 implemented — status-chip strip, rail badges, Help nav panel (CHG-038, FEAT-010) | Status chips (dataset/regression/variables/font) above the plot, each opening its drawer on click; rail badges for Variables (hidden-variable count) and Display (non-default dot); new static Help nav panel (`R/ui_help.R`). Additive — no input ID or reactive changed. 48/48 unit assertions and 9/9 integration assertions pass unmodified. DEC-005 restyle now fully complete, including phase 2. |
 
 ---
 
-*Document version: 3.2 — CHG-022 through CHG-037: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-6 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish) complete — core migration done, Step 7 phase-2 remains. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010. CHG-037 reconciles the test counts (ISS-037: documented command silently skipped all integration tests), refreshes session-handoff.md, and records the FAILED R 4.5.2 migration attempt — blocked by ISS-036; DEC-006 authorises the snapshot when it is retried.*
+*Document version: 3.3 — CHG-022 through CHG-038: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-7 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish, status chips/rail badges/Help nav) complete — restyle fully done. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010. CHG-037 reconciles the test counts (ISS-037: documented command silently skipped all integration tests), refreshes session-handoff.md, and records the FAILED R 4.5.2 migration attempt — blocked by ISS-036; DEC-006 authorises the snapshot when it is retried. CHG-038 implements FEAT-010 (DEC-005 Step 7 phase 2), completing the restyle.*

@@ -8,12 +8,12 @@
 > - `mdt-activity-dashboard/themed-template/design-handoff 2.md` — original rail+drawer design brief
 > - `mdt-activity-dashboard/themed-template/R/theme.R` — CAQ palette
 >
-> **Status:** IMPLEMENTED — accepted as **DEC-005** on 2026-07-17. Steps 0-6 (the
-> core migration) are complete and shipped; see CHG-023/024 and CHG-029 through
-> CHG-034 in `app-changelog-decision-register.md` for the per-step record.
-> Step 7 (phase 2, optional) remains outstanding and is tracked as **FEAT-010**
-> in `issues-register.md`. This document is retained as the design rationale for
-> the app's current layout — it is a historical plan, not a to-do list.
+> **Status:** IMPLEMENTED — accepted as **DEC-005** on 2026-07-17. All steps,
+> including phase 2, are complete and shipped; see CHG-023/024, CHG-029 through
+> CHG-034, and CHG-038 in `app-changelog-decision-register.md` for the per-step
+> record. Step 7 (phase 2) shipped as **FEAT-010** in `issues-register.md`. This
+> document is retained as the design rationale for the app's current layout — it
+> is a historical plan, not a to-do list.
 
 ---
 
@@ -269,13 +269,14 @@ if (data.open) window.dispatchEvent(new Event("resize"));
 | **4** | Move sidebar content into the Data drawer; drop `page_sidebar` for good. Check upload → bucket-list → confirm → preview flow end-to-end. | shinytest2 upload/confirm tests pass unmodified | ✅ Done — CHG-032 |
 | **5** | Order panel (`reorder` + `sortable_cols`) into drawer; remove from Plot tab. Export drawer per FEAT-009 design; retire `download_png`/`download_svg` IDs for `export_format` + `download_plot`; update `server/export.R`. Mark **ISS-031 resolved, FEAT-009 implemented (location amended)** in the register. | Manual export of PNG/SVG/code; tests updated for new export IDs | ✅ Done — CHG-033 |
 | **6** | Polish: merge old `styles.css` slider/sortable rules (recoloured `#2c3e50` → `#426175`), delete old file; focus-visible audit; cache-buster; smoke test at 1366×768 and ~2560 width. | Full suite + manual smoke test | ✅ Done — CHG-034 |
-| **7 (phase 2, optional)** | Status-chip strip; rail badges; *Help* nav panel (How-to-Use pattern from MDT). | — | 🔲 Not started — FEAT-010 |
+| **7 (phase 2)** | Status-chip strip (clicking a chip opens its drawer); rail badges (Variables: hidden-variable count; Display: non-default dot); *Help* nav panel (static content, not the MDT `.htu-*` pattern — that CSS was dropped per §7). | Full suite green | ✅ Done — CHG-038 |
 
-Steps 1–6 are individually shippable; the app works after every step.
+Steps 1–7 are individually shippable; the app works after every step.
 
 **Outcome:** Steps 0–6 were delivered as planned between 2026-06-10 and
 2026-07-17, each as its own CHG entry with tests green before commit, exactly as
-this table specifies. Step 7 was deliberately deferred — "ship the core first".
+this table specifies. Step 7 was deliberately deferred — "ship the core first" —
+and picked up on 2026-09-04 as CHG-038.
 
 ## 9. Risks and mitigations
 

@@ -12,6 +12,7 @@ ui <- page_navbar(
       class = "dashboard-body",
       div(
         class = "content-area",
+        uiOutput("status_chips"),
         navset_card_tab(
           nav_panel(
             "Review data",
@@ -40,5 +41,9 @@ ui <- page_navbar(
       drawerUI(),
       railUI()
     )
+  ),
+  nav_panel(
+    "Help",
+    helpPanelUI()
   )
 )

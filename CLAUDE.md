@@ -22,6 +22,7 @@ package (already stabilised, 112 tests passing).
   - `ui_drawers.R` — drawer shell
   - `ui_plot_options.R` — per-panel UI (`dataPanelUI()`, `variablesPanelUI()`,
     `displayPanelUI()`, `textPanelUI()`, `orderPanelUI()`, `exportPanelUI()`)
+  - `ui_help.R` — `helpPanelUI()`, the static Help nav panel content (FEAT-010)
 - `www/style.css` — single stylesheet (CAQ palette); linked with a `?v=` cache-buster
 - `app-changelog-decision-register.md` — decisions and changes log (update this for every change)
 - `issues-register.md` — open issues register
@@ -65,8 +66,8 @@ Counts above are assertions, not blocks — the register's per-CHG "48 unit test
 9/9 integration assertions" refers to the same figures.
 
 ## Current phase
-DEC-005 restyle — **core migration complete**. See `restyle-implementation-plan.md`
-for the full plan and `app-changelog-decision-register.md` (CHG-029 – CHG-034) for
+DEC-005 restyle — **complete, including phase 2**. See `restyle-implementation-plan.md`
+for the full plan and `app-changelog-decision-register.md` (CHG-029 – CHG-034, CHG-038) for
 what each step did.
 
 **Architecture decisions in force:**
@@ -85,8 +86,8 @@ what each step did.
 - Step 4 ✅ CHG-032: Data panel — sidebar removed from `ui.R` entirely
 - Step 5 ✅ CHG-033: Order panel + Export redesign (FEAT-009, ISS-031)
 - Step 6 ✅ CHG-034: CSS merge/polish, dead-code prune
-- Step 7 🔲 status chips, rail badges, Help nav — explicitly phase-2/optional in the
-  plan, not started ("ship the core first")
+- Step 7 ✅ CHG-038: status-chip strip, rail badges (Variables count, Display dot),
+  Help nav panel (FEAT-010)
 
 **Gotcha worth remembering:** drawer panels are `display:none` by default, so Shiny
 suspends any output inside them — including `downloadButton`s, which render as
@@ -97,11 +98,10 @@ suspends any output inside them — including `downloadButton`s, which render as
 - ISS-028: age group sort order in simulated data (Medium — likely in `forestHelperR`)
 - ISS-029: OS system fonts absent from selector after sysfonts migration (Low)
 - ISS-030: `"Source Sans Pro"` renamed on Google Fonts, silently absent (Low)
-- FEAT-010: DEC-005 Step 7 phase-2 — status chips, rail badges, Help nav (Low)
 
-**Next session:** Core restyle is shipped and committed. Either pick up DEC-005
-Step 7, or address the open issues above. `handover-dec004-file-split.md` is now
-historical — DEC-004 is complete.
+**Next session:** Restyle (including Step 7 / FEAT-010) is shipped and committed.
+Pick up ISS-036 (blocks the R 4.5.2 migration) or one of the open issues above.
+`handover-dec004-file-split.md` is now historical — DEC-004 is complete.
 
 ## Conventions
 - Always use explicit package::function() notation

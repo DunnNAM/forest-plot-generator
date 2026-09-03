@@ -41,3 +41,88 @@
       key      = if (is.null(key)) "" else key
     ))
   })
+
+  ## FEAT-010 (DEC-005 Step 7) — status-chip strip + rail badges. Additive:
+  ## no existing input ID or reactive touched. Every input read below is a
+  ## drawer-panel input, live in the DOM from app start (§3 of the restyle
+  ## plan), so none of this needs req() gates the way data-derived reactives
+  ## (fit(), reg_table()) do.
+
+  ### d - status chip click: always opens its drawer (not a toggle, unlike
+  ### the rail buttons themselves — a chip is a shortcut to a setting, not
+  ### an open/close control for a drawer that's probably already closed).
+  observeEvent(input$chip_open_key, {
+    rv_drawer(input$chip_open_key)
+  })
+
+  ### e - chip strip content
+  output$status_chips <- renderUI({
+    chip <- function(key, label, value) {
+      tags$button(
+        type = "button",
+        class = "filter-chip",
+        onclick = sprintf("Shiny.setInputValue('chip_open_key', '%s', {priority: 'event'})", key),
+        tags$strong(label), value
+      )
+    }
+
+    dataset_label <- if (identical(input$dataset_selected, "sim")) {
+      "Simulated data"
+    } else {
+      "Regression output"
+    }
+
+    regression_label <- switch(input$regression_type,
+      poisson  = "Poisson",
+      logistic = "Logistic",
+      cox      = "Cox PH",
+      input$regression_type
+    )
+
+    predictors_value <- if (identical(input$dataset_selected, "sim")) {
+      length(input$predictor_vars)
+    } else {
+      tryCatch(length(unique(reg_table()$displayname)), error = function(e) NA)
+    }
+
+    div(
+      class = "filter-chips",
+      span(class = "chips-label", "Current setup"),
+      chip("data", "Data: ", dataset_label),
+      chip("data", "Regression: ", regression_label),
+      if (!is.na(predictors_value)) chip("variables", "Variables: ", predictors_value),
+      chip("text", "Font: ", input$font)
+    )
+  })
+
+  ### f - rail badge: Variables — count of variables hidden from the plot
+  output$rail_badge_variables <- renderUI({
+    req(reg_table())
+
+    total <- length(unique(reg_table()$displayname))
+    hidden <- total - length(input$variables_displayed)
+
+    if (isTRUE(hidden > 0)) {
+      tags$span(class = "rail-badge", hidden)
+    }
+  })
+
+  ### g - rail badge: Display — dot when any display setting is non-default
+  output$rail_badge_display <- renderUI({
+    non_default <- any(
+      input$plotting_width != 120,
+      input$ci_colour != "#444444",
+      input$reference_colour != "#C43D4D",
+      isFALSE(input$transparent_table_bg),
+      isFALSE(input$transparent_plot_bg),
+      input$gaps != 0.8,
+      input$indent != 0.5,
+      isTRUE(input$sigfigs),
+      input$digits != 2,
+      length(input$right_justify) > 0
+    )
+
+    if (isTRUE(non_default)) {
+      tags$span(class = "rail-badge dot")
+    }
+  })

@@ -1,6 +1,6 @@
 # Forest Plot Builder — Session Handoff
 
-> **Last refreshed:** 2026-09-04 (CHG-037)
+> **Last refreshed:** 2026-09-04 (CHG-038)
 > **Purpose:** Session continuity — read at the start of a session, alongside `CLAUDE.md`.
 > **Scope note:** `CLAUDE.md` is the standing context (architecture, conventions, file
 > map). This document is the *current* state of play and what to pick up next. If the
@@ -32,7 +32,7 @@ half-finished refactor in the application code.
 | Test infrastructure (ISS-004) | Complete — `testthat` + `shinytest2` (CHG-014/015) |
 | Font migration (DEC-003) | Complete — `extrafont` → `sysfonts`/`showtext` (CHG-016) |
 | **DEC-004** file split | Complete — `server/` + `R/` split, no Shiny modules (CHG-018 … CHG-024) |
-| **DEC-005** restyle | **Core complete** — Steps 0-6 (CHG-029 … CHG-034). Step 7 deferred → FEAT-010 |
+| **DEC-005** restyle | **Complete** — Steps 0-7 (CHG-029 … CHG-034, CHG-038). Step 7 / FEAT-010 shipped 2026-09-04 |
 
 The app's current layout is the DEC-005 bottom-rail + drawer design. The design
 rationale lives in `restyle-implementation-plan.md` (a historical record — do not add
@@ -90,7 +90,6 @@ suggest tackling it:
 | ID | Sev | What | Note |
 |---|---|---|---|
 | **ISS-036** | Medium | `forestHelperR` recorded as `Source: "unknown"` in `renv.lock` | Blocks any `renv::restore()`. Prerequisite for the migration. |
-| **FEAT-010** | Low | DEC-005 Step 7: status-chip strip, rail badges, Help nav | The only feature item with a written design ready to implement. Additive — no existing input ID or reactive changes, so the suite should be unaffected. CSS hooks (`chip-strip`, `.rail-item` badge slot) were pre-ported in Steps 1/6. |
 | **ISS-028** | Medium | Age group levels not in clinical sort order | Highest-severity pre-existing item and the only one affecting output correctness — but it lives in `forestHelperR`, so it needs a session in *that* repo. Explicitly out of scope per plan §10. |
 | **ISS-029** | Low | OS system fonts absent from selector after `sysfonts` migration | |
 | **ISS-030** | Low | `"Source Sans Pro"` renamed on Google Fonts; silently absent | |
