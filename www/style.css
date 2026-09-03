@@ -54,6 +54,13 @@ body > .container-fluid {
 }
 
 .card {
+  /* Bootstrap 5's --bs-card-bg defaults to --bs-body-bg, which bs_theme()
+     sets to the same cream as the page background (global.R) — without this
+     override every card (navset_card_tab's wrapper, the Help panel's
+     section cards) blends into the page instead of reading as a raised
+     surface. Found during the design/modal-progression-workflow review
+     (2026-09-04) when the Help panel's cards were nearly invisible. */
+  background: #fff;
   border: 0;
   border-radius: 10px;
   box-shadow: 0 1px 10px rgba(0,0,0,0.06);
@@ -61,7 +68,7 @@ body > .container-fluid {
 
 .card-header {
   background: transparent;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 2px solid color-mix(in srgb, var(--page-accent, #426175) 35%, transparent);
   font-weight: 600;
 }
 
