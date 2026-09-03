@@ -234,7 +234,19 @@ body > .container-fluid {
 
 /* Drawer panels: all rendered statically, one visible at a time */
 .drawer-panel { display: none; }
-.drawer-panel.active { display: block; }
+/* flex column (not block): lets a panel's content opt into filling the
+   drawer's available height via `flex: 1` on a direct child — used by the
+   Data panel's .drawer-row-divided so its dividers can be centered within
+   the drawer rather than only within their own content height (2026-09-04
+   discussion). Harmless for the other five panels, whose content just stacks
+   top-to-bottom exactly as it did under display:block, since none of them
+   set flex-grow on anything. */
+.drawer-panel.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
 
 .filter-drawer-inner {
   height: 100%;
@@ -255,12 +267,108 @@ body > .container-fluid {
   width: 100%;
 }
 
+/* Data panel's field row — divided by faint vertical rules, centered within
+   the drawer's available height rather than touching its top/bottom edge
+   (2026-09-04 discussion). `flex: 1` lets the row stretch to fill whatever
+   vertical space the drawer isn't using for the full-width upload/file-table
+   block below it — in Simulated data mode, where nothing else shares the
+   drawer, it stretches to the drawer's full available height, so an equal
+   top/bottom inset on the divider is then genuinely centered, not just
+   visually approximate. In upload mode the row only stretches as far as the
+   upload block's natural position, which is deliberate — a divider running
+   through that unrelated full-width block would look wrong. Scoped to the
+   Data panel only via this dedicated class; the other five panels keep the
+   plain grid (.drawer-columns) with no dividers, per the same discussion. */
+.drawer-row-divided {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  row-gap: 12px;
+  flex: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+/* Target .drawer-field-block itself (a descendant selector, not
+   `.drawer-row-divided > *`): Shiny's conditionalPanel() renders
+   `display: contents` when shown, which promotes its child into this flex
+   row for layout — but that child (the actual .drawer-field-block, and the
+   real flex item as far as sizing goes) can sit one DOM level deeper than a
+   direct child, so a `>` selector missed it entirely (confirmed via
+   devtools, 2026-09-04). The leading divider is controlled explicitly by
+   drawerFieldUI()'s `first` argument for the same reason — DOM-structural
+   :first-child/:not(:first-child) can't see past that extra level either. */
+.drawer-row-divided .drawer-field-block {
+  flex: 1 1 220px;
+  min-width: 220px;
+  position: relative;
+}
+.drawer-row-divided .drawer-field-block--divided {
+  padding-left: 28px;
+}
+.drawer-row-divided .drawer-field-block--divided::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  /* top:0 anchors the line to the top of the field title (.drawer-field-block
+     has no top padding, so its own box top *is* the title's top) per the
+     2026-09-04 discussion. bottom:20px makes the line's distance from the
+     drawer's bottom edge equal its distance from the top: .drawer-row-divided
+     stretches (flex:1) to fill the drawer's full available height, flush
+     with its own bottom, but its top sits 20px further down than its bottom
+     does from the drawer's edges — that 20px is exactly the "Data" header's
+     footprint (it only exists above the row, not below). Measured via
+     devtools against the live layout, not derived from the header's CSS
+     values directly — re-measure if .drawer-header or .filter-drawer-inner's
+     padding/gap ever change. */
+  top: 0;
+  bottom: 20px;
+  width: 1px;
+  /* Slate blue (--page-accent) at low opacity — deliberately fainter than
+     the title text or rail so it reads as a quiet separator, not a border. */
+  background: color-mix(in srgb, var(--page-accent, #426175) 25%, transparent);
+}
+
+/* Single-column drawer content — a tall field (e.g. a data table) that
+   shouldn't share a grid row with .drawer-columns' short fields, or a panel
+   with too few controls to justify a multi-column grid at all. Same
+   max-width/centering as .drawer-columns so the two stack flush. */
+.drawer-fullwidth {
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+.drawer-fullwidth > * + * { margin-top: 8px; }
+
 /* strong() + materialSwitch() label pairs, so they don't look ragged as a
    grid cell narrower than the old accordion column (restyle plan §9) */
 .drawer-field {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Title-over-content field block (drawerFieldUI(), R/ui_plot_options.R) —
+   distinct from .drawer-field above: a bold title clearly larger than its
+   content, content starting at a consistent vertical position across a
+   .drawer-columns row. Requested for the Data panel's four top-level fields
+   (design/modal-progression-workflow review, 2026-09-04); deliberately not
+   cards, per that discussion. Titles here (Data set, Comparison mode, etc.)
+   are short enough to stay on one line at the grid's 260px column minimum,
+   which is what keeps every row's content flush — no fixed title height
+   needed unless a longer title gets added to this pattern later. */
+.drawer-field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.drawer-field-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--page-accent, #426175);
+}
+.drawer-field-content {
+  font-size: 13px;
 }
 
 /* ── Export panel (FEAT-009) — colour-separated graph/code sections ──────── */

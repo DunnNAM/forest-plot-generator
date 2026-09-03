@@ -11,25 +11,82 @@
 # they don't look ragged when a grid column is narrower than the accordion
 # column was (restyle plan §9).
 
+# Title + content wrapper for a single .drawer-columns field: a bold title
+# noticeably larger than its content (CSS: .drawer-field-title/-content),
+# with content starting at a consistent vertical position across a row —
+# requested specifically for the Data panel's four top-level fields (design/
+# modal-progression-workflow review, 2026-09-04). Deliberately not cards, per
+# that discussion — plain title-over-content blocks inside the existing
+# .drawer-columns grid.
+#
+# `first` controls the leading divider (Data panel's .drawer-row-divided
+# only — see dataPanelUI()) explicitly rather than via a CSS :first-child/
+# :not(:first-child) selector. That was the first approach, and it silently
+# matched nothing for the sim-mode fields: Shiny's conditionalPanel() renders
+# `display: contents` when shown (so its child is promoted into the parent
+# flex row for *layout* purposes) but a `.drawer-row-divided > *` CSS
+# selector still only sees the un-promoted DOM tree — the conditionalPanel
+# div, not the drawerFieldUI() div nested inside it — so the divider rule
+# never matched it (confirmed via devtools, 2026-09-04). Since exactly one
+# field ("Data set") is ever first regardless of dataset_selected, passing it
+# explicitly sidesteps the mismatch entirely.
+drawerFieldUI <- function(title, ..., first = FALSE) {
+  div(
+    class = paste("drawer-field-block", if (!first) "drawer-field-block--divided"),
+    div(class = "drawer-field-title", title),
+    div(class = "drawer-field-content", ...)
+  )
+}
+
 dataPanelUI <- function() {
   tagList(
     h4(class = "drawer-header", "Data"),
     div(
-      class = "drawer-columns",
-      radioButtons("dataset_selected", "Data set",
-                   choices = c("Regression output" = "upload", "Simulated data" = "sim"),
-                   selected = "upload"),
+      # .drawer-row-divided rather than .drawer-columns: this panel gets
+      # vertical dividers between its fields, which needs the row to stretch
+      # to fill the drawer's available height (see CSS) — a flex row, not a
+      # grid, is what lets that work (2026-09-04 discussion). Scoped to the
+      # Data panel only; the other five panels keep the plain grid.
+      class = "drawer-row-divided",
+      drawerFieldUI(
+        "Data set",
+        radioButtons("dataset_selected", label = NULL,
+                     choices = c("Regression output" = "upload", "Simulated data" = "sim"),
+                     selected = "upload"),
+        first = TRUE
+      ),
       conditionalPanel(
         condition = "input.dataset_selected == 'upload'",
-        div(class = "drawer-field",
-            strong("Comparison of two regressions"),
-            materialSwitch("by_group", "", value = FALSE, status = "primary")),
-        fileInput("upload", "Upload one or two files with regression output (csv/tsv required). To compare two regressions, select both files at once using Ctrl+click (Windows) or Cmd+click (Mac).", multiple = TRUE),
-        DT::dataTableOutput("files", width = "100%")
+        drawerFieldUI(
+          "Comparison mode",
+          # materialSwitch() has no built-in on/off text — with the "Comparison
+          # of two regressions" description now living in the title above (not
+          # beside the switch), a bare toggle had no visible cue what "on"
+          # means, so it gets a static "On" caption (2026-09-04 discussion).
+          materialSwitch("by_group", "On", value = FALSE, status = "primary")
+        )
       ),
-      radioButtons("regression_type", "Regression type selected",
-                   choices = c("Poisson" = "poisson", "Logistic" = "logistic", "Cox proportional hazards" = "cox"),
-                   selected = "poisson"),
+      drawerFieldUI(
+        "Regression type",
+        tagList(
+          # Alphabetical (Cox, Logistic, Poisson) so Robust variance — nested
+          # under Poisson, the last option — never repositions Cox/Logistic
+          # above it when it shows/hides. It used to be its own top-level
+          # field; when "Simulated data" was selected, the sim-only
+          # response/predictor block (tall — 11 checkboxes) shared its grid
+          # row and stretched it, stranding Robust variance under Data set at
+          # the bottom of the drawer instead of beside Regression type (user
+          # report, 2026-09-04). Nesting it here removes that separate grid
+          # item entirely, so there's nothing left to misplace.
+          radioButtons("regression_type", label = NULL,
+                       choices = c("Cox proportional hazards" = "cox", "Logistic" = "logistic", "Poisson" = "poisson"),
+                       selected = "poisson"),
+          conditionalPanel(
+            condition = "input.regression_type == 'poisson'",
+            checkboxInput("robust_variance", "Robust variance", value = TRUE)
+          )
+        )
+      ),
       conditionalPanel(
         condition = "input.dataset_selected == 'upload' && input.by_group==1",
         textInput("group_var_name", "Group variable display name", value = "Group"),
@@ -38,13 +95,32 @@ dataPanelUI <- function() {
       ),
       conditionalPanel(
         condition = "input.dataset_selected == 'sim'",
-        selectInput("response_var", "Response variable", choices = responses),
-        checkboxGroupInput("predictor_vars", "Predictor variables",
-                           choices = predictors, selected = c("AgeGroupAtDiagnosis"))
+        drawerFieldUI(
+          "Response variable",
+          selectInput("response_var", label = NULL, choices = responses)
+        )
       ),
       conditionalPanel(
-        condition = "input.regression_type == 'poisson'",
-        materialSwitch("robust_variance", "Robust variance", value = TRUE, status = "primary")
+        condition = "input.dataset_selected == 'sim'",
+        drawerFieldUI(
+          "Predictor variables",
+          checkboxGroupInput("predictor_vars", label = NULL,
+                             choices = predictors, selected = c("AgeGroupAtDiagnosis"))
+        )
+      )
+    ),
+    # Upload + file table pulled out of .drawer-columns deliberately: sharing
+    # a grid row with the short radio/switch fields above stretched that row
+    # to the table's height, stranding "Data set" et al. under a wall of dead
+    # space before the next row started (design/modal-progression-workflow
+    # review, 2026-09-04). Full-width block below instead, same max-width/
+    # centering as the grid via .drawer-fullwidth.
+    conditionalPanel(
+      condition = "input.dataset_selected == 'upload'",
+      div(
+        class = "drawer-fullwidth",
+        fileInput("upload", "Upload one or two files with regression output (csv/tsv required). To compare two regressions, select both files at once using Ctrl+click (Windows) or Cmd+click (Mac).", multiple = TRUE),
+        DT::dataTableOutput("files", width = "100%")
       )
     )
   )
@@ -175,11 +251,20 @@ textPanelUI <- function() {
 orderPanelUI <- function() {
   tagList(
     h4(class = "drawer-header", "Order"),
+    # .drawer-fullwidth rather than .drawer-columns: this panel has one real
+    # control, so a multi-column grid just leaves the other columns empty.
+    # The explanatory copy also addresses the panel reading as broken/empty
+    # when reorder is off (design/modal-progression-workflow review,
+    # 2026-09-04) — off is the common case, so it should look intentional.
     div(
-      class = "drawer-columns",
+      class = "drawer-fullwidth",
       div(class = "drawer-field",
           strong("Reorder columns"),
           checkboxInput("reorder", "", value = FALSE)),
+      p(class = "text-muted",
+        "Off by default — the plot uses the standard left-to-right column",
+        " order. Turn this on to drag the plot's element columns",
+        " (variables, counts, estimate, CI, p-value) into a custom order."),
       conditionalPanel(condition = "input.reorder==1", uiOutput("sortable_cols"))
     )
   )
