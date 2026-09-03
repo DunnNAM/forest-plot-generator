@@ -19,6 +19,9 @@ helpPanelUI <- function() {
       strong(" Apply"), " button. Open a drawer from the bottom rail, adjust",
       " its controls, and close it (rail icon again, or click outside the",
       " drawer) to see the full plot."),
+    p("New here, or coming back after a while? Click ", strong("Tour"), " —",
+      " the first icon on the rail below — to restart the guided setup at",
+      " any time."),
     section(
       "1. Data",
       p("Choose a data set: upload your own regression output (CSV/TSV),",
