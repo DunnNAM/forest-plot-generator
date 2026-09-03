@@ -32,6 +32,48 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Decisions
 
+### DEC-006 — `renv::snapshot()` authorised for the R 4.5.2 migration
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-03 |
+| **Author** | Nathan Dunn (decision) / Claude (Anthropic) |
+| **Status** | Active — migration not yet completed |
+| **Refs** | ISS-036, CHG-037, `session-handoff.md` §3 |
+
+**Decision:** For the migration of this project from R 4.3.x to R 4.5.2, `renv::snapshot()`
+may rewrite `renv.lock`, overriding the standing "Do not modify renv.lock" convention in
+`CLAUDE.md`. The convention otherwise stands.
+
+**Why the override is needed:** `renv::restore()` installs packages but never edits the
+lockfile, so restoring under 4.5.2 would leave `renv.lock` still recording
+`"R": { "Version": "4.3.1" }` while the project actually ran on 4.5.2. A lockfile that
+misstates its own R version is a worse failure mode than the convention protects against —
+it silently misleads the next person to rebuild the environment. Only `snapshot()` can
+correct it.
+
+**Conditions attached:**
+
+1. **Snapshot only after the test suite is green under R 4.5.2.** The pre-migration
+   baseline is 48 assertions / 23 blocks (`test-helpers.R`) and 9 assertions / 6 blocks
+   (`test-shiny-app.R`), all passing under R 4.3.3, captured 2026-09-03. A lockfile
+   recording a broken environment is worse than a stale one.
+2. **Rollback is `git checkout renv.lock`** — the lockfile is tracked, so the override is
+   reversible in one command.
+3. **The override is scoped to this migration.** It does not authorise routine
+   `snapshot()` calls; the convention resumes once the migration lands.
+
+**Status note:** the first automated attempt (2026-09-03) failed before reaching the
+snapshot step — see CHG-037. `renv.lock` is unmodified. A manual retry is planned for
+2026-09-04; this decision remains in force for it.
+
+**Alternatives considered:** *Restore only, leave the lock alone* — respects the convention
+but leaves the lockfile permanently inaccurate. *Stay on R 4.3.x* — zero risk and the
+environment that works today, but declines the upgrade; this remains the fallback if the
+manual retry also fails.
+
+---
+
 ### DEC-005 — Restyle: MDT theme + bottom rail/drawer layout
 
 | Field | Detail |
@@ -188,6 +230,115 @@ Entries are listed in reverse chronological order (newest first) within each sec
 ---
 
 ## Changes
+
+### CHG-037 — Test-count reconciliation, session-handoff refresh, failed R 4.5.2 migration attempt
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-03 / 2026-09-04 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented (documentation); **migration attempt failed — not implemented** |
+| **Refs** | DEC-006, ISS-036, ISS-037 |
+
+**Files changed:** `CLAUDE.md`, `session-handoff.md`, `issues-register.md`, `app-changelog-decision-register.md`
+
+**Files added:** none · **Files removed:** none · **Application source changed:** none
+
+**Summary:**
+
+Three tidy-up tasks ahead of further development. Two landed; the third failed and is
+recorded here as a failed attempt rather than a change.
+
+---
+
+**1. Test counts reconciled — and a real defect found (ISS-037).**
+
+`CLAUDE.md` claimed "48 unit tests" and "7 shinytest2 integration tests"; the files contain
+23 and 6 `test_that` blocks; CHG-033/034 cited "9/9 integration assertions". Three different
+figures for two files. Resolved by running the suite rather than reasoning about it:
+
+| File | Blocks | Assertions | Result |
+|---|---|---|---|
+| `test-helpers.R` | 23 | 48 | all pass |
+| `test-shiny-app.R` | 6 | 9 | all pass |
+
+So "48" was assertions (correct), the register's "9/9" was correct, and "7 integration
+tests" was simply wrong. `CLAUDE.md` now states both blocks and assertions explicitly.
+
+Establishing that baseline surfaced **ISS-037**: run via the command `CLAUDE.md` documented,
+**all 6 integration blocks skip**. `shinytest2`'s `AppDriver$new()` calls `skip_on_cran()`,
+and `NOT_CRAN` is set automatically only by `devtools::test()` and the RStudio runner — not
+by a bare `Rscript`. The run prints `SSSSSS` and **exits 0**, so it reads as a pass. The
+documented command had therefore been verifying nothing. Both `CLAUDE.md` and
+`session-handoff.md` now document `NOT_CRAN=true` with an explicit warning about the
+misleading exit code.
+
+---
+
+**2. `session-handoff.md` refreshed.**
+
+The file was dated May 2026 and described the project as mid code-review: `ui.R` "unchanged,
+no fixes applied yet", the register at v0.5, and §3-§6 giving step-by-step instructions for
+Batches 1-3 (ISS-013 … ISS-026) — all resolved in CHG-007/008/009. §5 assumed a pre-git
+workflow of uploading files to a chat session. Four development phases had happened since.
+
+Rewritten (335 lines → ~150): current state of play, the open queue in priority order, the
+migration brief for the next session, how to run the tests correctly, and the drawer
+`suspendWhenHidden` trap. This is the second stale-document failure found in two sessions —
+the restyle plan was the first (CHG-036) — so the refreshed file carries an explicit note to
+update it alongside `CLAUDE.md` when a phase completes.
+
+---
+
+**3. R 4.5.2 migration — attempted, failed, not implemented.**
+
+Decided per DEC-006 (snapshot authorised) with Rtools45 installed first so source builds
+would succeed. Both preconditions were met; the restore still failed.
+
+`renv::restore()` under R 4.5.2 aborted:
+
+> Error: failed to install "DT", "broom", "colourpicker", "forestHelperR", "forestploter",
+> "ggplot2", "gridExtra", "stringi", "stringr", "svglite", "textshaping", "tidyr"
+
+`renv/library/windows/R-4.5/` was left containing nothing but renv itself. Two causes:
+
+- **Structural (ISS-036, raised):** `renv.lock` records `forestHelperR` with
+  `"Source": "unknown"`. renv cannot fetch it on any R version, so no `restore()` can fully
+  succeed — this would have defeated the attempt independently of the R upgrade, and means
+  the lockfile does not presently describe a reproducible environment.
+- **Build cascade:** `stringi` compiles from source (building the whole ICU library) and
+  most of the other failures depend on it directly or through `stringr`;
+  `textshaping`/`svglite` are the other compiled group. The toolchain was *not* the blocker
+  — the build log references `c:/rtools45/` correctly.
+
+**Not diagnosed, and why:** the restore was run with its output piped through `tail`, so the
+per-package diagnostics were discarded and only the summary survived. The specific `stringi`
+failure is therefore unknown. A retry must capture the full log.
+
+**`renv::snapshot()` was deliberately not run.** Per DEC-006's first condition, snapshotting
+an environment that fails to build would record a broken lockfile — worse than the stale one.
+`renv.lock` is unmodified; `git status` confirms.
+
+**State after the attempt — nothing broken:**
+
+| Check | Result |
+|---|---|
+| `renv.lock` | Unmodified |
+| R 4.3.3 environment | Intact — `shiny`, `forestHelperR`, `shinytest2` all load |
+| `renv/library/windows/R-4.5/` | Empty apart from renv |
+| Application source | Untouched |
+
+**One durable environment change:** installing Rtools45 via winget **removed Rtools43** — it
+upgraded the existing package rather than installing alongside, so `C:\rtools43` no longer
+exists. The R-4.3 library is already built so the app still runs under 4.3.x, but compiling
+source packages there now requires reinstalling Rtools43 from CRAN. This was an unanticipated
+consequence of the install, not an intended part of the change.
+
+**Next:** a manual migration is planned for 2026-09-04. `session-handoff.md` §3 carries the
+brief — fix ISS-036 first, capture the full install log, and verify against the 48/9 baseline
+before snapshotting.
+
+---
 
 ### CHG-036 — Track the restyle plan and readiness review; register DEC-005 Step 7 as FEAT-010
 
@@ -1278,7 +1429,8 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | 2026-05-11 | ISS-002 resolved — `extrafont` replaced with `sysfonts`/`showtext` (CHG-016, DEC-003) | Lato now registered at startup from bundled TTFs. Google Fonts load via `tryCatch()` — fail silently without internet. Verified: Lato, Open Sans, Roboto, Montserrat appear in selector. ISS-028 (age group sort order), ISS-029 (system fonts absent), ISS-030 (Source Sans Pro renamed) raised. |
 | 2026-09-03 | Tooling housekeeping — Claude Code settings repaired, stale DEC-004 worktree removed, `CLAUDE.md` refreshed for DEC-005 (CHG-035) | `.claude/settings.json` was invalid JSON and silently inert; comments stripped, dead rules removed, permission patterns normalised. Orphaned worktree (145 files) deleted after verifying every blob existed in history — `git fetch` now clean. `styler` hook built and tested but left disabled: it reformats the codebase against its own house style. No app source, test, or `renv.lock` change. |
 | 2026-09-03 | Restyle plan and readiness review brought under version control; DEC-005 Step 7 registered (CHG-036) | `restyle-implementation-plan.md` and `reviews/` had been untracked since 2026-06-10 despite DEC-005 citing both. Plan header still read “PLAN — nothing implemented”, four months after Steps 0-6 shipped; corrected, and §8 annotated with the CHG that delivered each step. Step 7 raised as FEAT-010 so the deferred work appears in the open-items list. Documentation only. |
+| 2026-09-03 | Test baseline established; handoff refreshed; R 4.5.2 migration attempted and failed (CHG-037, DEC-006) | Suite run to settle three conflicting test counts: 23 blocks/48 assertions and 6 blocks/9 assertions, all passing under R 4.3.3. Doing so exposed ISS-037 — the documented test command skips every integration test and still exits 0. `session-handoff.md` (335 lines, four phases out of date) rewritten. `renv::restore()` under 4.5.2 failed on 12 packages; ISS-036 raised (`forestHelperR` has no resolvable source, so no restore can succeed). `renv.lock` untouched, R 4.3.x environment intact, no app source changed. Rtools43 removed as a side effect of installing Rtools45. Manual retry planned 2026-09-04. |
 
 ---
 
-*Document version: 3.1 — CHG-022 through CHG-036 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-6 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish) complete — core migration done, Step 7 phase-2 remains. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010.*
+*Document version: 3.2 — CHG-022 through CHG-037: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-6 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish) complete — core migration done, Step 7 phase-2 remains. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010. CHG-037 reconciles the test counts (ISS-037: documented command silently skipped all integration tests), refreshes session-handoff.md, and records the FAILED R 4.5.2 migration attempt — blocked by ISS-036; DEC-006 authorises the snapshot when it is retried.*

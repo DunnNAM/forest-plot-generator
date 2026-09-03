@@ -411,6 +411,8 @@
 | ISS-033 | Low | `server/plot.R` | `output$forest` registered inside `observe()` | ✅ Resolved — CHG-024 |
 | ISS-034 | Medium | `server.R` / `server/regression.R` | Unqualified `ggsave()`, `glm()`, `as.formula()` | ✅ Resolved — CHG-025 |
 | ISS-035 | Medium | `server/export.R`, `renv.lock` | `svglite` not installed; SVG export will error at runtime | ✅ Resolved — CHG-028 |
+| ISS-036 | Medium | `renv.lock` | `forestHelperR` recorded as `Source: "unknown"`; blocks `renv::restore()` | Open |
+| ISS-037 | Medium | `CLAUDE.md`, test docs | Documented test command silently skips all 6 integration tests | ✅ Resolved — CHG-037 |
 | FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | ✅ Implemented — CHG-033 (location amended to Export drawer panel) |
 | FEAT-010 | Low | `ui.R`, `R/ui_rail.R`, `www/style.css` | DEC-005 Step 7 (phase 2): status-chip strip, rail badges, Help nav panel | Open |
 
@@ -474,6 +476,34 @@
 
 ---
 
+### ISS-036 — `forestHelperR` has no resolvable source in `renv.lock`
+
+| Field | Detail |
+|---|---|
+| **Source** | Discovered 2026-09-03 during the failed R 4.5.2 migration (CHG-037) |
+| **Severity** | Medium |
+| **Status** | **Open** |
+| **File(s)** | `renv.lock` |
+| **Description** | `renv.lock` records the entry `"forestHelperR": { "Version": "0.2.0", "Source": "unknown" }`. With no source, renv cannot fetch or reinstall the package, so **`renv::restore()` can never fully succeed on any R version** — not just during an R upgrade. The package was installed locally from a `.tar.gz` and the provenance was never captured. This surfaced as one of 12 failures in the 2026-09-03 restore attempt, but unlike the others it is structural rather than a build failure. |
+| **Impact** | Blocks the R 4.5.2 migration. More broadly, the lockfile does not currently describe a reproducible environment: a fresh clone cannot rebuild the project library, which undercuts the point of committing `renv.lock` (ISS-011 / CHG-011). |
+| **Recommended fix** | Give the package a resolvable source. Options, roughly in order of robustness: (1) host `forestHelperR` in a git repository renv can reference — this is PDEC-005, currently deferred, which ISS-036 may force earlier; (2) place the `.tar.gz` in a local renv cellar (`renv/cellar/`) so `renv::restore()` finds it, and commit or document the cellar; (3) document the manual pre-install step and accept that `restore()` will always report this package as failed. |
+| **Related** | PDEC-005 (package hosting), PDEC-006 (dependency declaration), CHG-037 |
+| **Resolution** | — |
+
+---
+### ISS-037 — Documented test command silently skips every integration test
+
+| Field | Detail |
+|---|---|
+| **Source** | Discovered 2026-09-03 while establishing an authoritative test baseline (CHG-037) |
+| **Severity** | Medium |
+| **Status** | **Resolved — CHG-037** (documentation fix) |
+| **File(s)** | `CLAUDE.md`, `session-handoff.md` |
+| **Description** | `CLAUDE.md` documented the integration suite as `testthat::test_file("tests/testthat/test-shiny-app.R")`. Run that way from a bare `Rscript`, **all 6 `test_that` blocks skip** — `shinytest2`'s `AppDriver$new()` calls `skip_on_cran()` internally, and `NOT_CRAN` is only set automatically by `devtools::test()` and the RStudio runner. The run prints `SSSSSS` and **exits 0**, so it reads as a pass at a glance and in any CI check keying on exit code. |
+| **Why it mattered** | The register's per-CHG claims of "9/9 integration assertions passing" were correct, but anyone verifying them with the documented command would have seen skips and had no signal that the suite had not actually run. |
+| **Resolution** | `CLAUDE.md` §Test suite and `session-handoff.md` §5 now document `NOT_CRAN=true` explicitly, with a warning that the exit code is misleading without it. Verified: with `NOT_CRAN=true`, 6 blocks / 9 assertions pass, 0 skipped. |
+
+---
 ### FEAT-009 — Redesign export controls into a dedicated sidebar accordion panel
 
 | Field | Detail |
@@ -503,4 +533,4 @@
 
 ---
 
-*Document version: 3.7 — ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite installed); ISS-031 resolved and FEAT-009 implemented (CHG-033: Export drawer panel redesign); FEAT-010 raised (CHG-036: DEC-005 Step 7 phase-2 work registered)*
+*Document version: 3.8 — ISS-036 raised (CHG-037: `forestHelperR` unresolvable in `renv.lock`); ISS-037 raised and resolved (CHG-037: NOT_CRAN skip); previously: ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite installed); ISS-031 resolved and FEAT-009 implemented (CHG-033: Export drawer panel redesign); FEAT-010 raised (CHG-036: DEC-005 Step 7 phase-2 work registered)*

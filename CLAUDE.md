@@ -26,11 +26,43 @@ package (already stabilised, 112 tests passing).
 - `app-changelog-decision-register.md` — decisions and changes log (update this for every change)
 - `issues-register.md` — open issues register
 
+## Environment
+**The project targets R 4.3.x.** `renv.lock` pins R 4.3.1 and `renv/library/R-4.3/`
+is the populated library. Use `C:\Program Files\R\R-4.3.3\bin\` — R 4.5.2 is
+installed on this machine but its renv library is empty.
+
+A migration to R 4.5.2 was attempted on 2026-09-03 and failed (CHG-037); a manual
+retry is planned. Two things block it, both recorded in `session-handoff.md` §3:
+`forestHelperR` has no resolvable source in the lockfile (**ISS-036**), and a
+compiled-package cascade led by `stringi` aborted the restore.
+
+**Toolchain:** Rtools45 (`C:\rtools45`). Rtools43 was removed by the winget upgrade,
+so compiling source packages under R 4.3.x needs it reinstalled from CRAN first;
+the existing R-4.3 library is already built, so running the app there is unaffected.
+
 ## Test suite
-- `tests/testthat/test-helpers.R` — unit tests for pure helper functions
-- `tests/testthat/test-shiny-app.R` — shinytest2 integration tests
+- `tests/testthat/test-helpers.R` — 23 `test_that` blocks / **48 assertions**, pure helper functions
+- `tests/testthat/test-shiny-app.R` — 6 `test_that` blocks / **9 assertions**, shinytest2 integration
 - `tests/fixtures/` — CSV fixture files for integration tests
-- Run with: `testthat::test_file("tests/testthat/test-helpers.R")` or `testthat::test_file("tests/testthat/test-shiny-app.R")`
+
+Run with:
+
+```r
+testthat::test_file("tests/testthat/test-helpers.R")
+testthat::test_file("tests/testthat/test-shiny-app.R")
+```
+
+**`NOT_CRAN=true` is required for the integration tests.** `shinytest2`'s
+`AppDriver$new()` calls `skip_on_cran()` internally, so without it all 6 blocks
+skip silently and the run still exits 0 — it looks like a pass. `devtools::test()`
+and RStudio's test runner set it for you; a bare `Rscript -e ...` does not:
+
+```sh
+NOT_CRAN=true Rscript -e 'testthat::test_file("tests/testthat/test-shiny-app.R")'
+```
+
+Counts above are assertions, not blocks — the register's per-CHG "48 unit tests,
+9/9 integration assertions" refers to the same figures.
 
 ## Current phase
 DEC-005 restyle — **core migration complete**. See `restyle-implementation-plan.md`
@@ -80,4 +112,5 @@ historical — DEC-004 is complete.
 
 ## Do not modify
 - forestHelperR package files (separate repo)
-- renv.lock (if present)
+- renv.lock — **except** the R 4.5.2 migration, where `renv::snapshot()` is
+  authorised by DEC-006, and only once the suite is green under 4.5.2
