@@ -189,6 +189,99 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ## Changes
 
+### CHG-035 — Claude Code settings repair, R formatting hook, stale worktree cleanup
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-03 |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | — (tooling only; no app source changed) |
+
+**Files added:** `.claude/hooks/style-r.R` (untracked as of this entry)
+**Files removed:** `.claude/worktrees/dec004-finish/` (orphaned worktree checkout)
+**Files changed:** `.claude/settings.json`, `.claude/settings.local.json` (git-ignored), `CLAUDE.md`
+
+**Summary:**
+
+Housekeeping session. No application source, test, or `renv.lock` change — `global.R`,
+`ui.R`, `server.R`, `server/`, `R/`, and `www/` are untouched.
+
+**`.claude/settings.json` was invalid JSON and therefore entirely inert.** The file used
+`//` comments, which JSON does not permit, so every permission rule, the hook, and the
+status line in it had been silently inactive for as long as the comments have been there.
+Comments stripped. Alongside that repair:
+
+- `statusLine` removed — it pointed at `~/.claude/statusline.sh`, which does not exist on
+  this machine (and is a `.sh` script on Windows).
+- `PostToolUse` prettier hook removed — it referenced `$FILE_PATH`, which is not a hook
+  variable (hooks receive their payload as JSON on stdin), there is no `package.json` in
+  this project, and prettier has no R parser.
+- `Edit(src/**)` / `Write(src/**)` dropped — there is no `src/` directory; R code lives in
+  `R/`, `server/`, and the root `.R` files.
+- `Write(*.R)` widened to `Write(**/*.R)` — the gitignore-style pattern matched only
+  root-level files, missing `R/helpers.R`, `server/plot.R`, and the rest of the split.
+- `Bash(rm *)` → `Bash(rm:*)` and `Bash(git push *)` → `Bash(git push:*)` — the space-glob
+  form does not prefix-match, so both deny rules were ineffective even once the file
+  parsed. Same normalisation applied to the allow rules in `settings.local.json`.
+
+**R formatting hook — built, evaluated, deliberately left disabled.** `.claude/hooks/style-r.R`
+reads the hook payload from stdin, filters to `.R` files, and calls `styler::style_file()`;
+it exits 0 on every path so a formatting failure can never block an edit. `styler` 1.11.0
+was installed into the user library (`win-library/4.5`), not into `renv` — it is a dev tool,
+not a project dependency, and adding it would mean touching `renv.lock`. The hook runs
+`Rscript --vanilla` so it bypasses `.Rprofile` and never activates the project's renv
+environment.
+
+It is **not wired into any settings file**, on evidence rather than preference. Trialled
+against `R/helpers.R`:
+
+| Scope | Result |
+|---|---|
+| default | 33 insertions / 14 deletions — expands every brace-less `if/else` into a full braced chain |
+| `"spaces"` | 4 / 4 — keeps the braces but strips the aligned-column padding |
+| `I("indention")` | **file unchanged** |
+
+Five helpers would have been reformatted at default scope (`is_col_included`,
+`get_est_type`, `get_font_expansion`, `serialise_x_ticks`, `serialise_chr_vec`) — each a
+compact aligned dispatch table turned into a tall braced block. Since the file is already
+clean under `I("indention")`, styler's only disagreements with this codebase are ones where
+the existing style is the more readable. The script is kept on disk should that judgement
+change; enabling it means adding a `PostToolUse` block to `settings.local.json` (it must be
+the *local* file — the command needs an absolute path to `Rscript.exe`, which is not on
+PATH on this machine).
+
+**Stale worktree removed.** `.claude/worktrees/dec004-finish/` — a 145-file, 5.8 MB orphaned
+checkout from the DEC-004 phase — was left behind with its `.git/worktrees/dec004-finish/`
+metadata directory emptied, so `git worktree list` no longer knew about it while
+`git fetch` failed on every invocation trying to prune it:
+`error: failed to delete '.git/worktrees/dec004-finish': Permission denied` (a OneDrive
+file lock). Before deleting, all 49 non-generated files were hashed with `git hash-object`
+and each blob confirmed present in the repository's object database — nothing in the
+checkout was unique. Directory and metadata removed; `git fetch` now exits 0 silently. The
+leftover `worktree-dec004-finish` branch, which pointed at the same commit as `main`, was
+deleted with `git branch -d` (which accepted it, confirming no unmerged work).
+
+**`CLAUDE.md` brought up to date.** Its "Current phase" section still described DEC-004 as
+in progress at Step 5 with Steps 6-7 outstanding, while `main` had been at DEC-005 Step 6
+(CHG-034) since 2026-07-17. Rewritten to describe DEC-005, its step status, and both
+architecture decisions in force. "Key files" expanded to list the actual `server/` and `R/`
+contents rather than the pre-split `server.R`-holds-everything description, and the
+resolved ISS-031 / FEAT-009 were dropped from the open-issues list, leaving ISS-028/029/030
+to match `issues-register.md`.
+
+**Verification:** both settings files parse as valid JSON. Hook script tested against three
+payloads (R file, `.md` file, malformed JSON) — all exit 0. `git fetch` clean. `main` level
+with `origin/main` at `891d3cd`, no unpushed commits. No test run — no application code was
+touched.
+
+**Known-stale, not addressed:** the `renv` library is built for R 4.3.x
+(`renv/library/R-4.3/`), so running under the R 4.5.2 installation reports every lockfile
+package as missing. Pre-existing and unrelated to this session; resolving it means either
+staying on R 4.3.x or a full `renv::restore()` under 4.5.2.
+
+---
+
 ### CHG-034 — DEC-005 Step 6: CSS merge/polish, dead-code prune, viewport smoke test
 
 | Field | Detail |
@@ -1129,7 +1222,8 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | 2026-05-11 | ISS-004 Phase 1 — test infrastructure initialised; 9 pure helpers extracted to `R/helpers.R`; 48 unit tests passing (CHG-014) | `testthat` wired up via `usethis::use_testthat()`. `renv.lock` updated. `server.R` refactored to call helpers. Phase 2 (`shinytest2`) pending. |
 | 2026-05-11 | ISS-004 Phase 2 — `shinytest2` integration tests (CHG-015) | 7 integration tests passing across 3 scenarios: column confirmation gate (incl. ISS-020 regression guard), two-file upload, and regression type → estimate label. `renv.lock` updated (sortable, knitr, shinytest2 pinned). ISS-004 fully resolved. ISS-013/014/015 register entries corrected to Resolved (were incorrectly showing Open). |
 | 2026-05-11 | ISS-002 resolved — `extrafont` replaced with `sysfonts`/`showtext` (CHG-016, DEC-003) | Lato now registered at startup from bundled TTFs. Google Fonts load via `tryCatch()` — fail silently without internet. Verified: Lato, Open Sans, Roboto, Montserrat appear in selector. ISS-028 (age group sort order), ISS-029 (system fonts absent), ISS-030 (Source Sans Pro renamed) raised. |
+| 2026-09-03 | Tooling housekeeping — Claude Code settings repaired, stale DEC-004 worktree removed, `CLAUDE.md` refreshed for DEC-005 (CHG-035) | `.claude/settings.json` was invalid JSON and silently inert; comments stripped, dead rules removed, permission patterns normalised. Orphaned worktree (145 files) deleted after verifying every blob existed in history — `git fetch` now clean. `styler` hook built and tested but left disabled: it reformats the codebase against its own house style. No app source, test, or `renv.lock` change. |
 
 ---
 
-*Document version: 2.9 — CHG-022 through CHG-034 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-6 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish) complete — core migration done, Step 7 phase-2 remains*
+*Document version: 3.0 — CHG-022 through CHG-035 implemented: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-6 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish) complete — core migration done, Step 7 phase-2 remains. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed.*
