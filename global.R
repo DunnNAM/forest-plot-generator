@@ -93,11 +93,15 @@ names(responses) <- stringr::str_replace(responses, "IND_", "Indicator ") %>%
   stringr::str_remove_all("_bin")
 predictors <- colnames(forestHelperR::dat)[-c(1,3,7,which(stringr::str_detect(
   colnames(forestHelperR::dat), "\\d")))]
-names(predictors) <- c("Sex", "Age group at diagnosis", 
+# Labels below are this repo's own display names, not anything sourced from
+# forestHelperR — the package only supplies the underlying column names
+# (colnames(forestHelperR::dat) above); renaming a label here never touches
+# the package (2026-09-04 user request/clarification).
+names(predictors) <- c("Sex", "Age-group",
                        "First Nations peoples status",
-                       "Socioeconomic status", "Comorbidities", 
-                       "Residence at diagnosis", "Diagnosis time period", 
-                       "ASA score", "Surgical facility type", "Stage", 
+                       "Socioeconomic status", "Comorbidities",
+                       "Remoteness area of residence", "Time period",
+                       "ASA score", "Surgical facility type", "Stage",
                        "Surgical admission status")
 elements <- c("Variables" = "variable",
               "Levels" = "level",

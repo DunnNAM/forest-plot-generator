@@ -67,8 +67,11 @@
       elements = order(),
       right_justify = input$right_justify,
       n_display = input$n_display,
-      concatenate_est_ci = input$concatenate_est_ci,
-      concatenate_est_sig = input$concatenate_est_sig,
+      # Derived from the single combine_estimate_with radio (FEAT-011
+      # follow-up, 2026-09-04) rather than two independent switch inputs —
+      # forestPloter()'s two params are unchanged, only what feeds them.
+      concatenate_est_ci = identical(input$combine_estimate_with, "ci"),
+      concatenate_est_sig = identical(input$combine_estimate_with, "sig"),
       significance_symbol = input$significance)
 
     p
@@ -98,24 +101,24 @@
   height = function() dims()[2]*72*1.5,
   res = 72*1.5)
 
-  ### f - if estimate or CI deselected, unset concatenate_est_ci
+  ### f - if estimate or CI deselected while "Combine estimate with:" is set
+  ### to Confidence interval, reset it to Neither (FEAT-011 follow-up,
+  ### 2026-09-04 — replaces the old concatenate_est_ci switch-reset observer
+  ### now that the two options are one radioButtons())
   observe({
-    if (!("est" %in% (input$elements)) | !("lci" %in% (input$elements))) {
-      updateMaterialSwitch(session,
-                           inputId = "concatenate_est_ci",
-                           value = FALSE)
+    if ((!("est" %in% (input$elements)) | !("lci" %in% (input$elements))) &&
+        identical(input$combine_estimate_with, "ci")) {
+      updateRadioButtons(session, "combine_estimate_with", selected = "neither")
     }
   }) %>%
     bindEvent(input$elements)
 
-  ### g - when significance deselected, unset concatenate_est_sig
+  ### g - when significance deselected while "Combine estimate with:" is set
+  ### to Significance symbol, reset it to Neither (FEAT-011 follow-up,
+  ### 2026-09-04 — replaces the old concatenate_est_sig switch-reset observer)
   observe({
-    if(!input$significance) {
-      updateMaterialSwitch(
-        session,
-        "concatenate_est_sig",
-        value = FALSE
-      )
+    if (!input$significance && identical(input$combine_estimate_with, "sig")) {
+      updateRadioButtons(session, "combine_estimate_with", selected = "neither")
     }
   }) %>%
     bindEvent(input$significance)

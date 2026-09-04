@@ -11,25 +11,29 @@
 # they don't look ragged when a grid column is narrower than the accordion
 # column was (restyle plan §9).
 
-# Title + content wrapper for a single .drawer-columns field: a bold title
-# noticeably larger than its content (CSS: .drawer-field-title/-content),
-# with content starting at a consistent vertical position across a row —
-# requested specifically for the Data panel's four top-level fields (design/
-# modal-progression-workflow review, 2026-09-04). Deliberately not cards, per
-# that discussion — plain title-over-content blocks inside the existing
-# .drawer-columns grid.
+# Title + content wrapper for a single drawer field: a bold title noticeably
+# larger than its content (CSS: .drawer-field-title/-content), with content
+# starting at a consistent vertical position across a row — requested
+# specifically for the Data panel's four top-level fields (design/
+# modal-progression-workflow review, 2026-09-04) and since extended to
+# Variables, Display, Text, and Order (FEAT-011 follow-up, same day). Used
+# both inside .drawer-row-divided (Data, Variables) and the plain
+# .drawer-columns grid (Display, Text, Order) — see each panel's own comment
+# for which and why. Deliberately not cards, per the original discussion —
+# plain title-over-content blocks.
 #
-# `first` controls the leading divider (Data panel's .drawer-row-divided
-# only — see dataPanelUI()) explicitly rather than via a CSS :first-child/
-# :not(:first-child) selector. That was the first approach, and it silently
-# matched nothing for the sim-mode fields: Shiny's conditionalPanel() renders
-# `display: contents` when shown (so its child is promoted into the parent
-# flex row for *layout* purposes) but a `.drawer-row-divided > *` CSS
-# selector still only sees the un-promoted DOM tree — the conditionalPanel
-# div, not the drawerFieldUI() div nested inside it — so the divider rule
-# never matched it (confirmed via devtools, 2026-09-04). Since exactly one
-# field ("Data set") is ever first regardless of dataset_selected, passing it
-# explicitly sidesteps the mismatch entirely.
+# `first` controls the leading divider in a .drawer-row-divided context
+# (Data, Variables — see dataPanelUI()/variablesPanelUI()) explicitly rather
+# than via a CSS :first-child/:not(:first-child) selector. That was the first
+# approach, and it silently matched nothing for the sim-mode fields: Shiny's
+# conditionalPanel() renders `display: contents` when shown (so its child is
+# promoted into the parent flex row for *layout* purposes) but a
+# `.drawer-row-divided > *` CSS selector still only sees the un-promoted DOM
+# tree — the conditionalPanel div, not the drawerFieldUI() div nested inside
+# it — so the divider rule never matched it (confirmed via devtools,
+# 2026-09-04). Passing `first` explicitly sidesteps the mismatch entirely; on
+# the plain grid (no .drawer-row-divided ancestor) it's a harmless no-op, so
+# every call site can pass it consistently without checking context.
 drawerFieldUI <- function(title, ..., first = FALSE) {
   div(
     class = paste("drawer-field-block", if (!first) "drawer-field-block--divided"),
@@ -57,25 +61,34 @@ dataPanelUI <- function() {
       # .drawer-row-divided rather than .drawer-columns: this panel gets
       # vertical dividers between its fields, which needs the row to stretch
       # to fill the drawer's available height (see CSS) — a flex row, not a
-      # grid, is what lets that work (2026-09-04 discussion). Scoped to the
-      # Data panel only; the other five panels keep the plain grid.
+      # grid, is what lets that work (2026-09-04 discussion). Also used by
+      # variablesPanelUI() (FEAT-011 follow-up, same day) — both panels' base
+      # fields stay in one row at typical widths. Display, Text, and Order
+      # keep the plain grid: too many fields to stay single-row, and the
+      # divider technique only positions correctly within one flex line.
       class = "drawer-row-divided",
       drawerFieldUI(
         "Data set",
+        # Defaults to Simulated data, not Regression output — app-wide
+        # default load state set 2026-09-04 (user request) so the app opens
+        # with a working example rather than an empty upload prompt.
         radioButtons("dataset_selected", label = NULL,
                      choices = c("Regression output" = "upload", "Simulated data" = "sim"),
-                     selected = "upload"),
+                     selected = "sim"),
         first = TRUE
       ),
       conditionalPanel(
         condition = "input.dataset_selected == 'upload'",
         drawerFieldUI(
           "Comparison mode",
-          # materialSwitch() has no built-in on/off text — with the "Comparison
-          # of two regressions" description now living in the title above (not
-          # beside the switch), a bare toggle had no visible cue what "on"
-          # means, so it gets a static "On" caption (2026-09-04 discussion).
-          materialSwitch("by_group", "On", value = FALSE, status = "primary")
+          # materialSwitch() has no built-in on/off text, and this switch
+          # originally got a static "On" caption to compensate (2026-09-04
+          # discussion) — dropped (2026-09-04 follow-up, FEAT-011): the
+          # caption never tracked the switch's actual state, so it read as
+          # mislabeled the instant this switch (defaults FALSE) was seen
+          # before being toggled — the title above already names the field,
+          # and the switch's own on/off colour is the state indicator.
+          materialSwitch("by_group", NULL, value = FALSE, status = "primary")
         )
       ),
       drawerFieldUI(
@@ -109,15 +122,21 @@ dataPanelUI <- function() {
         condition = "input.dataset_selected == 'sim'",
         drawerFieldUI(
           "Response variable",
-          selectInput("response_var", label = NULL, choices = responses)
+          # Defaults to Indicator 3 (value "IND_3") — 2026-09-04 default load
+          # state request.
+          selectInput("response_var", label = NULL, choices = responses, selected = "IND_3")
         )
       ),
       conditionalPanel(
         condition = "input.dataset_selected == 'sim'",
         drawerFieldUI(
           "Predictor variables",
+          # Defaults to Sex, Age-group, Time period (values "Sex",
+          # "AgeGroupAtDiagnosis", "DxYearGroup") — 2026-09-04 default load
+          # state request.
           checkboxGroupInput("predictor_vars", label = NULL,
-                             choices = predictors, selected = c("AgeGroupAtDiagnosis"))
+                             choices = predictors,
+                             selected = c("Sex", "AgeGroupAtDiagnosis", "DxYearGroup"))
         )
       )
     ),
@@ -141,36 +160,105 @@ dataPanelUI <- function() {
 variablesPanelUI <- function() {
   tagList(
     drawerHeaderUI("list-check", "Variables and Elements"),
+    # .drawer-row-divided attempt #2 (FEAT-011 follow-up, 2026-09-04): unlike
+    # Display/Text below, this panel's base fields (Variables plotted,
+    # Elements included, Estimate Column Formatting) are few enough to stay
+    # in one row at the drawer's usual width, so the divider technique — which
+    # only positions correctly within a single flex line, see www/style.css —
+    # is worth attempting here. It degrades to an oversized divider spanning
+    # into the next line if enough conditional fields (Count display, Plot
+    # inverse hazard ratio) are active at once to force a wrap; accepted as a
+    # known limitation rather than solved, per the design/
+    # modal-progression-workflow review. The three estimate-column toggles
+    # were originally separate fields here and did force that wrap even in
+    # the common case — combining them into one field (below) was the actual
+    # fix, not just a formatting nicety.
     div(
-      class = "drawer-columns",
-      checkboxGroupInput("variables_displayed", "Variables plotted", choices = c()),
-      checkboxGroupInput("elements", "Elements included",
-                         choices = display_option,
-                         selected = unname(display_option)),
+      class = "drawer-row-divided",
+      drawerFieldUI(
+        "Variables plotted",
+        checkboxGroupInput("variables_displayed", label = NULL, choices = c()),
+        first = TRUE
+      ),
+      drawerFieldUI(
+        "Elements included",
+        checkboxGroupInput("elements", label = NULL,
+                           choices = display_option,
+                           selected = unname(display_option))
+      ),
       conditionalPanel(
         condition = "input.elements.includes('n')",
-        radioButtons("n_display", "Count display", choices = c("n", "n/N", "% (n/N)"), selected = "n")
+        drawerFieldUI(
+          "Count display",
+          radioButtons("n_display", label = NULL, choices = c("n", "n/N", "% (n/N)"), selected = "n")
+        )
       ),
-      conditionalPanel(
-        condition = "input.elements.includes('est')||input.elements.includes('lci')",
-        div(class = "drawer-field",
-            strong("Combine estimate and CI"),
-            materialSwitch("concatenate_est_ci", "", value = TRUE, status = "primary"))
+      # Combined field (user request, 2026-09-04 review, revised same day):
+      # originally three separate drawerFieldUI() items, then a first pass
+      # merged them under one heading as two independent switches — this pass
+      # replaces the two switches with a single three-way radioButtons(),
+      # since "combine with significance" and "combine with CI" were always
+      # mutually exclusive in practice (nothing downstream renders an
+      # estimate cell with both crammed in) and a radio makes that exclusivity
+      # the UI's own structure instead of two switches a user could
+      # (nonsensically) both flip on. "Include significance symbol" keeps its
+      # own switch — unlike the other two, it isn't a "combine with" choice,
+      # it controls whether the symbol exists at all — but drops the strong()
+      # wrapper around its label: nested inside this field's own bold title,
+      # a second bold label directly below it read as double emphasis rather
+      # than a normal field row.
+      #
+      # `combine_estimate_with` replaces the old `concatenate_est_ci` /
+      # `concatenate_est_sig` *inputs*, but not forestHelperR's parameters of
+      # the same names — those are the package's public API and aren't
+      # touched. server/plot.R and server/export.R now derive both booleans
+      # from this single radio's value at the point they call into the
+      # package (`== "ci"` / `== "sig"`) instead of reading two independent
+      # switch inputs.
+      drawerFieldUI(
+        "Estimate Column Formatting",
+        tagList(
+          # checkboxInput(), not materialSwitch() (2026-09-04 follow-up): the
+          # switch + label pushed into a narrow .drawer-field-block column
+          # wrapped "Include significance symbol" one word per line — a
+          # checkbox is the same widget family as "Elements included" above
+          # it, and its native layout puts the box first with the label
+          # following as ordinary text, wrapping normally if it must rather
+          # than stacking vertically. No .drawer-field wrapper needed —
+          # that class existed to lay a label next to a switch; a plain
+          # checkboxInput() already pairs box and label itself.
+          checkboxInput("significance", "Include significance symbol", value = TRUE),
+          # Nested drawerFieldUI() rather than a hand-styled div (2026-09-04
+          # follow-up): a manual margin-top on radioButtons()'s own
+          # .shiny-options-group landed on the wrong box — that class wraps
+          # only the three radio rows, and Bootstrap's .radio items already
+          # carry their own margin-top, so the override was colliding with
+          # inter-item spacing instead of adding space above the group
+          # (confirmed by inspecting radioButtons()'s generated HTML). Reusing
+          # drawerFieldUI() gives this title the same .drawer-field-title
+          # style and the same title-to-content gap (.drawer-field-block's
+          # flex `gap`) that every other field in the drawer already uses —
+          # consistent look, and the spacing comes from the pattern that's
+          # already proven to work rather than a new one-off rule.
+          # `first = TRUE` just skips the (harmless-but-pointless, since
+          # there's no .drawer-row-divided ancestor here) divided class.
+          drawerFieldUI(
+            "Combine estimate with:",
+            radioButtons("combine_estimate_with", label = NULL,
+                         choices = c("Significance symbol" = "sig",
+                                     "Confidence interval" = "ci",
+                                     "Neither" = "neither"),
+                         selected = "ci"),
+            first = TRUE
+          )
+        )
       ),
-      conditionalPanel(
-        condition = "input.significance == 1",
-        div(class = "drawer-field",
-            strong("Combine estimate and significance symbol"),
-            materialSwitch("concatenate_est_sig", "", value = FALSE, status = "primary"))
-      ),
-      div(class = "drawer-field",
-          strong("Include significance symbol"),
-          materialSwitch("significance", "", value = TRUE, status = "primary")),
       conditionalPanel(
         condition = "input.regression_type == 'cox'",
-        div(class = "drawer-field",
-            strong("Plot inverse hazard ratio"),
-            materialSwitch("inv", "", value = FALSE, status = "primary"))
+        drawerFieldUI(
+          "Plot inverse hazard ratio",
+          materialSwitch("inv", NULL, value = FALSE, status = "primary")
+        )
       )
     )
   )
@@ -179,49 +267,70 @@ variablesPanelUI <- function() {
 displayPanelUI <- function() {
   tagList(
     drawerHeaderUI("sliders", "Plot Display Options"),
+    # Titled fields (drawerFieldUI()) on the plain .drawer-columns grid, not
+    # .drawer-row-divided — this panel has ~15 fields and reliably wraps
+    # across several rows at any realistic drawer width, and the divider
+    # technique only positions correctly within a single flex line (see
+    # www/style.css). Grid wrapping handles any row count correctly on its
+    # own; dividers do not. FEAT-011 follow-up, 2026-09-04.
     div(
       class = "drawer-columns",
-      sliderInput("plotting_width", "Width of plotting area", min = 20, max = 250, value = 120, step = 1, ticks = TRUE),
-      colourpicker::colourInput("ci_colour", "Confidence interval colour", value = "#444444"),
+      drawerFieldUI("Width of plotting area",
+        sliderInput("plotting_width", label = NULL, min = 20, max = 250, value = 120, step = 1, ticks = TRUE)),
+      drawerFieldUI("Confidence interval colour",
+        colourpicker::colourInput("ci_colour", label = NULL, value = "#444444")),
       conditionalPanel(
         condition = "input.by_group==1",
-        colourpicker::colourInput("ci_colour2", "Group 2 confidence interval colour", value = "#E07653")
+        drawerFieldUI("Group 2 confidence interval colour",
+          colourpicker::colourInput("ci_colour2", label = NULL, value = "#E07653"))
       ),
-      colourpicker::colourInput("reference_colour", "Reference level colour", value = "#C43D4D"),
-      shinyWidgets::noUiSliderInput("xlims", "Domain", range = log_scale,
-                                    value = c(0.25, 4), min = 0.05, max = 20),
-      shinyWidgets::noUiSliderInput("xticks", "x-axis ticks", range = log_scale,
-                                    connect = FALSE, value = c(0.1, 0.25, 0.5, 2, 4, 10), min = 0.05, max = 20),
-      div(class = "drawer-field",
-          strong("Table background transparent"),
-          materialSwitch("transparent_table_bg", "", value = TRUE, status = "primary")),
+      drawerFieldUI("Reference level colour",
+        colourpicker::colourInput("reference_colour", label = NULL, value = "#C43D4D")),
+      drawerFieldUI("Domain",
+        shinyWidgets::noUiSliderInput("xlims", label = NULL, range = log_scale,
+                                      value = c(0.25, 4), min = 0.05, max = 20)),
+      drawerFieldUI("x-axis ticks",
+        shinyWidgets::noUiSliderInput("xticks", label = NULL, range = log_scale,
+                                      connect = FALSE, value = c(0.1, 0.25, 0.5, 2, 4, 10), min = 0.05, max = 20)),
+      # Static "On" captions dropped from every materialSwitch() below (FEAT-011
+      # follow-up, 2026-09-04): the caption text never tracked the switch's
+      # actual state, so it read as mislabeled for any switch defaulting FALSE
+      # (striped_bg, sigfigs) the moment it was seen before being toggled —
+      # and would go stale the instant *any* of them was toggled, defaulting
+      # TRUE or not. The field title above each switch already names it; the
+      # switch's own on/off colour is the state indicator now.
+      drawerFieldUI("Table background transparent",
+        materialSwitch("transparent_table_bg", NULL, value = TRUE, status = "primary")),
       conditionalPanel(
         condition = "input.transparent_table_bg==0",
-        colourpicker::colourInput("table_bg_colour", "Table background colour"),
-        div(class = "drawer-field",
-            strong("Striped background"),
-            materialSwitch("striped_bg", "", value = FALSE, status = "primary")),
+        drawerFieldUI("Table background colour",
+          colourpicker::colourInput("table_bg_colour", label = NULL)),
+        drawerFieldUI("Striped background",
+          materialSwitch("striped_bg", NULL, value = FALSE, status = "primary")),
         conditionalPanel(
           condition = "input.striped_bg==1",
-          colourpicker::colourInput("bg_stripe", "Stripe colour", value = "#EBEBEB")
+          drawerFieldUI("Stripe colour",
+            colourpicker::colourInput("bg_stripe", label = NULL, value = "#EBEBEB"))
         )
       ),
-      div(class = "drawer-field",
-          strong("Plot background transparent"),
-          materialSwitch("transparent_plot_bg", "", value = TRUE, status = "primary")),
+      drawerFieldUI("Plot background transparent",
+        materialSwitch("transparent_plot_bg", NULL, value = TRUE, status = "primary")),
       conditionalPanel(
         condition = "input.transparent_plot_bg==0",
-        colourpicker::colourInput("plot_bg_colour", "Plot background colour")
+        drawerFieldUI("Plot background colour",
+          colourpicker::colourInput("plot_bg_colour", label = NULL))
       ),
-      div(strong("Space between variables"),
-          sliderInput("gaps", "", value = 0.8, min = 0.5, max = 2, step = 0.1, ticks = FALSE)),
-      div(strong("Indent of levels"),
-          sliderInput("indent", "", value = 0.5, min = 0, max = 2, step = 0.1, ticks = FALSE)),
-      materialSwitch("sigfigs", "Use significant figures", value = FALSE, status = "primary"),
-      numericInput("digits", "Number of decimal places", value = 2, min = 1, max = 5, step = 1),
-      selectizeInput(
-        "right_justify", "Right-justify variables", multiple = TRUE,
-        choices = elements[-c(1,2,4)], selected = c())
+      drawerFieldUI("Space between variables",
+        sliderInput("gaps", label = NULL, value = 0.8, min = 0.5, max = 2, step = 0.1, ticks = FALSE)),
+      drawerFieldUI("Indent of levels",
+        sliderInput("indent", label = NULL, value = 0.5, min = 0, max = 2, step = 0.1, ticks = FALSE)),
+      drawerFieldUI("Use significant figures",
+        materialSwitch("sigfigs", NULL, value = FALSE, status = "primary")),
+      drawerFieldUI("Number of decimal places",
+        numericInput("digits", label = NULL, value = 2, min = 1, max = 5, step = 1)),
+      drawerFieldUI("Right-justify variables",
+        selectizeInput("right_justify", label = NULL, multiple = TRUE,
+                       choices = elements[-c(1,2,4)], selected = c()))
     )
   )
 }
@@ -229,9 +338,16 @@ displayPanelUI <- function() {
 textPanelUI <- function() {
   tagList(
     drawerHeaderUI("font", "Plot Text Options"),
+    # Titled fields on the plain grid, same reasoning as displayPanelUI(): too
+    # many fields to stay single-row, so no .drawer-row-divided here. The two
+    # wrap-control fluidRow()s stay un-wrapped in drawerFieldUI() — they're
+    # secondary sub-controls of the field above them (Title/Footnote), not
+    # fields in their own right, and already carry their own switch label
+    # ("Center title"/"Long footnote"). FEAT-011 follow-up, 2026-09-04.
     div(
       class = "drawer-columns",
-      textInput("plot_title", "Title", placeholder = "Plot title text"),
+      drawerFieldUI("Title",
+        textInput("plot_title", label = NULL, placeholder = "Plot title text")),
       conditionalPanel(
         condition = "input.plot_title != ''",
         fluidRow(
@@ -240,11 +356,16 @@ textPanelUI <- function() {
           sliderInput("plot_title_wrap", "Title width before wrapping", min = 40,
                       max = 140, value = 80, step = 1, width = "200px",
                       ticks = FALSE))),
-      selectInput("font", "Font", choices = fonts, selected = "Lato"),
-      sliderInput("base_size", "Font size", min = 8, max = 18, value = 11, step = 1, post = "pt", ticks = FALSE),
-      colourpicker::colourInput("base_font_colour", "Text colour", value = "#444444"),
-      selectizeInput("xaxis_text", "x-axis label", choices = labels_axis, options = list(create = TRUE)),
-      textInput("plot_footnote", "Footnote", placeholder = "Plot footnote text"),
+      drawerFieldUI("Font",
+        selectInput("font", label = NULL, choices = fonts, selected = "Lato")),
+      drawerFieldUI("Font size",
+        sliderInput("base_size", label = NULL, min = 8, max = 18, value = 11, step = 1, post = "pt", ticks = FALSE)),
+      drawerFieldUI("Text colour",
+        colourpicker::colourInput("base_font_colour", label = NULL, value = "#444444")),
+      drawerFieldUI("x-axis label",
+        selectizeInput("xaxis_text", label = NULL, choices = labels_axis, options = list(create = TRUE))),
+      drawerFieldUI("Footnote",
+        textInput("plot_footnote", label = NULL, placeholder = "Plot footnote text")),
       conditionalPanel(
         condition = "input.plot_footnote != ''",
         fluidRow(
@@ -253,9 +374,12 @@ textPanelUI <- function() {
           sliderInput("footnote_wrap", "Footnote width before wrapping", min = 40,
                       max = 200, value = 120, step = 1, width = "200px",
                       ticks = FALSE))),
-      colourpicker::colourInput("variable_font_colour", "Variable font colour", value = "#2047A7"),
-      selectizeInput("variable_font_face", "Variable header font face", choices = faces, selected = "bold"),
-      selectizeInput("pval_font_face", "p-value font face", choices = faces, selected = "plain")
+      drawerFieldUI("Variable font colour",
+        colourpicker::colourInput("variable_font_colour", label = NULL, value = "#2047A7")),
+      drawerFieldUI("Variable header font face",
+        selectizeInput("variable_font_face", label = NULL, choices = faces, selected = "bold")),
+      drawerFieldUI("p-value font face",
+        selectizeInput("pval_font_face", label = NULL, choices = faces, selected = "plain"))
     )
   )
 }
@@ -270,9 +394,15 @@ orderPanelUI <- function() {
     # 2026-09-04) — off is the common case, so it should look intentional.
     div(
       class = "drawer-fullwidth",
-      div(class = "drawer-field",
-          strong("Reorder columns"),
-          checkboxInput("reorder", "", value = FALSE)),
+      # drawerFieldUI() for the same title-over-content look as the other
+      # panels (FEAT-011 follow-up, 2026-09-04). Dividers don't apply here —
+      # there's only ever one field — so `first` is a no-op outside
+      # .drawer-row-divided, kept for consistency with the other call sites.
+      drawerFieldUI(
+        "Reorder columns",
+        checkboxInput("reorder", label = NULL, value = FALSE),
+        first = TRUE
+      ),
       p(class = "text-muted",
         "Off by default — the plot uses the standard left-to-right column",
         " order. Turn this on to drag the plot's element columns",

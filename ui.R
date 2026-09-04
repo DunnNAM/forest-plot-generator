@@ -14,7 +14,11 @@ ui <- page_navbar(
       div(
         class = "content-area",
         uiOutput("status_chips"),
+        # id lets server/drawers.R drive this tabset programmatically
+        # (bslib::nav_select) — added FEAT-011 follow-up, 2026-09-04, so
+        # opening any drawer other than Data switches the main body to Plot.
         navset_card_tab(
+          id = "main_tabs",
           nav_panel(
             "Review data",
             br(),

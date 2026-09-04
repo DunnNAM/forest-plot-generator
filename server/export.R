@@ -82,8 +82,12 @@
       '  elements                 = ', elements_str, ',\n',
       '  right_justify            = ', rj_str, ',\n',
       '  n_display                = "', input$n_display, '",\n',
-      '  concatenate_est_ci       = ', input$concatenate_est_ci, ',\n',
-      '  concatenate_est_sig      = ', input$concatenate_est_sig, ',\n',
+      # Derived from combine_estimate_with, same as server/plot.R (FEAT-011
+      # follow-up, 2026-09-04) — the generated code still calls forestPloter()
+      # with its real concatenate_est_ci/concatenate_est_sig params, just
+      # computed from the one radio input instead of two switch inputs.
+      '  concatenate_est_ci       = ', identical(input$combine_estimate_with, "ci"), ',\n',
+      '  concatenate_est_sig      = ', identical(input$combine_estimate_with, "sig"), ',\n',
       '  significance_symbol      = ', input$significance, '\n',
       ')'
     )

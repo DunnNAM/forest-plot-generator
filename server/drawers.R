@@ -14,6 +14,16 @@
   outputOptions(output, "download_r_code", suspendWhenHidden = FALSE)
 
   ### a - rail click: toggle semantics (clicking the open key closes it)
+  #
+  # Also anchors the main body tab to whichever drawer is open (FEAT-011
+  # follow-up, 2026-09-04 user request, revised same day): Review data is
+  # only useful while the Data drawer is the thing being edited, so opening
+  # any other drawer switches the main body to Plot, and — per the revision —
+  # returning to the Data drawer switches it back to Review data. Only fires
+  # on opening a drawer, not on closing one (the close branch below): closing
+  # a drawer via the rail (clicking its already-open key) leaves whichever
+  # main tab is currently showing alone, since there's no drawer left to
+  # anchor it to.
   observeEvent(input$rail_key, {
     current <- rv_drawer()
     key <- input$rail_key
@@ -22,6 +32,9 @@
       rv_drawer(NULL)
     } else {
       rv_drawer(key)
+      bslib::nav_select("main_tabs",
+                        selected = if (identical(key, "data")) "Review data" else "Plot",
+                        session = session)
     }
   })
 
@@ -51,8 +64,15 @@
   ### d - status chip click: always opens its drawer (not a toggle, unlike
   ### the rail buttons themselves — a chip is a shortcut to a setting, not
   ### an open/close control for a drawer that's probably already closed).
+  ### Same Plot-tab switch as the rail click above (FEAT-011 follow-up,
+  ### 2026-09-04, revised same day) — a chip is just another way to open a
+  ### drawer, so it anchors the main tab exactly like the rail click above.
   observeEvent(input$chip_open_key, {
-    rv_drawer(input$chip_open_key)
+    key <- input$chip_open_key
+    rv_drawer(key)
+    bslib::nav_select("main_tabs",
+                      selected = if (identical(key, "data")) "Review data" else "Plot",
+                      session = session)
   })
 
   ### e - chip strip content
