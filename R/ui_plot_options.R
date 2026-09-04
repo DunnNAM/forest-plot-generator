@@ -54,6 +54,55 @@ drawerHeaderUI <- function(icon_name, title) {
   h4(class = "drawer-header", icon(icon_name), title)
 }
 
+# Sub-group wrapper for a panel with too many fields to read as one flat list
+# (Display panel, 2026-09-04 follow-up, revised same day per user feedback)
+# — one GROUP is now the "field" as far as layout/dividers are concerned:
+# each drawerGroupUI() call is a single .drawer-field-block (same class
+# dataPanelUI()/variablesPanelUI() fields use) whose *content* is a vertical
+# stack of the group's own fields, not one control. The whole panel becomes
+# one .drawer-row-divided row of ~5 group-columns side by side — reusing
+# Data/Variables' existing, proven single-row divider technique directly,
+# rather than inventing a new one, since the item count in that row is now
+# ~5 (groups) instead of 15+ (individual fields), which is exactly the
+# "stays single-row at typical widths" case that technique was designed
+# for. The first version of this (a horizontal row of fields *per* group,
+# with dividers between individual fields and groups stacked as separate
+# rows down the panel) put dividers in the wrong place (between fields
+# within a group, not between groups) and, worse, meant 5 separately-
+# wrapping rows instead of one — exactly the "still needs to scroll" outcome
+# the user was trying to avoid. Fields inside a group use drawerSubfieldUI()
+# below, not drawerFieldUI() — a lighter label, since the bold
+# .drawer-field-title treatment now belongs to the group as a whole.
+# `width`, added 2026-09-04 (fourth follow-up, user request): an explicit
+# CSS percentage (e.g. "50%") overriding the row's default even flex growth
+# (.drawer-row-divided .drawer-field-block { flex: 1 1 220px }) — inline
+# style beats an external stylesheet rule's specificity automatically, no
+# !important needed. Added because dropping Display's Number formatting
+# group (freeing a column) only redistributed that space *evenly* across
+# the remaining groups by default, when what was actually wanted was giving
+# most of it to Plot sizing & axis specifically, whose sliders needed the
+# room. NULL (the default) keeps the old even-growth behaviour for panels
+# that don't need an explicit split (Data, Variables).
+drawerGroupUI <- function(title, ..., first = FALSE, width = NULL) {
+  div(
+    class = paste("drawer-field-block", if (!first) "drawer-field-block--divided"),
+    style = if (!is.null(width)) sprintf("flex: 0 0 %s; max-width: %s;", width, width),
+    div(class = "drawer-field-title", title),
+    div(class = "drawer-field-content drawer-group-stack", ...)
+  )
+}
+
+# One field inside a drawerGroupUI() group — a smaller, less prominent label
+# than drawerFieldUI()'s (which now marks the group itself), stacked above
+# its control with a tight gap. checkboxInput() fields inside a group skip
+# this wrapper entirely and go in bare (see displayPanelUI()).
+drawerSubfieldUI <- function(label, ...) {
+  div(class = "drawer-subfield",
+      div(class = "drawer-subfield-label", label),
+      ...)
+}
+
+
 dataPanelUI <- function() {
   tagList(
     drawerHeaderUI("database", "Data"),
@@ -250,6 +299,31 @@ variablesPanelUI <- function() {
                                      "Neither" = "neither"),
                          selected = "ci"),
             first = TRUE
+          ),
+          # Moved from the Display panel's Number formatting group
+          # (2026-09-04, third follow-up, user request — a quick real-estate
+          # reclaim: dropping that group entirely from Display frees up a
+          # whole column in its own .drawer-row-divided row for Plot sizing
+          # & axis, whose x-axis-ticks slider needed the room). Lands here
+          # since it's now the only visible formatting option left for the
+          # estimate/CI column — a natural fit alongside "Combine estimate
+          # with:" rather than a stray field of its own. Same
+          # .drawer-field-title-reuse pattern as "Combine estimate with:"
+          # above, for the same reason (a proven title-to-content gap
+          # instead of a new one-off rule). `first = TRUE` is required here,
+          # not optional (bug fixed 2026-09-04, fourth follow-up): every
+          # .drawer-field-block is a *descendant* of .drawer-row-divided
+          # regardless of nesting depth, so its divider CSS
+          # (.drawer-row-divided .drawer-field-block--divided) matched this
+          # nested field too and added a 28px left padding meant for actual
+          # row items — visually shifting this field right of its siblings
+          # ("appears centred" in the user's report) instead of flush left.
+          # "Combine estimate with:" above already passed first = TRUE for
+          # the same reason; this one just needed the same treatment.
+          drawerFieldUI(
+            "Number of decimal places",
+            numericInput("digits", label = NULL, value = 2, min = 1, max = 5, step = 1),
+            first = TRUE
           )
         )
       ),
@@ -267,71 +341,155 @@ variablesPanelUI <- function() {
 displayPanelUI <- function() {
   tagList(
     drawerHeaderUI("sliders", "Plot Display Options"),
-    # Titled fields (drawerFieldUI()) on the plain .drawer-columns grid, not
-    # .drawer-row-divided — this panel has ~15 fields and reliably wraps
-    # across several rows at any realistic drawer width, and the divider
-    # technique only positions correctly within a single flex line (see
-    # www/style.css). Grid wrapping handles any row count correctly on its
-    # own; dividers do not. FEAT-011 follow-up, 2026-09-04.
+    # Restructured 2026-09-04, revised same day per user feedback: the first
+    # version put 5 groups of *rows* stacked down the panel, each its own
+    # wrapping flex line — dividers ended up between individual fields
+    # within a group, and the panel as a whole still needed 5 separately-
+    # wrapping rows (3/2/2/3/2 fields respectively), which didn't solve the
+    # "needs no scrolling" goal at all. This version makes each GROUP a
+    # single .drawer-field-block (drawerGroupUI()) — its fields stacked
+    # vertically inside with no dividers between them — and puts all 5
+    # groups in *one* .drawer-row-divided row, the same single-row divider
+    # technique Data/Variables already use. ~5 items reliably stays single-
+    # row at typical drawer widths (unlike the 15+ individual fields this
+    # replaced), so the dividers now correctly separate the four/five
+    # *groups* from each other, matching what was actually asked for.
+    # Every materialSwitch() in the panel converted to checkboxInput() at
+    # the same time — same reasoning as "Include significance symbol" in
+    # variablesPanelUI() (a switch's label wrapped awkwardly in a narrow
+    # column, and checkbox is the same widget family "Elements included"
+    # already uses). Not applied elsewhere yet (by_group, inv still use
+    # materialSwitch) — the user asked for *a* consistent widget approach
+    # across drawers, not a mandate to convert every switch immediately.
+    # Consolidated to 3 groups with an explicit 50/25/25 width split
+    # (2026-09-04, fourth follow-up, user request): dropping the Number
+    # formatting group (previous follow-up) only freed a column's width
+    # *evenly* across the remaining 4 groups (.drawer-row-divided's default
+    # flex: 1 1 220px grows every item equally), which wasn't actually
+    # targeted at Plot sizing & axis — the one that needed the room for its
+    # sliders (especially x-axis ticks, cramped at ~220-260px with up to 12
+    # handles). Colours and Backgrounds merged into one "Colours &
+    # Backgrounds" group (both are colour-related settings — table/plot
+    # background colour and transparency sit naturally alongside CI/
+    # reference colour) so there are only 3 groups to split explicitly,
+    # rather than trying to weight 4. drawerGroupUI()'s new `width` param
+    # sets the split directly.
     div(
-      class = "drawer-columns",
-      drawerFieldUI("Width of plotting area",
-        sliderInput("plotting_width", label = NULL, min = 20, max = 250, value = 120, step = 1, ticks = TRUE)),
-      drawerFieldUI("Confidence interval colour",
-        colourpicker::colourInput("ci_colour", label = NULL, value = "#444444")),
-      conditionalPanel(
-        condition = "input.by_group==1",
-        drawerFieldUI("Group 2 confidence interval colour",
-          colourpicker::colourInput("ci_colour2", label = NULL, value = "#E07653"))
+      class = "drawer-row-divided",
+      drawerGroupUI(
+        "Plot sizing & axis",
+        # noUiSliderInput(), not sliderInput() (2026-09-04, fifth follow-up,
+        # user request): sliderInput()'s ionRangeSlider auto-generates grid
+        # ticks at whatever interval divides the range into its own default
+        # count, giving odd values like every 23 units for a 20-250 range —
+        # there's no simple way to fix the *spacing* via sliderInput()'s own
+        # ticks = TRUE. noUiSliderInput()'s `pips` option addresses that
+        # directly (mode = "values" places pips at exactly the values given,
+        # independent of the slider's own drag step) and also brings this
+        # field's visual style in line with Domain/x-axis ticks below it,
+        # which already use noUiSliderInput — three different-looking widgets
+        # in one small group was the "styling should be closer together"
+        # complaint. Range widened to 40-320 (was 20-250) specifically to
+        # land on clean 40-unit pips (40, 80, ... 320) — the user's own
+        # suggestion — while step = 1 keeps the actual draggable value
+        # continuous/fine-grained, not snapped to multiples of 40; only the
+        # displayed pips are at 40-unit intervals. input$plotting_width's
+        # type/shape is unchanged (still a single numeric), so nothing
+        # downstream (server/plot.R, server/export.R, the Display rail
+        # badge) needed to change.
+        drawerSubfieldUI("Width of plotting area",
+          shinyWidgets::noUiSliderInput("plotting_width", label = NULL,
+                                        min = 40, max = 320, value = 120, step = 1,
+                                        pips = list(mode = "values", values = seq(40, 320, by = 40), density = 4))),
+        drawerSubfieldUI("Domain",
+          shinyWidgets::noUiSliderInput("xlims", label = NULL, range = log_scale,
+                                        value = c(0.25, 4), min = 0.05, max = 20)),
+        # xticks_count folded inline into the "x-axis ticks" subfield, not a
+        # separate stacked subfield of its own (2026-09-04, second follow-up
+        # — quick layout fix, user request): a full extra label + gap +
+        # control was enough added height in this one group to push
+        # .drawer-row-divided past the drawer's max-height, triggering an
+        # unwanted internal scroll. Reuses the existing .drawer-field inline
+        # row style (same one "Comparison mode" etc. use) rather than adding
+        # new CSS. This is layout-only — xticks_count's id, the uiOutput()
+        # it drives, and the server-side rebuild/mirror-pairing logic in
+        # server/observers.R are all completely unchanged; see that file's
+        # own comment for why a renderUI() is needed here at all
+        # (updateNoUiSliderInput() can't add/remove handles) and why
+        # server/drawers.R needs outputOptions(..., suspendWhenHidden =
+        # FALSE) for output$xticks_ui. The tick slider's own min/max being
+        # wired to the current domain (rather than the fixed full log_scale
+        # range) is server-side, in the same renderUI() — see
+        # server/observers.R.
+        drawerSubfieldUI("x-axis ticks",
+          div(class = "drawer-field",
+              "Number of ticks:",
+              numericInput("xticks_count", label = NULL, value = 6, min = 2, max = 12, step = 1, width = "70px")),
+          uiOutput("xticks_ui")),
+        first = TRUE,
+        width = "50%"
       ),
-      drawerFieldUI("Reference level colour",
-        colourpicker::colourInput("reference_colour", label = NULL, value = "#C43D4D")),
-      drawerFieldUI("Domain",
-        shinyWidgets::noUiSliderInput("xlims", label = NULL, range = log_scale,
-                                      value = c(0.25, 4), min = 0.05, max = 20)),
-      drawerFieldUI("x-axis ticks",
-        shinyWidgets::noUiSliderInput("xticks", label = NULL, range = log_scale,
-                                      connect = FALSE, value = c(0.1, 0.25, 0.5, 2, 4, 10), min = 0.05, max = 20)),
-      # Static "On" captions dropped from every materialSwitch() below (FEAT-011
-      # follow-up, 2026-09-04): the caption text never tracked the switch's
-      # actual state, so it read as mislabeled for any switch defaulting FALSE
-      # (striped_bg, sigfigs) the moment it was seen before being toggled —
-      # and would go stale the instant *any* of them was toggled, defaulting
-      # TRUE or not. The field title above each switch already names it; the
-      # switch's own on/off colour is the state indicator now.
-      drawerFieldUI("Table background transparent",
-        materialSwitch("transparent_table_bg", NULL, value = TRUE, status = "primary")),
-      conditionalPanel(
-        condition = "input.transparent_table_bg==0",
-        drawerFieldUI("Table background colour",
-          colourpicker::colourInput("table_bg_colour", label = NULL)),
-        drawerFieldUI("Striped background",
-          materialSwitch("striped_bg", NULL, value = FALSE, status = "primary")),
+      drawerGroupUI(
+        "Colours & backgrounds",
+        drawerSubfieldUI("Confidence interval colour",
+          colourpicker::colourInput("ci_colour", label = NULL, value = "#444444")),
         conditionalPanel(
-          condition = "input.striped_bg==1",
-          drawerFieldUI("Stripe colour",
-            colourpicker::colourInput("bg_stripe", label = NULL, value = "#EBEBEB"))
-        )
+          condition = "input.by_group==1",
+          drawerSubfieldUI("Group 2 confidence interval colour",
+            colourpicker::colourInput("ci_colour2", label = NULL, value = "#E07653"))
+        ),
+        drawerSubfieldUI("Reference level colour",
+          colourpicker::colourInput("reference_colour", label = NULL, value = "#C43D4D")),
+        checkboxInput("transparent_table_bg", "Table background transparent", value = TRUE),
+        conditionalPanel(
+          condition = "input.transparent_table_bg==0",
+          drawerSubfieldUI("Table background colour",
+            colourpicker::colourInput("table_bg_colour", label = NULL)),
+          checkboxInput("striped_bg", "Striped background", value = FALSE),
+          conditionalPanel(
+            condition = "input.striped_bg==1",
+            drawerSubfieldUI("Stripe colour",
+              colourpicker::colourInput("bg_stripe", label = NULL, value = "#EBEBEB"))
+          )
+        ),
+        checkboxInput("transparent_plot_bg", "Plot background transparent", value = TRUE),
+        conditionalPanel(
+          condition = "input.transparent_plot_bg==0",
+          drawerSubfieldUI("Plot background colour",
+            colourpicker::colourInput("plot_bg_colour", label = NULL))
+        ),
+        width = "25%"
       ),
-      drawerFieldUI("Plot background transparent",
-        materialSwitch("transparent_plot_bg", NULL, value = TRUE, status = "primary")),
-      conditionalPanel(
-        condition = "input.transparent_plot_bg==0",
-        drawerFieldUI("Plot background colour",
-          colourpicker::colourInput("plot_bg_colour", label = NULL))
-      ),
-      drawerFieldUI("Space between variables",
-        sliderInput("gaps", label = NULL, value = 0.8, min = 0.5, max = 2, step = 0.1, ticks = FALSE)),
-      drawerFieldUI("Indent of levels",
-        sliderInput("indent", label = NULL, value = 0.5, min = 0, max = 2, step = 0.1, ticks = FALSE)),
-      drawerFieldUI("Use significant figures",
-        materialSwitch("sigfigs", NULL, value = FALSE, status = "primary")),
-      drawerFieldUI("Number of decimal places",
-        numericInput("digits", label = NULL, value = 2, min = 1, max = 5, step = 1)),
-      drawerFieldUI("Right-justify variables",
-        selectizeInput("right_justify", label = NULL, multiple = TRUE,
-                       choices = elements[-c(1,2,4)], selected = c()))
-    )
+      drawerGroupUI(
+        "Spacing & layout",
+        width = "25%",
+        drawerSubfieldUI("Space between variables",
+          sliderInput("gaps", label = NULL, value = 0.8, min = 0.5, max = 2, step = 0.1, ticks = FALSE)),
+        drawerSubfieldUI("Indent of levels",
+          sliderInput("indent", label = NULL, value = 0.5, min = 0, max = 2, step = 0.1, ticks = FALSE)),
+        # Defaults to Counts ("n") pre-selected (2026-09-04 follow-up, user
+        # request) — the count column (n / n/N / n/N (%), per input$n_display)
+        # reads better right-justified in the common case; still fully
+        # removable, just no longer starting empty.
+        drawerSubfieldUI("Right-justify variables",
+          selectizeInput("right_justify", label = NULL, multiple = TRUE,
+                         choices = elements[-c(1,2,4)], selected = c("n")))
+      )
+    ),
+    # sigfigs kept in the DOM but hidden, not deleted (2026-09-04, third
+    # follow-up, user request — "remove for now"): the Number formatting
+    # group it lived in is dropped entirely to reclaim a column's width for
+    # Plot sizing & axis (see the .drawer-row-divided block above), and
+    # "Number of decimal places" moved into variablesPanelUI()'s Estimate
+    # Column Formatting field. server/plot.R, server/export.R, and the
+    # Display rail badge (server/drawers.R) all still read input$sigfigs
+    # directly — deleting the input entirely would leave it NULL and break
+    # those. A hidden checkboxInput() keeps it a real, bound Shiny input
+    # (always FALSE, since it can't be toggled) with zero visible footprint,
+    # so nothing downstream needed to change. Revisit alongside ISS-039 if
+    # significant-figures mode is worth resurfacing.
+    div(style = "display: none;",
+        checkboxInput("sigfigs", NULL, value = FALSE))
   )
 }
 

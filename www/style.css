@@ -107,10 +107,61 @@ body > .container-fluid {
   background: transparent;
 }
 
-/* Propagate the card's fixed height down to the plot. */
-.card[style*="height"] .tab-pane,
-.card[style*="height"] .tab-pane > .shiny-html-output {
-  height: 100%;
+/* Disable bslib's fill-height sizing on the Builder page's navset_card_tab
+   (2026-09-04, user request): on a tall plot the card was capped at a
+   JS-computed height with an internal scrollbar; on a short one it left
+   dead space below the card up to that same computed height — either way
+   scrolling the whole page once the plot is taller than the viewport is the
+   better behaviour, on any screen size, not just high-res ones.
+   page_navbar(fillable = FALSE) (ui.R) turns off the *page*-level fill
+   context, but doesn't reach this: navset_card_tab()'s outer card() call is
+   hardcoded inside bslib (checked the bslib 0.8.0 source directly —
+   bslib:::navset_card calls card(height = height, full_screen =
+   full_screen, ...) with no fill = FALSE passthrough exposed by
+   navset_card_tab()'s own arguments), so the card keeps sizing itself via
+   bslib's card-resize JS (data-bslib-card-init) regardless of the page
+   setting. Overriding here instead of reimplementing the component against
+   bslib's undocumented internals. `!important` in this stylesheet beats an
+   inline style even when JS keeps rewriting it on resize — a real CSS spec
+   exception, not a specificity fluke — so this holds regardless of how many
+   times the resize script fires. The previous `.card[style*="height"] ...`
+   rule (propagating a JS-set fixed height down to the plot) is now the
+   opposite of what's wanted and has been removed. */
+/* .shiny-plot-output added 2026-09-04 (second follow-up): plotOutput()'s own
+   container carries its own separate fixed-height default (400px), one
+   level deeper than .tab-pane — overridden here in CSS rather than via
+   plotOutput()'s own `height` argument, since passing height = "auto" there
+   broke Shiny's client-side plot-resize JS (see ui.R for the full story). */
+.content-area .bslib-card,
+.content-area .bslib-card .card-body,
+.content-area .bslib-card .tab-pane,
+.content-area .bslib-card .shiny-plot-output {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Real cause of the "zoomed in, lost clarity" report (2026-09-04, traced by
+   inspecting the actual rendered <img> tag directly, not by guessing): the
+   plot's <img>, as Shiny renders it, carries only a `width="100%"` HTML
+   attribute — no separate CSS `style` on the element at all — so it always
+   stretches to fill whatever the container's *current* CSS width is. The
+   server always renders the bitmap at a *fixed* pixel resolution (computed
+   from the data via `dims()` in server/plot.R, unrelated to display size).
+   Once the container above was freed to size itself naturally instead of
+   being capped inside a small fixed box, it became wider than before, so
+   the same fixed-resolution bitmap was stretched over more on-screen space
+   than previously — visible upscaling blur, not a resolution regression.
+   (A `height="[object Object]"` HTML attribute was also found on the same
+   <img> during this investigation — an invalid value the browser silently
+   ignores, confirmed harmless and unrelated to this; not worth chasing.)
+   Fix: stop forcing width:100%, let the image display at its native
+   resolution and only ever shrink (never stretch) to fit a narrower
+   container — this is what actually restores the previous crisp look. */
+.content-area .bslib-card .shiny-plot-output img {
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
 }
 
 /* ── Dashboard layout — bottom rail (side→bottom adaptation) ─────────────── */
@@ -473,6 +524,51 @@ body > .container-fluid {
   letter-spacing: 0.04em;
   color: #8b8e92;
   margin: 10px 0 4px;
+}
+
+/* Display panel groups (2026-09-04, revised same day): each drawerGroupUI()
+   group is one .drawer-field-block inside the panel's single
+   .drawer-row-divided row (same class Data/Variables' individual fields
+   use — see displayPanelUI() for why groups, not fields, are the row's
+   items here). .drawer-group-stack is that block's .drawer-field-content —
+   a plain vertical stack of the group's own fields, no dividers between
+   them; the divider belongs between groups, which .drawer-field-block
+   already provides. */
+/* gap reduced 14px -> 10px 2026-09-04 (fifth follow-up, user request):
+   tighter vertical rhythm so a group with several stacked fields (Plot
+   sizing & axis, three sliders) sits further from the rail rather than
+   crowding it. */
+.drawer-group-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* One field inside a group — a smaller, less prominent label than
+   .drawer-field-title (which now marks the group as a whole), stacked
+   tightly above its control. checkboxInput() fields skip this wrapper
+   entirely (bare in the group stack) since they already pair their own
+   label with the box. width: 100% + the slider-container rule below added
+   2026-09-04 (fifth follow-up): a slider rendered while its drawer panel is
+   still display:none measures a stale (often 0 or default-fallback) parent
+   width at creation time — the existing drawer.js resize dispatch on open
+   mostly covers this, but forcing width: 100% here too removes any
+   remaining ambiguity about the *container's* box, independent of what a
+   given slider library does internally on resize. */
+.drawer-subfield {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+.drawer-subfield-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+.drawer-subfield .shiny-input-container,
+.drawer-subfield .noUi-target {
+  width: 100%;
 }
 
 .drawer-btnrow {

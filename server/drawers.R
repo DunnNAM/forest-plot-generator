@@ -12,6 +12,11 @@
   outputOptions(output, "sortable_cols", suspendWhenHidden = FALSE)
   outputOptions(output, "download_plot", suspendWhenHidden = FALSE)
   outputOptions(output, "download_r_code", suspendWhenHidden = FALSE)
+  # output$xticks_ui (Display panel, 2026-09-04 follow-up) — same reason as
+  # the others: it's a renderUI() inside a normally-hidden drawer panel, and
+  # needs to actually render (so input$xticks exists) even before the user
+  # opens Display.
+  outputOptions(output, "xticks_ui", suspendWhenHidden = FALSE)
 
   ### a - rail click: toggle semantics (clicking the open key closes it)
   #
@@ -128,6 +133,16 @@
   })
 
   ### g - rail badge: Display — dot when any display setting is non-default
+  ### right_justify's check fixed 2026-09-04 (sixth follow-up, user report):
+  ### this compared against the *original* default (empty), but the actual
+  ### default changed to c("n") earlier the same session (right-justify
+  ### Counts by default) — `length(...) > 0` was true for that default too,
+  ### so the badge showed a permanent false positive on Display regardless
+  ### of whether the user had actually changed anything. Compares against
+  ### the real current default instead. digits/sigfigs weren't touched here
+  ### since their own defaults (2, FALSE) are unchanged — sigfigs is now
+  ### hidden from the UI entirely (see R/ui_plot_options.R) but stays a real
+  ### bound input fixed at FALSE, so this check still holds.
   output$rail_badge_display <- renderUI({
     non_default <- any(
       input$plotting_width != 120,
@@ -139,7 +154,7 @@
       input$indent != 0.5,
       isTRUE(input$sigfigs),
       input$digits != 2,
-      length(input$right_justify) > 0
+      !setequal(input$right_justify, c("n"))
     )
 
     if (isTRUE(non_default)) {
