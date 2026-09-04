@@ -43,6 +43,28 @@ the user's own live check immediately after, **none of the three actually landed
 intended, and one regressed** (title/tab baseline alignment got worse); see **ISS-042**
 in the open queue below.
 
+**ISS-042 (navbar) was then largely resolved (CHG-055..057).** The user removed the
+Chrome browser extension from that session entirely (it was "burning tokens
+wastefully") and instead checked each CSS round live in their own browser, directing
+the next fix — this is what actually got ISS-042's navbar sub-issues resolved, after
+the prior blind CSS-text reasoning (CHG-054) had produced the opposite of its intended
+result. **Two real root causes were found along the way, both only discoverable by
+fetching the served HTML/CSS directly** (the browser tool wasn't available even to
+Claude that session — the user does the visual checking now, per their explicit
+direction): bslib's `page_navbar()` uses Bootstrap-3-style markup where `.navbar-brand`
+is nested inside a `.navbar-header` wrapper rather than being a direct flex child; and
+Bootstrap 5.3's `.nav-underline` utility class (present by default on the tab `<ul>`)
+was silently overriding `.nav-link` spacing at a higher CSS specificity than expected,
+regardless of stylesheet load order. The fix that actually stuck was structural, not
+another alignment tweak: **navbar tabs are now filled slate/cream pills**, which
+removes the whole "must overlay another element's border exactly" problem outright.
+The same pill treatment was extended to the wizard's modal-footer buttons and the
+Export drawer's buttons at the user's request, and the Export drawer itself was
+reworked — single divider between its two panels (not a coloured border each), buttons
+bottom-aligned, panel narrowed over 33%, buttons inverted to slate/cream with a
+uniform width, and a centred (not left-aligned) layout. **ISS-042's sub-issue 1 (Help
+page title alignment) was not touched and is still open** — see the open queue below.
+
 **Also worth knowing:** `README.md` (both on this branch and on `main`) is
 significantly stale — untouched since before DEC-004/DEC-005, still describing the
 old sidebar+accordion layout and listing resolved issues (no tests, no renv lockfile)
@@ -65,29 +87,37 @@ new scope to it) and its companion audit in
 
 ---
 
-## 3. NEXT SESSION — Connect Cloud publish, in progress (started 2026-09-06)
+## 3. NEXT SESSION
 
-**Before picking up the Connect Cloud thread below, note a still-open item the
-`design/modal-progression-workflow` branch raised: ISS-042 (CHG-054's navbar/Help-tab
-fixes didn't land).** CHG-054 attempted three narrowly-scoped fixes to the top navbar
-and Help tab: (1) the app title's styling/size relative to the Help page's own title,
-(2) the app title and tab labels sharing one visual baseline, and (3) the Builder/Help
-tabs showing one consistent divider with a clearly-visible active-tab indicator
-overlaid on it rather than a second, misaligned line. **The user's own live check
-immediately after found none of the three actually landed, and one (title/tab baseline
-alignment) is now visibly worse than before** — see **ISS-042** in `issues-register.md`
-for the full detail, including per-sub-issue hypotheses. The session that produced
-CHG-054 had no working Chrome browser extension connection and could only verify the
-change by inspecting served HTML/CSS text — never an actual rendered screenshot, which
-is almost certainly why reasoning that looked sound against the stylesheet text didn't
-survive contact with the real page. Get a working browser connection (or the user's own
-live check) before touching this CSS again. Concrete first steps: (1) restart the R
-process fully and hard-refresh the browser before assuming anything is still broken —
-`R/ui_help.R`'s class rename needs a restart, unlike the CSS-only navbar changes in the
-same commit; (2) for the navbar, use actual devtools computed-style/box-model
-inspection rather than re-deriving cascade/specificity from the stylesheet text; (3) fix
-the baseline alignment before re-touching the active-tab `::after` — the underline's
-positioning is likely downstream of the alignment bug, not an independent problem.
+**No working-tool blocker anymore, and no single mandated priority** — the previous
+"fix ISS-042 first" instruction is done (its navbar sub-issues; see §2). The Connect
+Cloud publish thread (real, `main`-side work) is a separate track — see §3a below; it
+does not depend on ISS-042. Two small things worth knowing before picking whatever's
+next:
+
+1. **The Chrome extension is gone from this session, on purpose — do not try to
+   reconnect it.** The user removed it because it was burning tokens wastefully.
+   Going forward, **the user does the visual checking themselves** and directs CSS/
+   layout fixes turn by turn; don't call `tabs_context_mcp` or any other
+   `mcp__claude-in-chrome__*` tool expecting it to work. This is recorded as a
+   standing memory (`no-chrome-extension-user-inspects-visually`) — it should already
+   be in context at session start, but flagging here too since it reverses this
+   section's earlier framing (before ISS-042's navbar sub-issues were resolved, a
+   working browser connection was called out as the missing piece).
+2. **ISS-042 sub-issue 1 (Help page title left-alignment) is still open** — the
+   session that resolved CHG-055..057 was entirely on the navbar tabs/brand (sub-issues
+   2, 3) and never touched `R/ui_help.R` or the Help page's own CSS. Worth a quick
+   check next time the Help tab is open — the original hypothesis (CHG-054's
+   `R/ui_help.R` class rename needing a full R restart, not just a browser refresh, to
+   actually take effect) was never confirmed or ruled out.
+
+Otherwise, the open queue below (ISS-041 README refresh, ISS-036 renv/migration
+prerequisite, FEAT-011's own merge decision) is genuinely just a backlog — pick
+whatever seems most useful, or ask the user.
+
+---
+
+### 3a. Connect Cloud publish (started 2026-09-06, `main`)
 
 ---
 
@@ -198,17 +228,18 @@ and compare before snapshotting.
 
 ## 5. Open queue
 
-Beyond the two live items above (§3 Connect Cloud, §4 migration), this is a backlog:
+Beyond §3a (Connect Cloud) and §4 (migration), this is a backlog — no single mandated
+order anymore (see §3):
 
 | ID | Sev | What | Note |
 |---|---|---|---|
-| **ISS-042** | Medium | CHG-054's navbar/Help-tab restyle didn't land — see §3 | **Do this before ISS-041.** User's explicit priority for next session. |
+| **ISS-042** | Low (was Medium) | Sub-issue 1 only: Help page title left-alignment | Navbar sub-issues (2, 3) resolved — CHG-055. Sub-issue 1 never touched; see §3. |
 | **ISS-036** | — | ~~`forestHelperR` recorded as `Source: "unknown"` in `renv.lock`~~ | ✅ Resolved (CHG-040) — published to `github.com/DunnNAM/forestHelperR`, `renv.lock` now records a real `"Source": "GitHub"`. `renv::restore()` should now fully succeed, unblocking the R 4.5.2 migration's own prerequisite too — not yet re-verified on 4.5.2 itself. |
 | **ISS-043** | — (feature) | Add internal `styling` package as a dependency (colour palettes, fonts) | Doc-only, not started. Same deployability question as ISS-036 — whatever eventually fixes ISS-036 properly should probably cover this too. |
 | **ISS-028** | Medium | Age group levels not in clinical sort order | Highest-severity pre-existing item and the only one affecting output correctness — but it lives in `forestHelperR`, so it needs a session in *that* repo. Explicitly out of scope per plan §10. |
 | **ISS-029** | Low | OS system fonts absent from selector after `sysfonts` migration | |
 | **ISS-030** | Low | `"Source Sans Pro"` renamed on Google Fonts; silently absent | |
-| **ISS-041** | Medium | `README.md` describes the pre-restyle app (sidebar/accordion, no tests, no renv) | User-facing and actively misleading, not just incomplete. Deliberately not fixed yet — worth its own pass. Do after ISS-042. |
+| **ISS-041** | Medium | `README.md` describes the pre-restyle app (sidebar/accordion, no tests, no renv) | User-facing and actively misleading, not just incomplete. Deliberately not fixed yet — worth its own pass. |
 | **ISS-039** | Low | x-axis tick generation always splits evenly either side of 1 | Doesn't suit a skewed distribution. Deferred future-development note from the user, not an immediate ask. |
 | **ISS-040** | Low | Variables rail badge can briefly flash a stale "hidden" count on load | Cosmetic, self-corrects. User explicitly asked this be logged rather than fixed now. |
 | **FEAT-011** | — | Decide whether `design/modal-progression-workflow` gets merged/adopted | Merged to `main` (2026-09-06, rebase — see `app-changelog-decision-register.md`'s renumbering note). |
@@ -353,10 +384,40 @@ R 4.5.2 has no populated library.
   consistent on paper, checked via `curl` for served HTML/CSS and balanced braces, but
   the Chrome browser extension was unavailable that session so none of it was actually
   seen rendered. The user's own live check immediately after found none of the three
-  fixes landed, and one regressed. See **ISS-042**. Lesson: for visual/layout work,
-  either get a working browser connection before claiming something is fixed, or say
-  explicitly that the change is unverified and may need visual correction — don't let
-  "the reasoning is sound" stand in for "I saw it work."
+  fixes landed, and one regressed. See **ISS-042**. **Resolution that actually worked
+  (CHG-053, same day):** the user removed the Chrome extension from the session
+  entirely and instead checked each CSS round live in their own browser, directing the
+  next fix — i.e. the fix wasn't "get Claude a working browser tool", it was "the
+  human does the visual verification and Claude iterates on direction." This is now
+  the standing process — see the `no-chrome-extension-user-inspects-visually` memory —
+  not a one-off workaround.
+- **bslib's `page_navbar()` does not emit plain Bootstrap 5 navbar markup.** It uses
+  Bootstrap-3-style compatibility structure: `.navbar-brand` renders as a `<span>`
+  nested inside a `.navbar-header` wrapper div (which also holds the mobile toggle
+  button), and `.navbar-header` — not `.navbar-brand` — is the actual flex child of
+  `.container-fluid`. Any CSS assuming `.navbar-brand` is a direct flex sibling of
+  `.navbar-collapse` (the natural assumption from reading plain Bootstrap 5 docs) will
+  silently target the wrong element for flex alignment. Found 2026-09-04 (CHG-053) by
+  fetching the served HTML directly (`curl http://127.0.0.1:<port>/`) after a
+  `margin-bottom` change on `.navbar-brand` visibly had no effect — worth doing this
+  check early for any navbar-brand-position CSS in this app, rather than assuming
+  standard markup.
+- **Bootstrap 5.3's `.nav-underline` utility class is present by default on bslib's
+  generated tab `<ul>`** (`page_navbar()`'s tabs render as `<ul class="nav navbar-nav
+  nav-underline" ...>`), and its own rule
+  `.navbar .nav-underline :where(ul.nav.navbar-nav > li)>a` — specificity 0-2-1 — set
+  `padding-bottom`/`margin-bottom` intended to make *its own* underline style hug the
+  navbar's border. This silently overrides a plain `.navbar-nav .nav-link` selector
+  (specificity 0-2-0) **regardless of which stylesheet loads last** — a same-property
+  override that isn't about `!important` or edit order, just a higher-specificity
+  selector nobody wrote deliberately for this app. Found 2026-09-04 (CHG-053) by
+  fetching `bootstrap.min.css` directly (`curl .../bootstrap-5.3.1/bootstrap.min.css`)
+  and diffing it against what our own `.nav-link` rule declared — this is what made
+  every previous attempt at aligning the active-tab underline fail regardless of how
+  the offset math was tuned. Worth checking for on any future `.nav-link`/tab-styling
+  work in this app; the eventual fix was to stop fighting it (switch to filled pill
+  tabs, which don't need underline-precision alignment at all) rather than out-
+  specificity it.
 
 ---
 

@@ -239,6 +239,72 @@ manual retry also fails.
 > unchanged. Commit subject lines on the branch still cite the old numbers — treat this
 > register as the authoritative numbering going forward.
 
+### CHG-057 — Export drawer redesign: single divider, centred content, uniform-width inverted pills (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011, FEAT-009 |
+
+User-driven visual pass over the Export drawer panel (`R/ui_plot_options.R`'s `exportPanelUI()`, `www/style.css`), done with the user checking each round in their own browser and directing the next change (see CHG-055's note on why — the Chrome browser extension was removed from this session). Several rounds, in order:
+
+1. **Removed the per-panel coloured left borders** (`.export-section--graph`/`--code`, slate/teal) and replaced them with a **single** thin divider — the same faint slate rule used by the Data/Variables drawers (`color-mix(in srgb, var(--page-accent) 25%, transparent)`) — on the left edge of the **code** panel only, not the graph panel.
+2. **Bottom-aligned each panel's button(s).** The graph panel's format radio makes it taller than the code panel's plain label, which was pushing "Download" lower than "Copy R code"/"Download .R script". Wrapped the graph panel's single button in the same `.drawer-btnrow` class the code panel already used, then gave `.export-section .drawer-btnrow { margin-top: auto }` — both `.export-section` boxes are equal height (one CSS grid row, default `align-items: stretch`), so pushing each row to its own container's bottom lands both on the same line. Considered and rejected moving the format radio below the button instead, per the user's own reasoning: choosing a format is a *before*-the-click decision, so it belongs above the button regardless of alignment convenience.
+3. **Narrower panel** (user report: taking up too much horizontal space) — a new `.export-columns` class (alongside the shared `.drawer-columns`, not editing it — that class is also the Display panel's grid) caps the export layout at 640px, over 33% narrower than `.drawer-columns`' 1280px.
+4. **Inverted button colours to filled slate pills with cream text/icon**, matching the navbar's active tab pill (CHG-055) rather than Bootstrap's default white `.btn-default`. FontAwesome icons pick up the colour automatically via `currentColor`.
+5. **Uniform pill width.** All three buttons share `min-width: 190px` (sized by hand to fit "Download .R script", the longest label) so they read as one consistent set rather than each sized to its own text.
+6. **Bug found and fixed during (5):** the user reported "Download" looking narrower than the two code buttons despite the shared `min-width` — confirmed as a real layout bug, not a visual illusion. The code panel's `.drawer-btnrow` had been switched to `flex-direction: column` (step below) without also overriding flex's default `align-items: stretch`, so the two stacked buttons stretched to the row's full width while the graph panel's single button — in a row-direction container, where `stretch` affects height, not width — stayed at its declared 190px. Fixed with `align-items: center` on `.export-section--code .drawer-btnrow`.
+7. **Code panel's two buttons stacked vertically** instead of side by side — a consequence of (3) + (5) together: two 190px-wide pills side by side in a panel narrowed to fit within 640px total (shared with the graph panel) would either overflow or force the width back up.
+8. **Centred layout**, replacing the original left-aligned one on user request: `align-items: center; text-align: center;` on `.export-section` centres the label, format radio, and button(s) within each panel — satisfies the specific ask that the format radio sit centred over the Download button.
+
+No R reactive logic touched — `exportPanelUI()` changes are markup-only (added `.drawer-btnrow`/`.export-columns` wrapper classes). Verified only by the user's own live visual checks each round (no Chrome extension available this session — see CHG-055); not re-run against the automated test suite since no input ID or reactive was touched, consistent with prior CSS-only entries.
+
+---
+
+### CHG-056 — Pill button styling: wizard modal footers and Export panel buttons (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+
+Following the navbar tab redesign (CHG-055), applied the same fully-rounded pill treatment (`border-radius: 999px`) to the wizard's two modal footers (`.modal-footer .btn` — this app has only ever called `modalDialog()` from the wizard, confirmed in an existing CSS comment, so the generic Bootstrap class is safe to scope to) and the Export drawer's buttons (`.export-section .btn`), at the user's request rather than restyling every button in the app. Deliberately scoped, not global.
+
+Separately, fixed `.navbar-brand:hover`/`:focus` shifting to a dark near-black — Bootstrap's `.navbar-brand:hover,:focus{color:var(--bs-navbar-brand-hover-color)}` rule applies by class regardless of tag, even though the brand renders as a plain non-interactive `<span>` (`page_navbar()` gives it no `href`). Pinned both states to the resting slate colour and added `cursor: default`, since the element isn't clickable (user report: "not sure why the branding goes dark grey/black on hover, it doesn't need to be interactive").
+
+Verified only by the user's own live visual checks (no Chrome extension available this session).
+
+---
+
+### CHG-055 — Navbar tabs redesigned as filled pills; resolves ISS-042 (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-042, FEAT-011 |
+
+**Resolves ISS-042**, working with the user checking each round live in their own browser and directing the next fix — the Chrome browser extension had been removed from this session (it was "burning tokens wastefully", per the user), which is itself the correct resolution to ISS-042's root complaint: CHG-052 had no way to verify its CSS reasoning against a rendered page at all. Several rounds:
+
+1. **Tab label vertical position.** Root cause: `.navbar-nav .nav-link` used `line-height: 56px` to size its click target, which vertically *centres* text inside a 56px line box — while `.navbar-brand` sits in a tight ~24px box with `line-height: 1.1`, so its text hugs the box's bottom edge. `align-items: flex-end` (CHG-052) only ever aligned the two *boxes'* bottom edges, not the text within them, so the tab labels floated well above the brand's baseline regardless. First fix: `display: flex; align-items: flex-end; height: 56px` on `.nav-link`, bottom-anchoring its text the same way the brand's already sat.
+2. **Brand baseline.** With tab labels fixed, the brand needed a matching bottom inset to actually meet the tabs' new baseline — attempted via `margin-bottom` on `.navbar-brand`, which did not visibly move it. Root cause, found by fetching the served HTML directly (`curl`, since no browser tool was available): bslib's `page_navbar()` markup is **not** plain Bootstrap 5 — `.navbar-brand` renders as a `<span>` nested inside a `.navbar-header` wrapper div (Bootstrap-3-style compatibility markup), and `.navbar-header`, not `.navbar-brand`, is the actual flex item of `.container-fluid`. This was ultimately abandoned in favour of step 4 below rather than chased further.
+3. **Active-tab underline still not landing on the navbar's border.** Switched from an absolutely-positioned `::after` (CHG-052) to a real `border-bottom` on `.nav-link` (transparent by default, gold when `.active`) on the theory that a real border removes the position-math dependency — still didn't land correctly. Root cause, found by fetching and diffing the served `bootstrap.min.css` directly: bslib's generated tab `<ul>` carries Bootstrap 5.3's own `.nav-underline` utility class by default, whose rule `.navbar .nav-underline :where(ul.nav.navbar-nav > li)>a` (specificity 0-2-1) silently overrides `padding-bottom`/`margin-bottom` on the plain `.navbar-nav .nav-link` selector (0-2-0) **regardless of stylesheet load order** — the actual mechanism behind every previous round's alignment reasoning failing to hold in practice, on this branch and in CHG-052 before it.
+4. **Decisive fix, at the user's suggestion:** abandoned the shared-underline-on-divider design entirely for **filled pill tabs** — slate background + cream text when active, slate outline + slate text on the cream page when inactive, `box-shadow: 0 2px 5px rgba(66,97,117,0.35)` added on request for a muted lift. A pill's own background is the whole indicator, so it no longer needs to overlay another element's border line at all, which removes the entire class of problem items 1-3 kept hitting — and reverting `.navbar > .container-fluid`'s alignment to Bootstrap's plain default (`align-items: center`, no override) is enough for both the brand and the pills to read as nicely centred together, without needing pixel-exact baseline matching either.
+
+Also added `margin-left: 2.5rem` on `.navbar-nav` for horizontal breathing room between the title and tabs (user report: they read as too close together), and bumped `.nav-link` font size 14px → 16px for legibility.
+
+Verified only by the user's own live visual checks each round — this is the correct process going forward per the user's explicit direction (see `no-chrome-extension-user-inspects-visually` memory); no automated check exists for rendered CSS appearance.
+
+---
+
 ### CHG-054 — Navbar divider/active-tab-indicator unification, app title restyle, Help page title/card-header alignment (FEAT-011)
 
 | Field | Detail |
@@ -1780,6 +1846,8 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 ---
 
 ## Review Log
+
+> **Note (2026-09-06 merge):** rows below dated 2026-09-04 that cite `design/modal-progression-workflow`'s branch-only CHG numbers (CHG-039 onward) predate the merge renumbering — see the note at the top of **## Changes** above. Add 2 to any CHG number in this section from that range (e.g. the branch's own "CHG-052" is this register's CHG-054) to match the authoritative numbering.
 
 | Date | Activity | Outcome |
 |---|---|---|
