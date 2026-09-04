@@ -39,6 +39,12 @@ the `design/modal-progression-workflow` branch's own, separate status; ISS-038 (
 pre-existing first-visit-trigger bug the branch found and fixed) is detailed in
 `issues-register.md`.
 
+**Also worth knowing:** `README.md` (both on this branch and on `main`) is
+significantly stale — untouched since before DEC-004/DEC-005, still describing the
+old sidebar+accordion layout and listing resolved issues (no tests, no renv lockfile)
+as current limitations. Raised as **ISS-041**, deliberately not rewritten yet —
+flagged for its own pass rather than folded into unrelated UI work.
+
 | Phase | Outcome |
 |---|---|
 | Package stabilisation | Complete — 112 tests passing in `forestHelperR` |
@@ -173,7 +179,10 @@ Beyond the two live items above (§3 Connect Cloud, §4 migration), this is a ba
 | **ISS-028** | Medium | Age group levels not in clinical sort order | Highest-severity pre-existing item and the only one affecting output correctness — but it lives in `forestHelperR`, so it needs a session in *that* repo. Explicitly out of scope per plan §10. |
 | **ISS-029** | Low | OS system fonts absent from selector after `sysfonts` migration | |
 | **ISS-030** | Low | `"Source Sans Pro"` renamed on Google Fonts; silently absent | |
-| **FEAT-011** | — | Decide whether `design/modal-progression-workflow` gets merged/adopted | Branch is draft, in progress. `69f9b33` (card background fix) is mergeable to `main` independently right now if wanted, ahead of any decision on the rest. |
+| **ISS-041** | Medium | `README.md` describes the pre-restyle app (sidebar/accordion, no tests, no renv) | User-facing and actively misleading, not just incomplete. Deliberately not fixed yet — worth its own pass. |
+| **ISS-039** | Low | x-axis tick generation always splits evenly either side of 1 | Doesn't suit a skewed distribution. Deferred future-development note from the user, not an immediate ask. |
+| **ISS-040** | Low | Variables rail badge can briefly flash a stale "hidden" count on load | Cosmetic, self-corrects. User explicitly asked this be logged rather than fixed now. |
+| **FEAT-011** | — | Decide whether `design/modal-progression-workflow` gets merged/adopted | Merged to `main` (2026-09-06, rebase — see `app-changelog-decision-register.md`'s renumbering note). |
 | PDEC-005 | — | Move `forestHelperR` to its own repo? | Deferred — gated on publication/hosting being scoped. Note ISS-036 may force this conversation earlier, and now has a concrete Connect Cloud reason to as well. |
 | PDEC-006 | — | Declare package deps vs. document manual install | Deferred to a future package maintenance cycle |
 
@@ -272,6 +281,42 @@ R 4.5.2 has no populated library.
   a visible stray space in the browser. `p("...", strong("X"), ", ", strong("Y"), ...)`
   can render as "X , Y" instead of "X, Y". Building the sentence as one `HTML()` string
   sidesteps it — see CHG-048 / `R/ui_wizard.R`.
+- **A CSS descendant selector matches a nested `.drawer-field-block` too, not just a
+  direct row item.** `.drawer-row-divided .drawer-field-block--divided` (the divider
+  rule) matches *any* descendant with that class, regardless of nesting depth — a field
+  nested inside another field's own content (e.g. a sub-field added to an existing
+  titled field) picks up the row-level divider padding meant for actual row items,
+  visibly shifting it right of its siblings. Fix is always `first = TRUE` on a nested
+  `drawerFieldUI()`/`drawerGroupUI()` call, not just on top-level row items — found
+  2026-09-04 (CHG-050) when "Number of decimal places" landed inside Variables'
+  Estimate Column Formatting field without it.
+- **`bslib::navset_card_tab()`'s fill behaviour can't be turned off via its own
+  arguments — its outer `card()` call is hardcoded inside `bslib` with no `fill`
+  passthrough** (confirmed by reading the `bslib` 0.8.0 source directly:
+  `bslib:::navset_card` calls `card(height = height, full_screen = full_screen, ...)`).
+  `page_navbar(fillable = FALSE)` only turns off *page*-level fill context; the card
+  keeps sizing itself via its own resize JS regardless. Overriding in CSS
+  (`height: auto !important` etc., which *does* beat an inline style even one JS keeps
+  rewriting — a real spec exception) was the practical fix, not reimplementing the
+  component against `bslib`'s undocumented internals — see CHG-049 / `www/style.css`.
+- **`plotOutput()`'s `height` argument only accepts a fixed CSS length — passing
+  `"auto"` breaks Shiny's own client-side plot-resize JS.** The rendered `<img>` came
+  back with a literal `height="[object Object]"` HTML attribute (confirmed by
+  inspecting the tag directly) instead of erroring visibly. A CSS override on the
+  container achieves the same effect safely. Separately: the `<img>` itself only ever
+  carries `width="100%"` with no CSS `style` at all, so it always stretches to fill the
+  container's current width — if the server renders the bitmap at a fixed pixel
+  resolution (unrelated to display size, as `server/plot.R`'s `dims()`-based sizing
+  does here), widening the container stretches a fixed-resolution image over more
+  screen space, reading as "zoomed in, blurry" rather than an actual quality
+  regression. `width: auto; max-width: 100%` (shrink-only, never stretch) is the fix —
+  see CHG-049.
+- **`shinyWidgets::noUiSliderInput()`'s handle *count* is fixed at creation** —
+  `updateNoUiSliderInput()` only repositions/reconfigures existing handles (confirmed
+  via the package's own formals and example app), it can't add or remove them. Changing
+  how many handles a multi-value slider has means rebuilding it via `renderUI()` (same
+  pattern as the Data panel's file table / Order panel's sortable list — remember
+  `outputOptions(..., suspendWhenHidden = FALSE)` for it) — see CHG-050.
 
 ---
 

@@ -239,6 +239,57 @@ manual retry also fails.
 > unchanged. Commit subject lines on the branch still cite the old numbers — treat this
 > register as the authoritative numbering going forward.
 
+### CHG-053 — Rail badge: Display's "non-default" check fixed for the new right-justify default (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `fd490b7` (originally registered as CHG-051 on the branch) |
+
+CHG-048 changed `right_justify`'s default from empty to `c("n")` (Counts pre-selected). `output$rail_badge_display`'s "non-default" check (`server/drawers.R`) still tested `length(input$right_justify) > 0`, which was correct for the old empty default but became permanently `TRUE` for the new one — the Display rail item showed a maroon "edited" dot at every fresh load, regardless of whether the user had changed anything. Fixed to `!setequal(input$right_justify, c("n"))`, comparing against the actual current default. Found and reported by the user, who also correctly diagnosed a second, separate cosmetic issue on the Variables rail badge — a brief "N hidden" flash on load, self-correcting within a fraction of a second — as a genuine but low-priority pre-existing race, not something related to this fix; raised as **ISS-040**, deliberately not fixed this session.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass.
+
+---
+
+### CHG-052 — Display panel: 3-group 50/25/25 layout, unified sliders, x-axis tick count + domain-scoped mirror-pairing (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `fd490b7` (originally registered as CHG-050 on the branch) |
+
+The Display panel went through several iterations this session before landing on its current shape, each a direct response to user feedback on the previous one: an initial per-field-titled `.drawer-columns` grid → 5 logical groups each as their own wrapping row (dividers ended up between fields *within* a group, and the panel still needed 5 separately-wrapping rows — didn't solve the "no drawer scrolling" goal) → the current version, where each *group* is one `.drawer-field-block` inside a single `.drawer-row-divided` row (reusing Data/Variables' proven single-row divider technique, since ~3-5 groups reliably stays single-row where 15+ individual fields did not) — dividers now correctly separate the groups, not fields within them. Consolidated further to 3 groups (Colours and Backgrounds merged into "Colours & backgrounds") with an explicit 50/25/25 width split via a new `drawerGroupUI(width = ...)` param, giving Plot sizing & axis (the slider-heavy group) most of the room. "Width of plotting area" switched from `sliderInput()` to `noUiSliderInput()` with `pips` in "values" mode (fixing ~23-unit auto-generated tick spacing and unifying its look with the other two sliders in its group) — domain widened to 40-320 to land on clean 40-unit pips while the actual drag step stays fine-grained (not snapped to multiples of 40). Added "Number of x-axis ticks" (`xticks_count`, folded inline into the tick field to avoid pushing the group past the drawer's height budget) driving a `renderUI()`-rebuilt tick slider — `noUiSliderInput()`'s handle *count* can't be changed via `updateNoUiSliderInput()`, confirmed via the package's own formals and example app — whose default positions regenerate on count or domain change and, while dragging, mirror-pair a moved handle to `1/value` (its `n+1-i` counterpart) when the domain straddles 1, matching the RR/OR/HR "no effect" line convention this log axis is normally showing. The tick slider's own `min`/`max`/`range` now track the current domain (`xlims`) rather than the old fixed `(0.05, 20)`, including a generic reconstruction (`make_log_range()`) of the domain slider's own non-linear log-step range shape, scoped to whatever the domain currently is, confirmed to closely reproduce `log_scale`'s own breakpoints when handed its same bounds.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass; the new reactive wiring (rebuild-on-change, mirror-pairing, domain-scoped range) additionally smoke-tested via simulated shinytest2 input events (not screenshots) — 0 console errors, ticks confirmed to stay within a narrowed domain, and mirror-pairing confirmed to move the correct partner handle.
+
+---
+
+### CHG-051 — Plot tab: card grows to content height instead of an internal scrollbar; fixed a resulting resolution/zoom regression (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `fd490b7` (originally registered as CHG-049 on the branch) |
+
+On a high-resolution display, the Plot tab's card was capped at a `bslib`-computed fill height — leaving dead space below a short plot, or an internal scrollbar on a tall one (e.g. a 6-predictor model), regardless of the actual plot's own rendered height. `page_navbar(fillable = FALSE)` (`ui.R`) turns off page-level fill, but `navset_card_tab()`'s own outer `card()` call is hardcoded inside `bslib` (confirmed by reading the `bslib` 0.8.0 source directly) with no `fill = FALSE` passthrough exposed by its own arguments, so it kept sizing itself via `bslib`'s card-resize JS regardless of the page setting — overridden directly in `www/style.css` instead of reimplementing the component against `bslib`'s undocumented internals (CSS `!important` beats an inline style even when JS keeps rewriting it on resize — confirmed spec behaviour, not a fluke). `plotOutput()`'s own separate fixed-height default (400px) and `fill = TRUE` default needed the same treatment (`height = "auto"` was tried first as an R-level argument but broke Shiny's client-side plot-resize JS — the rendered `<img>` came back with a literal `height="[object Object]"` attribute; reverted in favour of the same CSS-override approach). Fixing the height surfaced a second, real bug: the plot's `<img>` — inspected directly — only ever carries a `width="100%"` HTML attribute, no CSS `style` at all, so it always stretches to fill whatever the container's current width is; the server always renders the bitmap at a fixed pixel resolution (`dims()` in `server/plot.R`, unrelated to display size), so once the container was freed to grow wider, the same fixed-resolution image was stretched over more screen space than before — visible upscaling blur ("zoomed in, lost clarity"), not an actual resolution regression. Fixed by letting the image display at its native resolution and only ever shrink to fit a narrower container (`width: auto; max-width: 100%`), never stretch beyond it.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass; user-confirmed live that the plot now renders at correct resolution/zoom and the page (not the card) scrolls for a tall plot.
+
+---
+
 ### CHG-050 — Wizard welcome modal redesign, auto-advance fix, styling (FEAT-011)
 
 | Field | Detail |
@@ -1738,4 +1789,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 3.5 — CHG-039 through CHG-048 record the design/modal-progression-workflow branch's work to date (FEAT-011, draft, NOT merged to `main`): soft-gated setup wizard (CHG-039), `.card` background bug fix (CHG-040 — candidate to cherry-pick to `main` independently), Data drawer titled fields/dividers/Robust variance renesting (CHG-041), icon+uppercase panel headings (CHG-042), titled-field styling extended to Variables/Display/Text/Order (CHG-043), Variables' estimate-column toggles combined into one radio group + misleading switch captions removed app-wide (CHG-044), rail/chip-to-main-tab anchoring (CHG-045), default load state + predictor label renames (CHG-046), returning-user Data drawer default + a real pre-existing `shiny:connected` event bug fixed (CHG-047, ISS-038), wizard welcome modal redesign + auto-advance fix + styling (CHG-048). Previously: CHG-022 through CHG-038 — DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-7 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish, status chips/rail badges/Help nav) complete — restyle fully done. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010. CHG-037 reconciles the test counts (ISS-037: documented command silently skipped all integration tests), refreshes session-handoff.md, and records the FAILED R 4.5.2 migration attempt — blocked by ISS-036; DEC-006 authorises the snapshot when it is retried. CHG-038 implements FEAT-010 (DEC-005 Step 7 phase 2), completing the restyle.*
+*Document version: 3.6 — CHG-039 through CHG-051 record the design/modal-progression-workflow branch's work to date (FEAT-011, draft, NOT merged to `main`): soft-gated setup wizard (CHG-039), `.card` background bug fix (CHG-040 — candidate to cherry-pick to `main` independently), Data drawer titled fields/dividers/Robust variance renesting (CHG-041), icon+uppercase panel headings (CHG-042), titled-field styling extended to Variables/Display/Text/Order (CHG-043), Variables' estimate-column toggles combined into one radio group + misleading switch captions removed app-wide (CHG-044), rail/chip-to-main-tab anchoring (CHG-045), default load state + predictor label renames (CHG-046), returning-user Data drawer default + a real pre-existing `shiny:connected` event bug fixed (CHG-047, ISS-038), wizard welcome modal redesign + auto-advance fix + styling (CHG-048), Plot tab card-height/plot-resolution fixes (CHG-049), Display panel 3-group 50/25/25 layout + x-axis tick count/domain-scoped mirror-pairing (CHG-050), Display rail badge default-state fix (CHG-051, ISS-040 raised for a separate low-priority Variables badge race). Previously: CHG-022 through CHG-038 — DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-7 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish, status chips/rail badges/Help nav) complete — restyle fully done. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010. CHG-037 reconciles the test counts (ISS-037: documented command silently skipped all integration tests), refreshes session-handoff.md, and records the FAILED R 4.5.2 migration attempt — blocked by ISS-036; DEC-006 authorises the snapshot when it is retried. CHG-038 implements FEAT-010 (DEC-005 Step 7 phase 2), completing the restyle.*

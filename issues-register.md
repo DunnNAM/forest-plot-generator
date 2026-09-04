@@ -555,17 +555,65 @@
 |---|---|
 | **Source** | USER, session 2026-09-04 |
 | **Severity** | — (design experiment, not a defect) |
-| **Status** | **Draft — in progress on `design/modal-progression-workflow`, not merged to `main`** |
+| **Status** | **Merged to `main`** (2026-09-06, rebase — see `app-changelog-decision-register.md`'s renumbering note) |
 | **File(s)** | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js` (new); `R/ui_rail.R`, `R/ui_help.R`, `R/ui_plot_options.R`, `www/style.css`, `ui.R`, `server.R`, `server/drawers.R`, `server/plot.R`, `server/export.R`, `global.R`, `tests/testthat/test-shiny-app.R` (modified) |
 | **Description** | Three related but separable pieces of work, both exploring whether the app's first-launch "directionless" feeling (no cue where to start) can be fixed without abandoning DEC-005's static rail/drawer model: **(1) a soft-gated setup wizard** — a three-button welcome modal (Skip wizard / Update data source/s / Go to plot styling) shown on first visit, a second "Variables ready" modal that auto-advances once the user has actually changed something in the Data panel, always skippable, restartable any time via a "Tour" rail item, and a returning-user default (Data drawer open, Review data tab); **(2) a Data-drawer visual redesign, extended app-wide** — title/content field convention and icon+uppercase panel headings on every drawer panel except Export, vertical dividers attempted where a panel's fields stay single-row (Data, Variables), and two real layout/logic bugs fixed along the way (`.card` had no explicit background, blending into the cream page; three related Variables-panel toggles combined into one field with a mutually-exclusive radio group, replacing two switches a user could nonsensically both enable); **(3) app-wide defaults and navigation** — the app now loads with a working Simulated-data example already plotted (previously an empty upload prompt), and the bottom rail/status chips anchor the main body tab to whichever drawer is open. |
 | **Design notes** | The wizard is deliberately *instructional*, not a duplicate control surface: DEC-005's restyle plan already made the case (§3) against duplicating any of the ~45 live plot-option inputs, so the wizard's modals tell the user what to do and the server opens the matching drawer for them, rather than embedding copies of `dataset_selected` etc. inside a modal. Several real Shiny/CSS/JS gotchas surfaced and are documented in situ: `conditionalPanel()` renders `display: contents` when shown, which promotes its child into a parent flex row for *layout* but not for CSS structural selectors (`:not(:first-child)` silently matched nothing); `flex: 1` stretch-to-fill only works if the *immediate* parent is a flex container; a plain `observe()` re-fires on the very first reactive flush too, which matters once the data it's watching can already be valid by default; htmltools' pretty-printer inserts whitespace between a multi-argument tag call's children that becomes a visible stray space between adjacent *inline* elements (invisible for block-level ones); and — the most significant, ISS-038 — Shiny fires `"shiny:connected"` through jQuery's `.trigger()`, which a native `document.addEventListener` can never catch, so the entire first-visit wizard trigger had silently never worked since it was written (CHG-041). |
-| **Commits so far** | `d2fb1b7` (wizard + Tour rail item), `69f9b33` (`.card` background fix — candidate to cherry-pick to `main` independently, since it's a real bug fix unrelated to the wizard experiment), `a63dd99` (Data panel titled fields, dividers, Robust variance renested under Regression type), `69fef17` (icon+uppercase panel headings, response-field padding, divider re-measurement), `69f364f` (CHG-045–048: titled-field styling extended app-wide, Variables' estimate-column redesign, rail/tab anchoring, default load state), `907ce40` (CHG-049–050, ISS-038: returning-user default, `shiny:connected` event fix, welcome modal redesign). |
+| **Commits so far** | `d2fb1b7` (wizard + Tour rail item), `69f9b33` (`.card` background fix — candidate to cherry-pick to `main` independently, since it's a real bug fix unrelated to the wizard experiment), `a63dd99` (Data panel titled fields, dividers, Robust variance renested under Regression type), `69fef17` (icon+uppercase panel headings, response-field padding, divider re-measurement), `69f364f` (CHG-045–048: titled-field styling extended app-wide, Variables' estimate-column redesign, rail/tab anchoring, default load state), `907ce40` (CHG-049–050, ISS-038: returning-user default, `shiny:connected` event fix, welcome modal redesign), `fd490b7` (CHG-051–053: Plot tab card-height/plot-resolution fixes, Display panel 3-group 50/25/25 layout + x-axis tick count/mirror-pairing, rail badge default-state fix; ISS-040/041 raised). |
 | **Open question** | Whether the wizard pattern and/or the Data-drawer visual language get adopted app-wide and merged to `main`, or stay a documented experiment. The visual language is now applied to every drawer panel except Export (deliberately deferred, pending its own design pass), narrowing what's actually still Data-panel-only. No DEC has been raised for this yet — raise one (working title: **DEC-007**) if/when a merge decision is made. |
 | **Resolution** | — |
 
 ---
 
-*Document version: 3.13 — ISS-038 raised and resolved (CHG-049: `shiny:connected` fired via
+### ISS-039 — x-axis tick generation always splits evenly either side of 1; doesn't suit a skewed distribution
+
+| Field | Detail |
+|---|---|
+| **Source** | USER, session 2026-09-04, flagged as a future-development note rather than an immediate request |
+| **Severity** | Low — a real gap, not a defect in what's shipped |
+| **Status** | **Open — deferred, not implemented** |
+| **File(s)** | `server/observers.R` (`xticks_default()`) |
+| **Description** | `xticks_default()` (added the same session, FEAT-011) always splits the requested tick count evenly either side of 1 when the domain straddles it — e.g. 6 ticks means 3 below 1 and 3 above. For a highly skewed result distribution, an even split may not be the most useful layout; the user gave the example of wanting 1 tick below 1 and 3 above. This would parallel how the *domain* (`xlims`) already works today — its two limits are independently draggable, not constrained to be exact inverses of each other — so an analogous "independent tick count on each side" control would be a natural, consistent extension. |
+| **Why it matters** | Not urgent — the current even-split behaviour is a reasonable default and nothing is broken. Worth having on record before the next round of x-axis tick work, so the asymmetric case is designed in from the start rather than retrofitted around the mirror-pairing logic ISS-038's neighbouring feature (the drag-to-mirror behaviour, same commit) already relies on. |
+| **Resolution** | — |
+
+---
+
+### ISS-040 — Variables rail badge can briefly show a stale "hidden variables" count on load
+
+| Field | Detail |
+|---|---|
+| **Source** | USER, session 2026-09-04, flagged explicitly as low priority — future fix, not urgent |
+| **Severity** | Low — cosmetic, self-corrects within a fraction of a second |
+| **Status** | **Open — deferred** |
+| **File(s)** | `server/drawers.R` (`output$rail_badge_variables`), `server/observers.R` (§a, the `variables_displayed` sync observer) |
+| **Description** | `rail_badge_variables` computes `hidden = total - length(input$variables_displayed)` from `reg_table()`'s unique display names vs. the current selection. A separate observer (`server/observers.R` §a) is what actually syncs `variables_displayed` to the full set whenever `reg_table()` changes, via `updateCheckboxGroupInput()`. On initial load, `reg_table()` can resolve (making `total` correct) before that sync observer has run in the same reactive flush, so the badge briefly computes `hidden > 0` against the *old* (usually empty or partial) `variables_displayed`, showing a false "N hidden" badge on the Variables rail item for a moment before it self-corrects. |
+| **Why it's newly visible** | This race likely always existed, but the app previously only reached a valid `reg_table()` after a real user upload — never on load itself — so there was no moment for the flash to occur. The 2026-09-04 default-load-state change (app now opens with Simulated data already valid) made `reg_table()` valid from the very first reactive flush, exposing the pre-existing race. |
+| **Possible fix** | Give the `variables_displayed` sync observer (`server/observers.R` §a) a higher `priority` than the default, so it reliably runs before `rail_badge_variables` renders within the same flush — not implemented, since the user asked this be logged as a low-priority future item rather than fixed now. |
+| **Resolution** | — |
+
+---
+
+### ISS-041 — `README.md` describes the pre-restyle app; hasn't tracked DEC-004/DEC-005 or later work
+
+| Field | Detail |
+|---|---|
+| **Source** | USER, session 2026-09-04, asked whether `README.md` exists on this branch and reflects current functionality |
+| **Severity** | Medium — user-facing, and actively misleading rather than merely incomplete |
+| **Status** | **Open — not fixed this session, deliberately deferred as its own pass** |
+| **File(s)** | `README.md` |
+| **Description** | `README.md` exists on `design/modal-progression-workflow` (same file as `main` — untouched by this branch) and has had exactly one commit since the project's initial commit (`391edf7`, an `renv` fix), predating DEC-004 (the `server/`+`R/` file split) and DEC-005 (the full rail/drawer restyle) entirely. Specific stale claims: describes a "left sidebar" and a "right-hand accordion panel" for plot options — both retired by DEC-005 in favour of the bottom rail + slide-up drawer; says export happens via "buttons in the Plot tab" — export is now its own dedicated Export drawer panel (FEAT-009); lists `server.R`/`ui.R` as flat files under "Project structure" — `server.R` is now a 6-file `source()` wrapper (DEC-004); references `www/styles.css` — the actual file is `www/style.css` (no `s`); lists "No automated tests" and "No `renv` lockfile" under Known limitations (ISS-004, ISS-011) — both resolved (a `testthat` + `shinytest2` suite exists, and `renv.lock` is committed and pins R 4.3.1); "Prerequisites: R ≥ 4.1" — the project now specifically targets R 4.3.x. |
+| **Why it matters** | A new contributor or returning user following the README today would be given fundamentally wrong instructions for using the app (there is no sidebar or accordion to find) and a wrong risk picture (both listed "known limitations" are actually resolved). |
+| **Resolution** | — deliberately not rewritten this session; flagged for its own pass rather than folded into an unrelated round of Display/Variables UI work. |
+
+---
+
+*Document version: 3.14 — ISS-039/040/041 raised (x-axis tick generation asymmetry,
+deferred; Variables rail badge stale-count race on load, low priority; `README.md` stale
+since before DEC-004/DEC-005, not fixed yet); FEAT-011's commit list extended with
+`fd490b7` (CHG-051–053: Plot tab card-height/resolution fixes, Display panel 3-group
+layout, rail badge default-state fix). Previously: Document version 3.13 — ISS-038 raised
+and resolved (CHG-049: `shiny:connected` fired via
 jQuery, never caught by `document.addEventListener` — first-visit wizard trigger had
 silently never worked since CHG-041); FEAT-011 updated (Data-drawer visual language
 extended to Variables/Display/Text/Order, Variables' estimate-column toggles combined,
