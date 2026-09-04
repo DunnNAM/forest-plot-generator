@@ -49,4 +49,6 @@ reviews/
 
 | Date | Type | File | Headline |
 |---|---|---|---|
+| 2026-09-04 | CSS / Styling | [architecture/2026-09-04_css-stylesheet-audit.md](architecture/2026-09-04_css-stylesheet-audit.md) | Stylesheet inspection & conflict audit: wizard modal Step 2 width/button styling discrepancy; drawer scrim z-index inversion (98 vs 1027); ~65 lines of dead template CSS; flexbox min-width conflict on Display drawer. |
+| 2026-09-04 | Architecture | [architecture/2026-09-04_architecture-code-review.md](architecture/2026-09-04_architecture-code-review.md) | Function-based architecture audit (DEC-004): 48/48 unit and 9/9 integration tests green; candidate ISS-033 resolved; F-5 un-namespaced `pkg::fun()` drift across UI/server; F-6 pure math helpers in `server/observers.R`; F-7 duplicated estimate label logic in `server/preview.R`. |
 | 2026-06-10 | Architecture | [architecture/2026-06-10_restyle-readiness-review.md](architecture/2026-06-10_restyle-readiness-review.md) | Restyle readiness: DEC-004 Steps 5–7 incomplete and unpushed; `Rplots.pdf` tracked artifact; `output$forest` inside `observe()`; unqualified `ggsave()`/`glm()` convention drift. Companion plan: `restyle-implementation-plan.md` |
