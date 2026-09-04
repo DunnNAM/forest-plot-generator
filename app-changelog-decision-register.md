@@ -231,6 +231,84 @@ manual retry also fails.
 
 ## Changes
 
+> **Renumbering note (2026-09-06 merge):** `design/modal-progression-workflow` independently
+> numbered its own branch-only entries CHG-039 onward, unaware `main` had since taken those
+> same numbers for the Connect Cloud publish work below. To merge both histories into one
+> sequence without collision, every branch-only entry originally numbered CHG-039–CHG-056
+> is renumbered **+2** here (→ CHG-041–CHG-058); `main`'s real CHG-039/CHG-040 are
+> unchanged. Commit subject lines on the branch still cite the old numbers — treat this
+> register as the authoritative numbering going forward.
+
+### CHG-044 — Data drawer: icon+uppercase panel headings, response-field padding (FEAT-011, branch-only)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `69fef17` (originally registered as CHG-042 on the branch) |
+
+Every drawer panel heading now shows its matching rail icon inline with an uppercase title (new `drawerHeaderUI()` helper), sized/weighted distinctly from field titles (20px/800 vs 16px/700 — previously identical, so a panel heading and a field title were indistinguishable). Left-aligned to match the fields below it, sealed off by a slate-blue bottom rule reusing the existing `.card-header` treatment. `.drawer-field-block` gained matching right-padding so full-width controls (Response variable's `<select>`) don't run into the next divider. Divider's bottom inset re-measured (20px → 70px) to stay symmetric against the taller header — verified via `getBoundingClientRect()`, not eyeballed. Full detail in the commit body.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass.
+
+---
+
+### CHG-043 — Data drawer: titled fields, divider rules, Robust variance nesting (FEAT-011, branch-only)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `a63dd99` (originally registered as CHG-041 on the branch) |
+
+Three related Data-panel changes: (1) every field (Data set, Comparison mode, Regression type, Response variable, Predictor variables) now uses a bold-title-over-smaller-content convention via a new `drawerFieldUI()` helper; (2) Robust variance moved from a separate top-level field to a checkbox nested under Regression type's Poisson option (Regression type reordered alphabetically — Cox, Logistic, Poisson — so the nested checkbox never repositions the other two), fixing a real layout break where selecting "Simulated data" stranded Robust variance under Data set at the bottom of the drawer; (3) faint vertical divider rules added between fields, centered within the drawer's available height via a `flex: 1`-stretching `.drawer-row-divided` layout (replacing `.drawer-columns` for this panel only). Two Shiny/CSS gotchas surfaced and are documented in the CSS: `conditionalPanel()`'s `display: contents` when shown defeats DOM-structural CSS selectors, and `flex: 1` needs an actual flex *parent*, which required making `.drawer-panel.active` a flex column. Full detail in the commit body.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass.
+
+---
+
+### CHG-042 — `.card` background invisible against cream page; sharper `.card-header` rule
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main` — a real bug fix, unrelated to the wizard/Data-panel experiment) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `69f9b33` (originally registered as CHG-040 on the branch) |
+
+`.card` had no explicit `background`; Bootstrap 5's `--bs-card-bg` defaults to `--bs-body-bg`, which `bs_theme()` sets to the same cream as the page (`global.R`), so every `bslib::card()` — including the FEAT-010 Help panel's four section cards — blended into the page instead of reading as a raised surface. Fixed with an explicit `background: #fff`. `.card-header`'s `border-bottom` also sharpened from a barely-visible `1px rgba(0,0,0,0.06)` hairline to a `2px` slate-blue rule (`color-mix()` at 35% of `--page-accent`), at the user's request once the card fix made the header line worth noticing.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass (CSS-only change).
+
+---
+
+### CHG-041 — Soft-gated setup wizard — modal-progression experiment (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `d2fb1b7` (originally registered as CHG-039 on the branch) |
+
+A first-visit setup wizard exploring whether the app's "directionless on first launch" problem can be fixed without abandoning DEC-005's static rail/drawer model. Two instructional `modalDialog()`s (welcome → Data; then Variables) guide a new user through the two required setup steps, auto-advancing from the first to the second the moment a plot-worthy table exists (`reg_table()`), always skippable, and restartable any time via a new "Tour" rail item (first, far left, styled as an action button like Export). Deliberately does not duplicate any of the ~45 live plot-option inputs DEC-005 keeps as single instances (restyle plan §3) — the modals tell the user what to do and the server opens the matching drawer, rather than embedding copies of controls like `dataset_selected`. First-visit detection uses `localStorage` (`www/wizard.js`), wrapped in `try/catch` so a blocked/private-browsing context just shows the tour every visit rather than erroring.
+
+New files: `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js`. Modified: `R/ui_rail.R` (Tour item, generalised `rail_button()` to support a non-drawer click target), `R/ui_help.R` (pointer text to the Tour button), `server.R`, `ui.R`.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass — additive, no existing input ID or reactive touched.
+
+---
+
 ### CHG-040 — Publish forestHelperR to GitHub, sanitized; fixes ISS-036 for real; two exposure incidents fixed along the way
 
 | Field | Detail |
@@ -1554,7 +1632,8 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 | 2026-09-03 | Restyle plan and readiness review brought under version control; DEC-005 Step 7 registered (CHG-036) | `restyle-implementation-plan.md` and `reviews/` had been untracked since 2026-06-10 despite DEC-005 citing both. Plan header still read “PLAN — nothing implemented”, four months after Steps 0-6 shipped; corrected, and §8 annotated with the CHG that delivered each step. Step 7 raised as FEAT-010 so the deferred work appears in the open-items list. Documentation only. |
 | 2026-09-03 | Test baseline established; handoff refreshed; R 4.5.2 migration attempted and failed (CHG-037, DEC-006) | Suite run to settle three conflicting test counts: 23 blocks/48 assertions and 6 blocks/9 assertions, all passing under R 4.3.3. Doing so exposed ISS-037 — the documented test command skips every integration test and still exits 0. `session-handoff.md` (335 lines, four phases out of date) rewritten. `renv::restore()` under 4.5.2 failed on 12 packages; ISS-036 raised (`forestHelperR` has no resolvable source, so no restore can succeed). `renv.lock` untouched, R 4.3.x environment intact, no app source changed. Rtools43 removed as a side effect of installing Rtools45. Manual retry planned 2026-09-04. |
 | 2026-09-04 | DEC-005 Step 7 implemented — status-chip strip, rail badges, Help nav panel (CHG-038, FEAT-010) | Status chips (dataset/regression/variables/font) above the plot, each opening its drawer on click; rail badges for Variables (hidden-variable count) and Display (non-default dot); new static Help nav panel (`R/ui_help.R`). Additive — no input ID or reactive changed. 48/48 unit assertions and 9/9 integration assertions pass unmodified. DEC-005 restyle now fully complete, including phase 2. |
+| 2026-09-04 | `design/modal-progression-workflow` branch opened — soft-gated setup wizard + Data drawer visual redesign (CHG-039 through CHG-042, FEAT-011, **draft, not merged**) | User-directed design session exploring the app's "directionless on first launch" problem via a two-step instructional setup wizard (CHG-039), plus a visual pass on the Data drawer specifically: titled fields, vertical dividers, Robust variance renested under Regression type, icon+uppercase panel headings (CHG-041, CHG-042). A genuine `.card` background bug was found and fixed along the way (CHG-040 — candidate to cherry-pick to `main` independently of the experiment). Two real Shiny/CSS gotchas documented in `www/style.css`: `conditionalPanel()`'s `display: contents` defeats DOM-structural CSS selectors, and `flex: 1` needs an actual flex parent. Also surfaced and fixed during the session (not app-related): `TaskStop` on this environment doesn't reliably kill the underlying Windows `Rscript.exe` child process when a background dev-server task is restarted, leaking orphaned R processes across the session — three stray processes were found and killed. No DEC raised yet for whether this branch's patterns get adopted app-wide/merged to `main`; see FEAT-011 for the open question. |
 
 ---
 
-*Document version: 3.3 — CHG-022 through CHG-038: DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-7 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish, status chips/rail badges/Help nav) complete — restyle fully done. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010. CHG-037 reconciles the test counts (ISS-037: documented command silently skipped all integration tests), refreshes session-handoff.md, and records the FAILED R 4.5.2 migration attempt — blocked by ISS-036; DEC-006 authorises the snapshot when it is retried. CHG-038 implements FEAT-010 (DEC-005 Step 7 phase 2), completing the restyle.*
+*Document version: 3.4 — CHG-039 through CHG-042 record the design/modal-progression-workflow branch's work to date (FEAT-011, draft, NOT merged to `main`): soft-gated setup wizard (CHG-039), `.card` background bug fix (CHG-040 — candidate to cherry-pick to `main` independently), Data drawer titled fields/dividers/Robust variance renesting (CHG-041), icon+uppercase panel headings (CHG-042). Previously: CHG-022 through CHG-038 — DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-7 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish, status chips/rail badges/Help nav) complete — restyle fully done. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010. CHG-037 reconciles the test counts (ISS-037: documented command silently skipped all integration tests), refreshes session-handoff.md, and records the FAILED R 4.5.2 migration attempt — blocked by ISS-036; DEC-006 authorises the snapshot when it is retried. CHG-038 implements FEAT-010 (DEC-005 Step 7 phase 2), completing the restyle.*

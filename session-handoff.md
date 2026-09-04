@@ -1,6 +1,9 @@
 # Forest Plot Builder — Session Handoff
 
-> **Last refreshed:** 2026-09-06 (CHG-039, Connect Cloud publish prep)
+> **Last refreshed:** 2026-09-06 (CHG-039/040, Connect Cloud publish prep; merged with
+> `design/modal-progression-workflow`'s own handoff refresh through CHG-058 — see
+> `app-changelog-decision-register.md`'s renumbering note for why the branch's own
+> CHG-039..056 became CHG-041..058 in the merge)
 > **Purpose:** Session continuity — read at the start of a session, alongside `CLAUDE.md`.
 > **Scope note:** `CLAUDE.md` is the standing context (architecture, conventions, file
 > map). This document is the *current* state of play and what to pick up next. If the
@@ -31,7 +34,8 @@ from the Connect Cloud work below; see that branch's own commits and `issues-reg
 
 **All planned programmes of work on `main`'s application code are complete.** There is
 no in-flight migration or half-finished refactor in the app itself. The one piece of
-live work right now is deployment prep (see §3), not a code change.
+live work right now is deployment prep (see §3), not a code change. See §1 above for
+the `design/modal-progression-workflow` branch's own, separate status.
 
 | Phase | Outcome |
 |---|---|
@@ -167,6 +171,7 @@ Beyond the two live items above (§3 Connect Cloud, §4 migration), this is a ba
 | **ISS-028** | Medium | Age group levels not in clinical sort order | Highest-severity pre-existing item and the only one affecting output correctness — but it lives in `forestHelperR`, so it needs a session in *that* repo. Explicitly out of scope per plan §10. |
 | **ISS-029** | Low | OS system fonts absent from selector after `sysfonts` migration | |
 | **ISS-030** | Low | `"Source Sans Pro"` renamed on Google Fonts; silently absent | |
+| **FEAT-011** | — | Decide whether `design/modal-progression-workflow` gets merged/adopted | Branch is draft, in progress. `69f9b33` (card background fix) is mergeable to `main` independently right now if wanted, ahead of any decision on the rest. |
 | PDEC-005 | — | Move `forestHelperR` to its own repo? | Deferred — gated on publication/hosting being scoped. Note ISS-036 may force this conversation earlier, and now has a concrete Connect Cloud reason to as well. |
 | PDEC-006 | — | Declare package deps vs. document manual install | Deferred to a future package maintenance cycle |
 
@@ -230,6 +235,23 @@ R 4.5.2 has no populated library.
   ignored) — the un-ignore had to be added inside `renv/.gitignore` itself, as a line
   after the exclusion it's overriding. Found 2026-09-06 committing the ISS-036
   cellar workaround.
+- **`conditionalPanel()` renders `display: contents` when shown**, not `block`. It
+  promotes its children into the parent's flex/grid layout for *sizing* purposes, but
+  CSS structural selectors (`:first-child`, `:not(:first-child)`, `.parent > *`) still
+  only see the un-promoted DOM tree — they silently match nothing on a promoted child.
+  Found 2026-09-04 (design/modal-progression-workflow, `www/style.css` has the full
+  writeup) building the Data drawer's field dividers.
+- **A background dev-server restart on this Windows setup doesn't reliably kill the
+  previous `Rscript.exe`.** Stopping a background task and starting a new
+  `shiny::runApp()` task can leave the old R process running and orphaned (found
+  2026-09-04 — three stray processes, one at 200+ MB, accumulated over a session of
+  restarts). Check `tasklist //FI "IMAGENAME eq Rscript.exe"` periodically if you've
+  been restarting a lot, and `taskkill //PID <pid> //F` anything not the one actually
+  listening on the port in use (`netstat -ano | grep :<port>` identifies it).
+- **A restart is not always necessary.** `www/*.css` and `www/*.js` are served fresh
+  from disk on every browser request — only `ui.R`/`R/*.R`/`server/*.R` changes need
+  the R process restarted. A CSS-only edit just needs the browser refreshed (bump the
+  stylesheet's `?v=` cache-buster in `ui.R` if the browser might have it cached).
 
 ---
 

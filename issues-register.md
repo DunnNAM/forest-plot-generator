@@ -415,6 +415,7 @@
 | ISS-037 | Medium | `CLAUDE.md`, test docs | Documented test command silently skips all 6 integration tests | ✅ Resolved — CHG-037 |
 | FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | ✅ Implemented — CHG-033 (location amended to Export drawer panel) |
 | FEAT-010 | Low | `ui.R`, `R/ui_rail.R`, `R/ui_help.R`, `www/style.css` | DEC-005 Step 7 (phase 2): status-chip strip, rail badges, Help nav panel | ✅ Implemented — CHG-038 |
+| FEAT-011 | — | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js`, `R/ui_plot_options.R`, `www/style.css` | Soft-gated setup wizard + Data drawer visual redesign | 🔲 Draft — branch `design/modal-progression-workflow`, not merged |
 
 ---
 
@@ -533,4 +534,53 @@
 
 ---
 
-*Document version: 3.11 — ISS-036 fully resolved (CHG-040, 2026-09-06): CHG-039's Cellar-based workaround was confirmed insufficient the same day (Connect Cloud's own server-side deploy can't resolve a local-machine Cellar reference — first deploy attempt failed on exactly this). Real fix: forestHelperR published to a new public repo, github.com/DunnNAM/forestHelperR, sanitized (original maintainer's personal email removed/masked pending her confirmation, Nathan Dunn added as real maintainer) and confirmed free of any other internal references; renv.lock's forestHelperR entry updated to a real GitHub source (scoped override of the "do not modify renv.lock" convention, explicitly authorized by the user, mirroring DEC-006's migration carve-out); manifest.json regenerated successfully via rsconnect's default lockfile-based path (no workaround needed this time). Also fixed two real, live privacy exposures found along the way: the original unsanitized tarball that CHG-039 had committed to the now-public forest-plot-generator repo, and the real email appearing in that same commit's own message on the new forestHelperR repo (fixed via a safe amend+force-push, since that repo had only the one commit). Previously: Document version: 3.10 — ISS-036 partially resolved (CHG-039, 2026-09-06): Connect Cloud publish prep confirmed ISS-036 as a hard blocker for generating a deployment manifest (rsconnect's internal renv snapshot pre-flight aborts outright on any unknown-source package), not just the R 4.5.2 migration. Fixed for manifest.json generation by committing renv/cellar/forestHelperR_0.2.0.tar.gz and reinstalling via renv::install() from that path — renv.lock itself deliberately left untouched (CLAUDE.md reserves lockfile edits for the R 4.5.2 migration, DEC-006), so ISS-036 remains open for that. Also found and patched a recurrence of the ISS-035 pattern: svglite/systemfonts/textshaping missing from the generated manifest (dependency scanner can't see them since nothing calls them via :: directly) — patched from their already-correct renv.lock entries; final manifest matches renv.lock's package list exactly (138/138). Previously: Document version: 3.9 — FEAT-010 implemented (CHG-038: DEC-005 Step 7 — status-chip strip, rail badges, Help nav panel); previously: ISS-036 raised (CHG-037: `forestHelperR` unresolvable in `renv.lock`); ISS-037 raised and resolved (CHG-037: NOT_CRAN skip); ISS-032/033/034 resolved (CHG-023/024/025); ISS-035 raised and resolved (CHG-028: svglite installed); ISS-031 resolved and FEAT-009 implemented (CHG-033: Export drawer panel redesign); FEAT-010 raised (CHG-036: DEC-005 Step 7 phase-2 work registered)*
+### FEAT-011 — Soft-gated setup wizard + Data drawer visual redesign (draft, branch-only)
+
+| Field | Detail |
+|---|---|
+| **Source** | USER, session 2026-09-04 |
+| **Severity** | — (design experiment, not a defect) |
+| **Status** | **Draft — in progress on `design/modal-progression-workflow`, not merged to `main`** |
+| **File(s)** | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js` (new); `R/ui_rail.R`, `R/ui_help.R`, `R/ui_plot_options.R`, `www/style.css`, `ui.R`, `server.R` (modified) |
+| **Description** | Two related but separable pieces of work, both exploring whether the app's first-launch "directionless" feeling (no cue where to start) can be fixed without abandoning DEC-005's static rail/drawer model: **(1) a soft-gated setup wizard** — two instructional modals (Data, then Variables) shown on first visit, auto-advancing once real data exists, always skippable, restartable any time via a new "Tour" rail item; **(2) a Data-drawer visual redesign** — title/content field convention, vertical dividers between fields, icon+uppercase panel headings, and a real layout bug fix (`.card` had no explicit background, so every `bslib::card()` in the app — including the FEAT-010 Help panel — blended into the cream page background). |
+| **Design notes** | The wizard is deliberately *instructional*, not a duplicate control surface: DEC-005's restyle plan already made the case (§3) against duplicating any of the ~45 live plot-option inputs, so the wizard's modals tell the user what to do and the server opens the matching drawer for them, rather than embedding copies of `dataset_selected` etc. inside a modal. Two real Shiny/CSS gotchas surfaced and are documented in situ in `www/style.css`: `conditionalPanel()` renders `display: contents` when shown, which promotes its child into a parent flex row for *layout* but not for CSS structural selectors (`:not(:first-child)` silently matched nothing); and a `flex: 1` stretch-to-fill only works if the *immediate* parent is a flex container, which `.drawer-panel.active` wasn't until fixed. |
+| **Commits so far** | `d2fb1b7` (wizard + Tour rail item), `69f9b33` (`.card` background fix — candidate to cherry-pick to `main` independently, since it's a real bug fix unrelated to the wizard experiment), `a63dd99` (Data panel titled fields, dividers, Robust variance renested under Regression type), `69fef17` (icon+uppercase panel headings, response-field padding, divider re-measurement). |
+| **Open question** | Whether the wizard pattern and/or the Data-drawer visual language get adopted app-wide (the other five drawer panels still use the plain `.drawer-columns` grid with no dividers/title convention) and merged to `main`, or stay a documented experiment. No DEC has been raised for this yet — raise one (working title: **DEC-007**) if/when a merge decision is made. |
+| **Resolution** | — |
+
+---
+
+*Document version: 3.12 — merged `design/modal-progression-workflow` branch docs onto `main`
+(rebase, 2026-09-06): FEAT-011 raised (branch: soft-gated setup wizard + Data drawer
+visual redesign, draft, now carried forward through the rebase); ISS-036 fully resolved
+(CHG-040, 2026-09-06): CHG-039's Cellar-based workaround was confirmed insufficient the
+same day (Connect Cloud's own server-side deploy can't resolve a local-machine Cellar
+reference — first deploy attempt failed on exactly this). Real fix: forestHelperR
+published to a new public repo, github.com/DunnNAM/forestHelperR, sanitized (original
+maintainer's personal email removed/masked pending her confirmation, Nathan Dunn added
+as real maintainer) and confirmed free of any other internal references; renv.lock's
+forestHelperR entry updated to a real GitHub source (scoped override of the "do not
+modify renv.lock" convention, explicitly authorized by the user, mirroring DEC-006's
+migration carve-out); manifest.json regenerated successfully via rsconnect's default
+lockfile-based path (no workaround needed this time). Also fixed two real, live privacy
+exposures found along the way: the original unsanitized tarball that CHG-039 had
+committed to the now-public forest-plot-generator repo, and the real email appearing in
+that same commit's own message on the new forestHelperR repo (fixed via a safe
+amend+force-push, since that repo had only the one commit). Previously: Document version
+3.10 — ISS-036 partially resolved (CHG-039, 2026-09-06): Connect Cloud publish prep
+confirmed ISS-036 as a hard blocker for generating a deployment manifest (rsconnect's
+internal renv snapshot pre-flight aborts outright on any unknown-source package), not
+just the R 4.5.2 migration. Fixed for manifest.json generation by committing
+renv/cellar/forestHelperR_0.2.0.tar.gz and reinstalling via renv::install() from that
+path — renv.lock itself deliberately left untouched at the time (CLAUDE.md reserves
+lockfile edits for the R 4.5.2 migration, DEC-006). Also found and patched a recurrence
+of the ISS-035 pattern: svglite/systemfonts/textshaping missing from the generated
+manifest (dependency scanner can't see them since nothing calls them via :: directly) —
+patched from their already-correct renv.lock entries; final manifest matches renv.lock's
+package list exactly (138/138). Previously: Document version 3.9 — FEAT-010 implemented
+(CHG-038: DEC-005 Step 7 — status-chip strip, rail badges, Help nav panel); previously:
+ISS-036 raised (CHG-037: `forestHelperR` unresolvable in `renv.lock`); ISS-037 raised and
+resolved (CHG-037: NOT_CRAN skip); ISS-032/033/034 resolved (CHG-023/024/025); ISS-035
+raised and resolved (CHG-028: svglite installed); ISS-031 resolved and FEAT-009
+implemented (CHG-033: Export drawer panel redesign); FEAT-010 raised (CHG-036: DEC-005
+Step 7 phase-2 work registered)*
