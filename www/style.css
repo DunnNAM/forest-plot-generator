@@ -15,36 +15,83 @@ body > .container-fluid {
   padding: 0;
 }
 
+/* 2026-09-04 (user report): this border used to be a light 1px grey rule,
+   and the Builder tab's dashboard-body separately drew its own 4px slate-blue
+   border-top right below it — so the Builder tab showed a thick slate divider
+   while the Help tab (no dashboard-body wrapper) showed only the navbar's
+   thin grey one. Moving the divider here, once, means both tabs share the
+   exact same line regardless of what the active nav_panel's own body does.
+   align-items: flex-end (overriding Bootstrap's default center) is what lets
+   the brand and the nav-links — different font sizes — share one visual
+   baseline at the navbar's bottom edge, right above this border. */
 .navbar {
   position: sticky;
+  display: flex;
+  align-items: flex-end;
   top: 0;
   z-index: 1030;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 4px solid var(--page-accent, #426175);
   min-height: 56px;
   padding-top: 0;
   padding-bottom: 0;
 }
 
+.navbar > .container-fluid {
+  align-items: flex-end;
+}
+
+/* Mirrors the app's other "page title" treatment (.drawer-header, the Help
+   page's own h4) — slate blue, uppercase, bold — rather than the plain small
+   bold text bslib gives it by default, which read smaller than the Help
+   page's own title (2026-09-04 user report). padding: 0 replaces Bootstrap's
+   default vertical padding so align-items: flex-end on the navbar controls
+   its position instead. */
 .navbar-brand {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #426175;
+  padding: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  line-height: 1.1;
 }
 
 .navbar-nav .nav-link {
+  position: relative;
   font-size: 14px;
   font-weight: 500;
   opacity: 0.78;
   padding-top: 0;
   padding-bottom: 0;
   line-height: 56px;
-  border-bottom: 3px solid transparent;
 }
 
+/* Active-tab indicator: an absolutely-positioned bar overlaid exactly on the
+   navbar's own border-bottom (same 4px weight, same width as the tab label's
+   own hit area) rather than a border-bottom on the link itself. A border on
+   the link sits at the *link's* box edge, one DOM level up from — and a few
+   pixels away from — the navbar's own border, so the two rendered as two
+   separate, misaligned lines (2026-09-04 user report), and the previous gold
+   (#F0DC9A) was hard to see against the Help tab's plain cream background
+   with no slate divider under it at the time. Overlaying it on the divider
+   itself, same weight, fixes both: it reads as one thicker highlighted
+   segment of the single shared line, not a second line, and it's visible on
+   both tabs now that the divider itself is always slate blue. */
 .navbar-nav .nav-link.active {
   font-weight: 600;
   opacity: 1;
-  border-bottom-color: #F0DC9A;
+}
+
+.navbar-nav .nav-link.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 4px;
+  background: #F0DC9A;
 }
 
 /* Remove bslib's default tab-content padding/margin so dashboard-body sits flush under the navbar */
@@ -70,6 +117,36 @@ body > .container-fluid {
   background: transparent;
   border-bottom: 2px solid color-mix(in srgb, var(--page-accent, #426175) 35%, transparent);
   font-weight: 600;
+}
+
+/* ── Help page (FEAT-010) — title + section-card headers ─────────────────── */
+
+/* Left-aligned flush with the cards below it, unlike .drawer-header (which
+   centers itself within a 1280px max-width to match the filter drawer's own
+   content) — 2026-09-04 user report. Same "page title" treatment otherwise:
+   slate blue, uppercase, bold, sealed off by a slate-blue rule. */
+.help-title {
+  margin: 0 0 16px 0;
+  padding: 14px 0;
+  border-bottom: 2px solid color-mix(in srgb, var(--page-accent, #426175) 30%, transparent);
+  font-size: 20px;
+  color: #426175;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Section-card titles ("1. Data", "2. Variables & Elements", ...) mirror the
+   page title's palette (slate blue, uppercase) at a smaller size, per
+   2026-09-04 user report, rather than bslib::card_header()'s default plain
+   dark text — scoped to .help-panel since bslib::card_header() isn't used
+   anywhere else in the app. */
+.help-panel .card-header {
+  color: #426175;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* ── navset_card_tab sub-tabs (Review data / Plot) ───────────────────────── */
@@ -166,11 +243,15 @@ body > .container-fluid {
 
 /* ── Dashboard layout — bottom rail (side→bottom adaptation) ─────────────── */
 
+/* border-top removed 2026-09-04 (user report): this drew a second, thicker
+   slate-blue divider directly under the navbar's own border, on the Builder
+   tab only — the Help tab has no .dashboard-body wrapper, so it only ever
+   showed the navbar's border, making the two tabs' dividers look different.
+   The navbar's own border-bottom is now the single divider for both. */
 .dashboard-body {
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 56px);
-  border-top: 4px solid var(--page-accent, #426175);
 }
 
 .content-area {

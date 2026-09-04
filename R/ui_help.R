@@ -4,6 +4,13 @@
 # MDT's How-to-Use pattern (.htu-*) was explicitly dropped from the ported
 # stylesheet (restyle plan §7) since it doesn't apply to a single-page app, so
 # this reuses the .card/.card-header rules that were kept instead.
+# The page title uses its own .help-title class rather than .drawer-header
+# (2026-09-04, user report): .drawer-header is centered within a 1280px
+# max-width to line up with the filter drawer's own content, which made it
+# sit inset from — not flush with — this page's cards on a wide viewport.
+# .help-panel scopes the card-header styling (slate blue/uppercase, matching
+# .help-title) to just this page's cards, since bslib::card_header() isn't
+# used anywhere else in the app.
 helpPanelUI <- function() {
   section <- function(title, ...) {
     bslib::card(
@@ -13,8 +20,8 @@ helpPanelUI <- function() {
   }
 
   div(
-    class = "content-area",
-    h4(class = "drawer-header", "How to use Forest Plot Builder"),
+    class = "content-area help-panel",
+    h4(class = "help-title", "How to use Forest Plot Builder"),
     p("The plot updates live as you change settings below — there is no",
       strong(" Apply"), " button. Open a drawer from the bottom rail, adjust",
       " its controls, and close it (rail icon again, or click outside the",

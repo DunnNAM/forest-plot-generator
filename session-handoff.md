@@ -37,7 +37,8 @@ no in-flight migration or half-finished refactor in the app itself. The one piec
 live work right now is deployment prep (see §3), not a code change. See §1 above for
 the `design/modal-progression-workflow` branch's own, separate status; ISS-038 (a real
 pre-existing first-visit-trigger bug the branch found and fixed) is detailed in
-`issues-register.md`.
+`issues-register.md`. The branch also unified the navbar divider/active-tab indicator
+and restyled the app title to match the Help page title (CHG-054).
 
 **Also worth knowing:** `README.md` (both on this branch and on `main`) is
 significantly stale — untouched since before DEC-004/DEC-005, still describing the

@@ -18,7 +18,7 @@ ui <- page_navbar(
   # neither depends on this.
   fillable = FALSE,
   header = tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "style.css?v=feat011-10"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "style.css?v=feat011-11"),
     tags$script(src = "drawer.js"),
     tags$script(src = "wizard.js")
   ),
