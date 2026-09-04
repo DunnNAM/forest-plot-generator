@@ -37,8 +37,11 @@ no in-flight migration or half-finished refactor in the app itself. The one piec
 live work right now is deployment prep (see §3), not a code change. See §1 above for
 the `design/modal-progression-workflow` branch's own, separate status; ISS-038 (a real
 pre-existing first-visit-trigger bug the branch found and fixed) is detailed in
-`issues-register.md`. The branch also unified the navbar divider/active-tab indicator
-and restyled the app title to match the Help page title (CHG-054).
+`issues-register.md`. The branch also attempted to unify the navbar divider/active-tab
+indicator and restyle the app title to match the Help page title (CHG-054) — but per
+the user's own live check immediately after, **none of the three actually landed as
+intended, and one regressed** (title/tab baseline alignment got worse); see **ISS-042**
+in the open queue below.
 
 **Also worth knowing:** `README.md` (both on this branch and on `main`) is
 significantly stale — untouched since before DEC-004/DEC-005, still describing the
@@ -63,6 +66,30 @@ new scope to it) and its companion audit in
 ---
 
 ## 3. NEXT SESSION — Connect Cloud publish, in progress (started 2026-09-06)
+
+**Before picking up the Connect Cloud thread below, note a still-open item the
+`design/modal-progression-workflow` branch raised: ISS-042 (CHG-054's navbar/Help-tab
+fixes didn't land).** CHG-054 attempted three narrowly-scoped fixes to the top navbar
+and Help tab: (1) the app title's styling/size relative to the Help page's own title,
+(2) the app title and tab labels sharing one visual baseline, and (3) the Builder/Help
+tabs showing one consistent divider with a clearly-visible active-tab indicator
+overlaid on it rather than a second, misaligned line. **The user's own live check
+immediately after found none of the three actually landed, and one (title/tab baseline
+alignment) is now visibly worse than before** — see **ISS-042** in `issues-register.md`
+for the full detail, including per-sub-issue hypotheses. The session that produced
+CHG-054 had no working Chrome browser extension connection and could only verify the
+change by inspecting served HTML/CSS text — never an actual rendered screenshot, which
+is almost certainly why reasoning that looked sound against the stylesheet text didn't
+survive contact with the real page. Get a working browser connection (or the user's own
+live check) before touching this CSS again. Concrete first steps: (1) restart the R
+process fully and hard-refresh the browser before assuming anything is still broken —
+`R/ui_help.R`'s class rename needs a restart, unlike the CSS-only navbar changes in the
+same commit; (2) for the navbar, use actual devtools computed-style/box-model
+inspection rather than re-deriving cascade/specificity from the stylesheet text; (3) fix
+the baseline alignment before re-touching the active-tab `::after` — the underline's
+positioning is likely downstream of the alignment bug, not an independent problem.
+
+---
 
 **This is the live piece of work right now**, ahead of the R 4.5.2 migration below.
 Goal: publish `main` to Posit Connect Cloud via its GitHub-integrated deploy, turn on
@@ -175,12 +202,13 @@ Beyond the two live items above (§3 Connect Cloud, §4 migration), this is a ba
 
 | ID | Sev | What | Note |
 |---|---|---|---|
+| **ISS-042** | Medium | CHG-054's navbar/Help-tab restyle didn't land — see §3 | **Do this before ISS-041.** User's explicit priority for next session. |
 | **ISS-036** | — | ~~`forestHelperR` recorded as `Source: "unknown"` in `renv.lock`~~ | ✅ Resolved (CHG-040) — published to `github.com/DunnNAM/forestHelperR`, `renv.lock` now records a real `"Source": "GitHub"`. `renv::restore()` should now fully succeed, unblocking the R 4.5.2 migration's own prerequisite too — not yet re-verified on 4.5.2 itself. |
 | **ISS-043** | — (feature) | Add internal `styling` package as a dependency (colour palettes, fonts) | Doc-only, not started. Same deployability question as ISS-036 — whatever eventually fixes ISS-036 properly should probably cover this too. |
 | **ISS-028** | Medium | Age group levels not in clinical sort order | Highest-severity pre-existing item and the only one affecting output correctness — but it lives in `forestHelperR`, so it needs a session in *that* repo. Explicitly out of scope per plan §10. |
 | **ISS-029** | Low | OS system fonts absent from selector after `sysfonts` migration | |
 | **ISS-030** | Low | `"Source Sans Pro"` renamed on Google Fonts; silently absent | |
-| **ISS-041** | Medium | `README.md` describes the pre-restyle app (sidebar/accordion, no tests, no renv) | User-facing and actively misleading, not just incomplete. Deliberately not fixed yet — worth its own pass. |
+| **ISS-041** | Medium | `README.md` describes the pre-restyle app (sidebar/accordion, no tests, no renv) | User-facing and actively misleading, not just incomplete. Deliberately not fixed yet — worth its own pass. Do after ISS-042. |
 | **ISS-039** | Low | x-axis tick generation always splits evenly either side of 1 | Doesn't suit a skewed distribution. Deferred future-development note from the user, not an immediate ask. |
 | **ISS-040** | Low | Variables rail badge can briefly flash a stale "hidden" count on load | Cosmetic, self-corrects. User explicitly asked this be logged rather than fixed now. |
 | **FEAT-011** | — | Decide whether `design/modal-progression-workflow` gets merged/adopted | Merged to `main` (2026-09-06, rebase — see `app-changelog-decision-register.md`'s renumbering note). |
@@ -318,6 +346,17 @@ R 4.5.2 has no populated library.
   how many handles a multi-value slider has means rebuilding it via `renderUI()` (same
   pattern as the Data panel's file table / Order panel's sortable list — remember
   `outputOptions(..., suspendWhenHidden = FALSE)` for it) — see CHG-050.
+- **CSS/layout reasoning verified only against stylesheet text, without an actual
+  rendered screenshot, is not reliable enough to report as "verified."** CHG-052 made
+  three navbar/Help-tab styling changes with detailed reasoning about flexbox
+  `align-items`, absolute-positioning offsets, and class scoping — all internally
+  consistent on paper, checked via `curl` for served HTML/CSS and balanced braces, but
+  the Chrome browser extension was unavailable that session so none of it was actually
+  seen rendered. The user's own live check immediately after found none of the three
+  fixes landed, and one regressed. See **ISS-042**. Lesson: for visual/layout work,
+  either get a working browser connection before claiming something is fixed, or say
+  explicitly that the change is unverified and may need visual correction — don't let
+  "the reasoning is sound" stand in for "I saw it work."
 
 ---
 

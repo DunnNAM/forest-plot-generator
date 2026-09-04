@@ -608,7 +608,31 @@
 
 ---
 
-*Document version: 3.14 — ISS-039/040/041 raised (x-axis tick generation asymmetry,
+### ISS-042 — CHG-054 navbar/Help-tab restyle: three visual issues not actually fixed, one made worse
+
+| Field | Detail |
+|---|---|
+| **Source** | USER, session 2026-09-04, live visual check of CHG-054 (this register's own author could not check live — the Chrome browser extension was unavailable that session, so CHG-054 was verified only against served HTML/CSS, not rendered appearance) |
+| **Severity** | Medium — the whole point of the session was these three specific visual fixes, and one is now worse than before |
+| **Status** | **Open — next session should fix this before starting the `README.md` refresh (ISS-041)** |
+| **File(s)** | `www/style.css` (`.navbar`, `.navbar-brand`, `.navbar-nav .nav-link`, `.help-title`), `R/ui_help.R` |
+| **Description** | Three sub-issues, all against CHG-054's intended fixes: |
+
+1. **Help page title still not left-aligned.** `R/ui_help.R`'s `<h4>` was moved off `.drawer-header` (which centers within a 1280px `max-width`) onto a new `.help-title` class with no such constraint — on paper this should already render flush with the section cards below, since neither `.help-title` nor `.content-area` sets any centering. **Prime suspect: this is an `R/*.R` file change, which needs a full R process restart to take effect** (per `session-handoff.md` §6) — if the session that reviewed this didn't restart (vs. a plain browser refresh, which is enough for the CSS-only navbar changes in the same commit), the page would still be running the *old* `helpPanelUI()` with the old `drawer-header` class, exactly reproducing the reported symptom. **First step next session: hard-restart R, hard-refresh the browser, and re-check before touching any CSS.** If it's still off after that, inspect the actual rendered class on the `<h4>` via devtools to confirm `.help-title` is even present.
+2. **App title / tab-label vertical alignment is worse, and the tab labels now look too small.** CHG-054 set `align-items: flex-end` on both `.navbar` and `.navbar > .container-fluid`, on the theory that `.navbar-brand` and `.navbar-collapse` (the flex children of `.container-fluid`) would both settle onto one shared bottom edge, since `.navbar-nav .nav-link`'s `line-height: 56px` makes the collapsed nav effectively 56px tall while `.navbar-brand` is much shorter. That reasoning doesn't obviously explain a *bigger* gap and *smaller*-looking tab text — worth checking directly in devtools next session rather than re-deriving on paper: (a) confirm what `.navbar-brand`'s actual rendered `font-size`/line-box height is — Bootstrap's own `.navbar-brand` rule may be winning on specificity or cascade order against the plain `.navbar-brand { font-size: 22px; ... }` added in this stylesheet, especially if bslib injects its own navbar CSS after this stylesheet in the `<head>`; (b) confirm `.navbar-nav .nav-link`'s computed `line-height` and `font-size` are actually 56px/14px as written, not overridden elsewhere; (c) check whether `.navbar > .container-fluid { align-items: flex-end; }` is even taking effect — Bootstrap's own `.navbar > .container-fluid` rule sets `align-items: center` at the same specificity (single class + descendant combinator on both), so cascade order (which stylesheet loads/is declared last) decides the winner, and bslib's own compiled theme CSS may load after this app's `style.css` link in `<head>` rather than before it.
+3. **Active-tab underline still reads as a second line, not overlaid on the divider.** CHG-054 replaced `.nav-link.active`'s own `border-bottom` with an absolutely-positioned `::after` (`bottom: -4px; height: 4px;`) intended to land exactly on `.navbar`'s new 4px `border-bottom`. `bottom: -4px` on an absolutely-positioned element is relative to its *nearest positioned ancestor's padding edge* — `.navbar-nav .nav-link` was given `position: relative` for exactly this, but the `::after`'s containing block is the `<a>` itself, not `.navbar`, so if the `<a>`'s own box bottom doesn't sit flush with `.navbar`'s content-box bottom (e.g. because of sub-issue 2's alignment problem, or residual padding/margin somewhere in the `.nav-item`/`.navbar-nav`/`.navbar-collapse` chain), the `::after` lands a few pixels short of or past the navbar's actual border, reproducing the "two lines" look CHG-054 was meant to remove. **This is likely downstream of sub-issue 2** — fixing the baseline alignment first, then re-measuring the `::after`'s actual position via devtools (not guessing the pixel offset again), is the more reliable order of operations than adjusting the `::after` in isolation.
+
+| **Why it matters** | This was the entire scope of the session that produced CHG-054 — the user asked for exactly these three things (title alignment, divider unification, active-tab highlight legibility) and, per their own live check, none of the three landed as intended, with the title/tab alignment actively regressing. |
+| **Recommended approach for next session** | (1) Restart R fully and hard-refresh before assuming anything is still broken — rule out sub-issue 1 being a stale-render artifact first. (2) For sub-issues 2 and 3, use actual browser devtools (computed styles + box model) rather than reasoning about cascade/specificity from the stylesheet text alone — this session's author did not have Chrome extension access, and CHG-054's own alignment reasoning, while plausible on paper, produced the opposite of the intended result once actually rendered, which is a strong signal to verify empirically this time rather than repeat the same reason-from-CSS-text approach. (3) Do this before ISS-041 (`README.md` refresh) — the user's explicit priority order for next session. |
+| **Resolution** | — |
+
+---
+
+*Document version: 3.15 — ISS-042 raised (CHG-054's navbar/Help-tab restyle: Help title
+still not left-aligned, app-title/tab-label baseline alignment made worse, active-tab
+underline still reads as a second line — flagged by the user's own live check; next
+session should fix this before starting ISS-041). Previously: Document version 3.14 —
+ISS-039/040/041 raised (x-axis tick generation asymmetry,
 deferred; Variables rail badge stale-count race on load, low priority; `README.md` stale
 since before DEC-004/DEC-005, not fixed yet); FEAT-011's commit list extended with
 `fd490b7` (CHG-051–053: Plot tab card-height/resolution fixes, Display panel 3-group
