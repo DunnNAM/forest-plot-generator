@@ -35,7 +35,9 @@ from the Connect Cloud work below; see that branch's own commits and `issues-reg
 **All planned programmes of work on `main`'s application code are complete.** There is
 no in-flight migration or half-finished refactor in the app itself. The one piece of
 live work right now is deployment prep (see §3), not a code change. See §1 above for
-the `design/modal-progression-workflow` branch's own, separate status.
+the `design/modal-progression-workflow` branch's own, separate status; ISS-038 (a real
+pre-existing first-visit-trigger bug the branch found and fixed) is detailed in
+`issues-register.md`.
 
 | Phase | Outcome |
 |---|---|
@@ -252,6 +254,24 @@ R 4.5.2 has no populated library.
   from disk on every browser request — only `ui.R`/`R/*.R`/`server/*.R` changes need
   the R process restarted. A CSS-only edit just needs the browser refreshed (bump the
   stylesheet's `?v=` cache-buster in `ui.R` if the browser might have it cached).
+- **Shiny fires `"shiny:connected"` via jQuery's `.trigger()`, not a native DOM event.**
+  `document.addEventListener("shiny:connected", ...)` can never catch it — confirmed by
+  reading the bundled `shiny.min.js` directly. Any client-side "run once Shiny connects"
+  code needs `jQuery(document).on("shiny:connected", ...)` instead. This is what ISS-038
+  turned out to be, and it had been silently broken since CHG-039 — worth checking any
+  other `addEventListener("shiny:...", ...)` call in the codebase for the same mistake
+  if one ever gets added.
+- **A plain `observe()` re-fires on the very first reactive flush too**, not just on
+  later changes — including when the reactive value it reads is already valid from
+  app-start defaults. This bit the wizard's auto-advance observer once Simulated data
+  (with a valid response/predictor selection) became the default: it fired almost
+  instantly instead of waiting for the user to do something. `bindEvent(..., ignoreInit
+  = TRUE)` on the actual inputs that should trigger it is the fix — see CHG-048.
+- **htmltools' pretty-printer inserts whitespace between a tag call's separate
+  arguments**, and between *inline* elements (unlike block-level ones) that collapses to
+  a visible stray space in the browser. `p("...", strong("X"), ", ", strong("Y"), ...)`
+  can render as "X , Y" instead of "X, Y". Building the sentence as one `HTML()` string
+  sidesteps it — see CHG-048 / `R/ui_wizard.R`.
 
 ---
 

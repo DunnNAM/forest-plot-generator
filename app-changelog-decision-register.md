@@ -239,7 +239,109 @@ manual retry also fails.
 > unchanged. Commit subject lines on the branch still cite the old numbers — treat this
 > register as the authoritative numbering going forward.
 
-### CHG-044 — Data drawer: icon+uppercase panel headings, response-field padding (FEAT-011, branch-only)
+### CHG-050 — Wizard welcome modal redesign, auto-advance fix, styling (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `907ce40` (originally registered as CHG-048 on the branch) |
+
+The CHG-048 default-load-state change (Simulated data, already valid) surfaced a real bug: the wizard's auto-advance from the welcome modal to the "Variables ready" modal was a plain `observe()` re-firing on every reactive flush, so with valid data present from the very first flush the two modals stacked almost instantly — confirmed via a shinytest2 "duplicate `wizard_skip` id" warning appearing on every test block. Fixed by `bindEvent()`-ing the observer to actual Data-panel input changes (`ignoreInit = TRUE`), so step 1 only advances because of something the user did after entering it. The welcome modal itself was redesigned to a three-button footer — Skip wizard / Update data source/s / Go to plot styling (new: for a visitor happy with the already-valid example data) — and restyled: title reuses the drawer panels' colour/weight/size (new `.wizard-modal-title`), a paragraph rebuilt as one `HTML()` string rather than separate `strong()`/text arguments after tracing stray spaces to htmltools' pretty-printer inserting whitespace between inline elements, tightened vertical rhythm (25% less padding top/bottom on `.modal-header/-body/-footer`), one-row equal-width buttons (`flex: 1 1 0; min-width: 0`, not `nowrap` — that combination briefly forced a button past the modal's edge), and a 650px modal width so the longest label wraps at most two lines. `tests/testthat/test-shiny-app.R`'s three upload/column-confirmation blocks needed an explicit switch to `dataset_selected = "upload"` first, since they'd relied on its old default to reach the `cols` button (a `conditionalPanel` Shiny suspends when hidden).
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass, 0 warnings (previously 6, one per test block).
+
+---
+
+### CHG-049 — Returning-user Data drawer default; fixed `shiny:connected` never firing (ISS-038) (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011, ISS-038 |
+| **Commit** | `907ce40` (originally registered as CHG-047 on the branch) |
+
+A returning user (`fpb_wizard_seen` already in `localStorage`) now default-opens the Data drawer instead of landing with no drawer open, while the main tab still defaults to Review data — `rv_drawer("data")` is set directly rather than through the rail-click path, so it doesn't also trigger that path's Plot-tab anchoring (CHG-047). Implementing this surfaced a real, pre-existing bug (present as far back as CHG-041, not introduced this session): `www/wizard.js` registered its "first visit?" check via `document.addEventListener("shiny:connected", ...)`, but Shiny fires that event through jQuery's `.trigger()`, not the native DOM event system — a native `addEventListener` can never catch it. The first-visit wizard modal's trigger had never actually worked reliably. Fixed by binding through jQuery itself (`jQuery(document).on("shiny:connected", ...)`), with a `Shiny.shinyapp.isConnected()` load-time check as a fallback for the case where the connection already completed before the script ran. Full root-cause trace (confirmed via server-side debug logging, then reading the bundled `shiny.min.js` directly) is in the commit body. Raises and resolves ISS-038.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass.
+
+---
+
+### CHG-048 — Default load state (Simulated data / Indicator 3 / Sex, Age-group, Time period); predictor label renames (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `69f364f` (originally registered as CHG-046 on the branch) |
+
+App now loads with Data set = Simulated data, Response variable = Indicator 3 (`IND_3`), Predictor variables = Sex, Age-group (`AgeGroupAtDiagnosis`), Time period (`DxYearGroup`) — Regression type unchanged (Poisson, robust variance on). Underlying column mapping confirmed by inspecting `forestHelperR::dat`'s actual `colnames()`. Three predictor display labels renamed in `global.R`: "Age group at diagnosis" → "Age-group", "Residence at diagnosis" → "Remoteness area of residence", "Diagnosis time period" → "Time period" — confirmed these are this repo's own display labels (`names(predictors) <- c(...)`), not anything sourced from `forestHelperR`, so no cross-repo change was needed.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass (integration suite needed updates for the new default — see CHG-050).
+
+---
+
+### CHG-047 — Rail/status-chip clicks anchor the main body tab to the open drawer (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `69f364f` (originally registered as CHG-045 on the branch) |
+
+The Review data tab is only useful while the Data drawer is what's being edited. `navset_card_tab()` given an explicit `id = "main_tabs"` (`ui.R`) so `server/drawers.R` can drive it with `bslib::nav_select()`: opening any drawer other than Data (via rail click or status chip) switches the main body to Plot; returning to the Data drawer switches it back to Review data. Closing a drawer (clicking its already-open rail item) leaves the current tab alone — there's no drawer left to anchor it to at that point.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass.
+
+---
+
+### CHG-046 — Variables panel: combined estimate-column toggles into one radio group; removed misleading static switch captions app-wide (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `69f364f` (originally registered as CHG-044 on the branch) |
+
+Three separate estimate-column fields ("Include significance symbol", "Combine estimate and CI", "Combine estimate and significance symbol") combined into one "Estimate Column Formatting" field. "Include significance symbol" is now a plain `checkboxInput()` (was a `materialSwitch()` whose label wrapped one word per line in the narrow field column); the other two — always mutually exclusive in practice — became a single three-way `radioButtons()`, "Combine estimate with:" (Significance symbol / Confidence interval / Neither, default Confidence interval, matching the old default). `server/plot.R` and `server/export.R` now derive `forestHelperR`'s `concatenate_est_ci`/`concatenate_est_sig` parameters from this one radio's value (`identical(input$combine_estimate_with, "ci"/"sig")`) rather than reading two independent switch inputs — the package's own parameters are unchanged, only what feeds them. The reset observers that used to unset the two switches when their underlying condition disappeared (estimate/CI deselected, significance turned off) now reset the radio to "Neither" instead. Separately: the static `"On"` caption on every `materialSwitch()` in the app (`by_group`, `inv`, `transparent_table_bg`, `striped_bg`, `transparent_plot_bg`, `sigfigs`, plus the three above before the redesign) was removed — it was static text that never tracked the switch's actual live state, so it read as mislabeled for any switch defaulting `FALSE` and would go stale the instant a `TRUE`-defaulting one was toggled off. Each switch now relies on its own on/off colour plus its adjacent title/label.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass.
+
+---
+
+### CHG-045 — Extend Data-drawer titled-field styling to Variables/Display/Text/Order panels (FEAT-011)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-04 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011 |
+| **Commit** | `69f364f` (originally registered as CHG-043 on the branch) |
+
+CHG-043's Data-panel-only `drawerFieldUI()` title-over-content convention extended to Variables, Display, Text, and Order — Export is explicitly out of scope, pending its own design pass. `.drawer-row-divided` (vertical dividers, CHG-043) attempted on Variables as well as Data, since its base fields stay in one row at typical widths — Display and Text keep the plain `.drawer-columns` grid, since both reliably wrap across several rows and the divider technique (an absolutely-positioned line sized to a single flex line's height) only positions correctly within one row; Order has only one field, so dividers don't apply there either way.
+
+Verified: 48/48 unit assertions, 9/9 integration assertions pass (CSS/layout-only change).
+
+---
+
+### CHG-044 — Data drawer: icon+uppercase panel headings, response-field padding (FEAT-011)
 
 | Field | Detail |
 |---|---|
@@ -256,7 +358,7 @@ Verified: 48/48 unit assertions, 9/9 integration assertions pass.
 
 ---
 
-### CHG-043 — Data drawer: titled fields, divider rules, Robust variance nesting (FEAT-011, branch-only)
+### CHG-043 — Data drawer: titled fields, divider rules, Robust variance nesting (FEAT-011)
 
 | Field | Detail |
 |---|---|
@@ -1636,4 +1738,4 @@ The app is a visualisation tool with no patient-facing interface, no authenticat
 
 ---
 
-*Document version: 3.4 — CHG-039 through CHG-042 record the design/modal-progression-workflow branch's work to date (FEAT-011, draft, NOT merged to `main`): soft-gated setup wizard (CHG-039), `.card` background bug fix (CHG-040 — candidate to cherry-pick to `main` independently), Data drawer titled fields/dividers/Robust variance renesting (CHG-041), icon+uppercase panel headings (CHG-042). Previously: CHG-022 through CHG-038 — DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-7 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish, status chips/rail badges/Help nav) complete — restyle fully done. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010. CHG-037 reconciles the test counts (ISS-037: documented command silently skipped all integration tests), refreshes session-handoff.md, and records the FAILED R 4.5.2 migration attempt — blocked by ISS-036; DEC-006 authorises the snapshot when it is retried. CHG-038 implements FEAT-010 (DEC-005 Step 7 phase 2), completing the restyle.*
+*Document version: 3.5 — CHG-039 through CHG-048 record the design/modal-progression-workflow branch's work to date (FEAT-011, draft, NOT merged to `main`): soft-gated setup wizard (CHG-039), `.card` background bug fix (CHG-040 — candidate to cherry-pick to `main` independently), Data drawer titled fields/dividers/Robust variance renesting (CHG-041), icon+uppercase panel headings (CHG-042), titled-field styling extended to Variables/Display/Text/Order (CHG-043), Variables' estimate-column toggles combined into one radio group + misleading switch captions removed app-wide (CHG-044), rail/chip-to-main-tab anchoring (CHG-045), default load state + predictor label renames (CHG-046), returning-user Data drawer default + a real pre-existing `shiny:connected` event bug fixed (CHG-047, ISS-038), wizard welcome modal redesign + auto-advance fix + styling (CHG-048). Previously: CHG-022 through CHG-038 — DEC-004 file split complete; ISS-035 (svglite) resolved; DEC-005 restyle Steps 1-7 (theme/navbar shell, rail/drawer, Variables/Display/Text panels, Data panel/sidebar retired, Order panel + FEAT-009 export redesign, CSS merge/polish, status chips/rail badges/Help nav) complete — restyle fully done. CHG-035 is tooling-only (Claude Code settings repair, stale worktree cleanup) — no app source changed. CHG-036 tracks the restyle plan and readiness review in git, corrects the plan’s stale “nothing implemented” header, and registers DEC-005 Step 7 as FEAT-010. CHG-037 reconciles the test counts (ISS-037: documented command silently skipped all integration tests), refreshes session-handoff.md, and records the FAILED R 4.5.2 migration attempt — blocked by ISS-036; DEC-006 authorises the snapshot when it is retried. CHG-038 implements FEAT-010 (DEC-005 Step 7 phase 2), completing the restyle.*

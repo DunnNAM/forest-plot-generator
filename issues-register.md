@@ -415,7 +415,7 @@
 | ISS-037 | Medium | `CLAUDE.md`, test docs | Documented test command silently skips all 6 integration tests | ✅ Resolved — CHG-037 |
 | FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | ✅ Implemented — CHG-033 (location amended to Export drawer panel) |
 | FEAT-010 | Low | `ui.R`, `R/ui_rail.R`, `R/ui_help.R`, `www/style.css` | DEC-005 Step 7 (phase 2): status-chip strip, rail badges, Help nav panel | ✅ Implemented — CHG-038 |
-| FEAT-011 | — | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js`, `R/ui_plot_options.R`, `www/style.css` | Soft-gated setup wizard + Data drawer visual redesign | 🔲 Draft — branch `design/modal-progression-workflow`, not merged |
+| FEAT-011 | — | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js`, `R/ui_plot_options.R`, `www/style.css`, `global.R`, `ui.R`, `server/drawers.R`, `server/plot.R`, `server/export.R`, `tests/testthat/test-shiny-app.R` | Soft-gated setup wizard + Data drawer visual redesign, extended app-wide | 🔲 Draft — branch `design/modal-progression-workflow`, not merged |
 
 ---
 
@@ -505,6 +505,21 @@
 | **Resolution** | `CLAUDE.md` §Test suite and `session-handoff.md` §5 now document `NOT_CRAN=true` explicitly, with a warning that the exit code is misleading without it. Verified: with `NOT_CRAN=true`, 6 blocks / 9 assertions pass, 0 skipped. |
 
 ---
+
+### ISS-038 — `shiny:connected` fired via jQuery, never caught by `document.addEventListener` — first-visit wizard trigger never actually worked
+
+| Field | Detail |
+|---|---|
+| **Source** | Discovered 2026-09-04 debugging why a returning user's default-open Data drawer (FEAT-011 follow-up) never opened |
+| **Severity** | Medium — the setup wizard is the entire point of FEAT-011, and its trigger mechanism was non-functional |
+| **Status** | **Resolved — CHG-047** |
+| **File(s)** | `www/wizard.js` |
+| **Description** | `www/wizard.js` (as far back as CHG-039, so pre-existing — not introduced this session) registered its first-visit check with `document.addEventListener("shiny:connected", ...)`. Confirmed via server-side trace (a plain `observe()` printing every value `input$wizard_should_show` ever took) across four separate fresh sessions that the input **never arrived, at all** — not a timing race, a deterministic failure. Root cause, confirmed by reading the bundled `shiny.min.js` directly: Shiny fires `"shiny:connected"` via jQuery's `.trigger()` — `(0,G.default)(document).trigger({type:"shiny:connected", socket:i})` — which is jQuery's own event system, not a real browser/DOM event. `document.addEventListener` can never see a jQuery-only trigger for a made-up event name like this one; no amount of "register the listener earlier" would have fixed it. |
+| **Why it mattered** | The soft-gated setup wizard (FEAT-011's core mechanism) never actually showed itself to a genuine first-time visitor in any tested configuration — the whole feature's entry point was silently dead code from the point it was written. |
+| **Resolution** | `www/wizard.js` now binds through jQuery itself — `jQuery(document).on("shiny:connected", reportWizardVisit)` — with a `Shiny.shinyapp.isConnected()` load-time check as a fallback for the case where the connection already completed before the script ran. Verified: with `fpb_wizard_seen` cleared, the welcome modal now reliably shows; with it set, the returning-user path (CHG-047) reliably fires instead. |
+
+---
+
 ### FEAT-009 — Redesign export controls into a dedicated sidebar accordion panel
 
 | Field | Detail |
@@ -541,16 +556,22 @@
 | **Source** | USER, session 2026-09-04 |
 | **Severity** | — (design experiment, not a defect) |
 | **Status** | **Draft — in progress on `design/modal-progression-workflow`, not merged to `main`** |
-| **File(s)** | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js` (new); `R/ui_rail.R`, `R/ui_help.R`, `R/ui_plot_options.R`, `www/style.css`, `ui.R`, `server.R` (modified) |
-| **Description** | Two related but separable pieces of work, both exploring whether the app's first-launch "directionless" feeling (no cue where to start) can be fixed without abandoning DEC-005's static rail/drawer model: **(1) a soft-gated setup wizard** — two instructional modals (Data, then Variables) shown on first visit, auto-advancing once real data exists, always skippable, restartable any time via a new "Tour" rail item; **(2) a Data-drawer visual redesign** — title/content field convention, vertical dividers between fields, icon+uppercase panel headings, and a real layout bug fix (`.card` had no explicit background, so every `bslib::card()` in the app — including the FEAT-010 Help panel — blended into the cream page background). |
-| **Design notes** | The wizard is deliberately *instructional*, not a duplicate control surface: DEC-005's restyle plan already made the case (§3) against duplicating any of the ~45 live plot-option inputs, so the wizard's modals tell the user what to do and the server opens the matching drawer for them, rather than embedding copies of `dataset_selected` etc. inside a modal. Two real Shiny/CSS gotchas surfaced and are documented in situ in `www/style.css`: `conditionalPanel()` renders `display: contents` when shown, which promotes its child into a parent flex row for *layout* but not for CSS structural selectors (`:not(:first-child)` silently matched nothing); and a `flex: 1` stretch-to-fill only works if the *immediate* parent is a flex container, which `.drawer-panel.active` wasn't until fixed. |
-| **Commits so far** | `d2fb1b7` (wizard + Tour rail item), `69f9b33` (`.card` background fix — candidate to cherry-pick to `main` independently, since it's a real bug fix unrelated to the wizard experiment), `a63dd99` (Data panel titled fields, dividers, Robust variance renested under Regression type), `69fef17` (icon+uppercase panel headings, response-field padding, divider re-measurement). |
-| **Open question** | Whether the wizard pattern and/or the Data-drawer visual language get adopted app-wide (the other five drawer panels still use the plain `.drawer-columns` grid with no dividers/title convention) and merged to `main`, or stay a documented experiment. No DEC has been raised for this yet — raise one (working title: **DEC-007**) if/when a merge decision is made. |
+| **File(s)** | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js` (new); `R/ui_rail.R`, `R/ui_help.R`, `R/ui_plot_options.R`, `www/style.css`, `ui.R`, `server.R`, `server/drawers.R`, `server/plot.R`, `server/export.R`, `global.R`, `tests/testthat/test-shiny-app.R` (modified) |
+| **Description** | Three related but separable pieces of work, both exploring whether the app's first-launch "directionless" feeling (no cue where to start) can be fixed without abandoning DEC-005's static rail/drawer model: **(1) a soft-gated setup wizard** — a three-button welcome modal (Skip wizard / Update data source/s / Go to plot styling) shown on first visit, a second "Variables ready" modal that auto-advances once the user has actually changed something in the Data panel, always skippable, restartable any time via a "Tour" rail item, and a returning-user default (Data drawer open, Review data tab); **(2) a Data-drawer visual redesign, extended app-wide** — title/content field convention and icon+uppercase panel headings on every drawer panel except Export, vertical dividers attempted where a panel's fields stay single-row (Data, Variables), and two real layout/logic bugs fixed along the way (`.card` had no explicit background, blending into the cream page; three related Variables-panel toggles combined into one field with a mutually-exclusive radio group, replacing two switches a user could nonsensically both enable); **(3) app-wide defaults and navigation** — the app now loads with a working Simulated-data example already plotted (previously an empty upload prompt), and the bottom rail/status chips anchor the main body tab to whichever drawer is open. |
+| **Design notes** | The wizard is deliberately *instructional*, not a duplicate control surface: DEC-005's restyle plan already made the case (§3) against duplicating any of the ~45 live plot-option inputs, so the wizard's modals tell the user what to do and the server opens the matching drawer for them, rather than embedding copies of `dataset_selected` etc. inside a modal. Several real Shiny/CSS/JS gotchas surfaced and are documented in situ: `conditionalPanel()` renders `display: contents` when shown, which promotes its child into a parent flex row for *layout* but not for CSS structural selectors (`:not(:first-child)` silently matched nothing); `flex: 1` stretch-to-fill only works if the *immediate* parent is a flex container; a plain `observe()` re-fires on the very first reactive flush too, which matters once the data it's watching can already be valid by default; htmltools' pretty-printer inserts whitespace between a multi-argument tag call's children that becomes a visible stray space between adjacent *inline* elements (invisible for block-level ones); and — the most significant, ISS-038 — Shiny fires `"shiny:connected"` through jQuery's `.trigger()`, which a native `document.addEventListener` can never catch, so the entire first-visit wizard trigger had silently never worked since it was written (CHG-041). |
+| **Commits so far** | `d2fb1b7` (wizard + Tour rail item), `69f9b33` (`.card` background fix — candidate to cherry-pick to `main` independently, since it's a real bug fix unrelated to the wizard experiment), `a63dd99` (Data panel titled fields, dividers, Robust variance renested under Regression type), `69fef17` (icon+uppercase panel headings, response-field padding, divider re-measurement), `69f364f` (CHG-045–048: titled-field styling extended app-wide, Variables' estimate-column redesign, rail/tab anchoring, default load state), `907ce40` (CHG-049–050, ISS-038: returning-user default, `shiny:connected` event fix, welcome modal redesign). |
+| **Open question** | Whether the wizard pattern and/or the Data-drawer visual language get adopted app-wide and merged to `main`, or stay a documented experiment. The visual language is now applied to every drawer panel except Export (deliberately deferred, pending its own design pass), narrowing what's actually still Data-panel-only. No DEC has been raised for this yet — raise one (working title: **DEC-007**) if/when a merge decision is made. |
 | **Resolution** | — |
 
 ---
 
-*Document version: 3.12 — merged `design/modal-progression-workflow` branch docs onto `main`
+*Document version: 3.13 — ISS-038 raised and resolved (CHG-049: `shiny:connected` fired via
+jQuery, never caught by `document.addEventListener` — first-visit wizard trigger had
+silently never worked since CHG-041); FEAT-011 updated (Data-drawer visual language
+extended to Variables/Display/Text/Order, Variables' estimate-column toggles combined,
+rail/tab anchoring, default load state, wizard welcome modal redesign — CHG-045 through
+CHG-050, carried forward through the `main` merge rebase). Previously: Document version
+3.12 — merged `design/modal-progression-workflow` branch docs onto `main`
 (rebase, 2026-09-06): FEAT-011 raised (branch: soft-gated setup wizard + Data drawer
 visual redesign, draft, now carried forward through the rebase); ISS-036 fully resolved
 (CHG-040, 2026-09-06): CHG-039's Cellar-based workaround was confirmed insufficient the
