@@ -38,9 +38,21 @@ drawerFieldUI <- function(title, ..., first = FALSE) {
   )
 }
 
+# Panel heading: the matching rail icon + an uppercase title, both in the
+# title's slate blue, sitting directly on the drawer's own background — no
+# card, no box. Ties the drawer's heading back to the rail button that opened
+# it. Chosen over a full left-hand icon "card" column (which would have meant
+# restructuring every panel's layout from a vertical stack to a sidebar+
+# content split, and re-deriving the Data panel's divider-centering math) —
+# see the 2026-09-04 discussion. `icon_name` must match the icon passed to
+# the corresponding rail_button() call in R/ui_rail.R.
+drawerHeaderUI <- function(icon_name, title) {
+  h4(class = "drawer-header", icon(icon_name), title)
+}
+
 dataPanelUI <- function() {
   tagList(
-    h4(class = "drawer-header", "Data"),
+    drawerHeaderUI("database", "Data"),
     div(
       # .drawer-row-divided rather than .drawer-columns: this panel gets
       # vertical dividers between its fields, which needs the row to stretch
@@ -128,7 +140,7 @@ dataPanelUI <- function() {
 
 variablesPanelUI <- function() {
   tagList(
-    h4(class = "drawer-header", "Variables and Elements"),
+    drawerHeaderUI("list-check", "Variables and Elements"),
     div(
       class = "drawer-columns",
       checkboxGroupInput("variables_displayed", "Variables plotted", choices = c()),
@@ -166,7 +178,7 @@ variablesPanelUI <- function() {
 
 displayPanelUI <- function() {
   tagList(
-    h4(class = "drawer-header", "Plot Display Options"),
+    drawerHeaderUI("sliders", "Plot Display Options"),
     div(
       class = "drawer-columns",
       sliderInput("plotting_width", "Width of plotting area", min = 20, max = 250, value = 120, step = 1, ticks = TRUE),
@@ -216,7 +228,7 @@ displayPanelUI <- function() {
 
 textPanelUI <- function() {
   tagList(
-    h4(class = "drawer-header", "Plot Text Options"),
+    drawerHeaderUI("font", "Plot Text Options"),
     div(
       class = "drawer-columns",
       textInput("plot_title", "Title", placeholder = "Plot title text"),
@@ -250,7 +262,7 @@ textPanelUI <- function() {
 
 orderPanelUI <- function() {
   tagList(
-    h4(class = "drawer-header", "Order"),
+    drawerHeaderUI("arrows-left-right", "Order"),
     # .drawer-fullwidth rather than .drawer-columns: this panel has one real
     # control, so a multi-column grid just leaves the other columns empty.
     # The explanatory copy also addresses the panel reading as broken/empty
@@ -277,7 +289,7 @@ orderPanelUI <- function() {
 # are colour-separated (.export-section--graph/--code in www/style.css).
 exportPanelUI <- function() {
   tagList(
-    h4(class = "drawer-header", "Export"),
+    drawerHeaderUI("download", "Export"),
     div(
       class = "drawer-columns",
       div(
