@@ -235,12 +235,12 @@ body > .container-fluid {
 /* Drawer panels: all rendered statically, one visible at a time */
 .drawer-panel { display: none; }
 /* flex column (not block): lets a panel's content opt into filling the
-   drawer's available height via `flex: 1` on a direct child — used by the
-   Data panel's .drawer-row-divided so its dividers can be centered within
-   the drawer rather than only within their own content height (2026-09-04
-   discussion). Harmless for the other five panels, whose content just stacks
-   top-to-bottom exactly as it did under display:block, since none of them
-   set flex-grow on anything. */
+   drawer's available height via `flex: 1` on a direct child — used by
+   .drawer-row-divided (Data, Variables) so its dividers can be centered
+   within the drawer rather than only within their own content height
+   (2026-09-04 discussion). Harmless for the other panels, whose content just
+   stacks top-to-bottom exactly as it did under display:block, since none of
+   them set flex-grow on anything. */
 .drawer-panel.active {
   display: flex;
   flex-direction: column;
@@ -267,18 +267,26 @@ body > .container-fluid {
   width: 100%;
 }
 
-/* Data panel's field row — divided by faint vertical rules, centered within
-   the drawer's available height rather than touching its top/bottom edge
-   (2026-09-04 discussion). `flex: 1` lets the row stretch to fill whatever
-   vertical space the drawer isn't using for the full-width upload/file-table
-   block below it — in Simulated data mode, where nothing else shares the
-   drawer, it stretches to the drawer's full available height, so an equal
-   top/bottom inset on the divider is then genuinely centered, not just
-   visually approximate. In upload mode the row only stretches as far as the
-   upload block's natural position, which is deliberate — a divider running
-   through that unrelated full-width block would look wrong. Scoped to the
-   Data panel only via this dedicated class; the other five panels keep the
-   plain grid (.drawer-columns) with no dividers, per the same discussion. */
+/* Field row divided by faint vertical rules, centered within the drawer's
+   available height rather than touching its top/bottom edge (2026-09-04
+   discussion). `flex: 1` lets the row stretch to fill whatever vertical
+   space the drawer isn't using for content below it (Data panel: the
+   full-width upload/file-table block) — in Simulated data mode, where
+   nothing else shares the drawer, it stretches to the drawer's full
+   available height, so an equal top/bottom inset on the divider is then
+   genuinely centered, not just visually approximate. In upload mode the row
+   only stretches as far as the upload block's natural position, which is
+   deliberate — a divider running through that unrelated full-width block
+   would look wrong.
+   Used by the Data and Variables panels (FEAT-011 follow-up, 2026-09-04) —
+   both have few enough base fields to stay in one flex line at typical
+   widths. The technique only positions correctly within a single line: with
+   flex-wrap and multiple lines, a field's divider (sized to that field's own
+   stretched box, see .drawer-field-block below) reflects its own line's
+   height, not the intent's "centered in the whole drawer" — acceptable for
+   Variables' rare heavily-conditional states, per the design review, but not
+   attempted on Display/Text/Order, which reliably wrap and keep the plain
+   grid (.drawer-columns) with no dividers instead. */
 .drawer-row-divided {
   display: flex;
   flex-wrap: wrap;
@@ -360,12 +368,14 @@ body > .container-fluid {
 /* Title-over-content field block (drawerFieldUI(), R/ui_plot_options.R) —
    distinct from .drawer-field above: a bold title clearly larger than its
    content, content starting at a consistent vertical position across a
-   .drawer-columns row. Requested for the Data panel's four top-level fields
-   (design/modal-progression-workflow review, 2026-09-04); deliberately not
-   cards, per that discussion. Titles here (Data set, Comparison mode, etc.)
-   are short enough to stay on one line at the grid's 260px column minimum,
-   which is what keeps every row's content flush — no fixed title height
-   needed unless a longer title gets added to this pattern later. */
+   drawer row. Requested for the Data panel's four top-level fields (design/
+   modal-progression-workflow review, 2026-09-04); deliberately not cards,
+   per that discussion. Extended to Variables, Display, Text, and Order the
+   same day (FEAT-011 follow-up) — Export not yet touched, pending its own
+   design pass. Titles across all five panels are short enough to stay on one
+   line at the grid's 260px column minimum, which is what keeps every row's
+   content flush — no fixed title height needed unless a longer title gets
+   added to this pattern later. */
 .drawer-field-block {
   display: flex;
   flex-direction: column;
@@ -601,4 +611,89 @@ p.bucket-list-header {
   right: -5px !important;
   top: -5px !important;
   background-color: #dedede !important;
+}
+
+/* ── Setup wizard modal (FEAT-011) — 2026-09-04 styling follow-up ────────── */
+
+/* Widened from Bootstrap's default ~500px modal-dialog width (2026-09-04,
+   third follow-up, user request): at the default width, each of the three
+   equal-width footer buttons only has room for the longest label ("Update
+   data source/s") to wrap across three lines, which then forces every
+   button (they share one stretched height) taller than needed. `:has()`
+   scopes this to the wizard's own modal via its footer's class rather than
+   widening every modal.modal-dialog in the app — safe today since these are
+   the only two modals anywhere in it, but scoped anyway so a future modal
+   isn't silently widened by this rule too. */
+.modal-dialog:has(.wizard-modal-footer) {
+  max-width: 650px;
+}
+
+/* Reuses the drawer panel titles' colour/weight/size, not the full
+   .drawer-header treatment (uppercase/letter-spacing/icon/border-bottom) —
+   those read as a panel-heading-specific device, odd stamped on a full
+   sentence like this modal's title. */
+.wizard-modal-title {
+  color: var(--page-accent, #426175);
+  font-weight: 800;
+  font-size: 20px;
+}
+
+/* Keeps the three footer buttons on one row rather than Bootstrap's default
+   .modal-footer wrap-if-crowded behaviour (user request). */
+.wizard-modal-footer {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+/* Equal-width buttons (2026-09-04 follow-up, user request): flex-basis 0
+   with flex-grow 1 splits the row evenly regardless of each button's own
+   text length, rather than each button sizing to fit its label.
+   `min-width: 0` overrides the flex item default of `min-width: auto`,
+   which otherwise refuses to shrink a flex item below its content's
+   intrinsic (unwrapped) width — combined with the `white-space: nowrap`
+   this rule used to carry, that was forcing "Skip wizard" wider than its
+   even third of the row and pushing it past the modal's edge, over the
+   backdrop (found 2026-09-04, second follow-up). Wrapping is allowed now
+   (no nowrap) so a button's text drops to a second line rather than
+   overflow; align-items: stretch is flexbox's own default (unset, not
+   overridden anywhere here) and is what then evens out all three buttons'
+   height to match whichever one wraps to two lines. */
+.wizard-modal-footer .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: normal;
+}
+
+/* Tightened modal vertical rhythm (2026-09-04 follow-up, user request: the
+   title-to-body and body-to-footer gaps read as too wide) — Bootstrap's
+   default 1rem top/bottom padding on each of .modal-header/-body/-footer
+   cut by 25% to 12px. Only the wizard's two modals exist anywhere in this
+   app (checked: no other shiny::modalDialog() call site), so there's no
+   other modal whose spacing this would need to leave alone — safe to
+   tighten globally rather than scope to a wrapper class modalDialog() has
+   no parameter to attach. Horizontal padding untouched — the complaint was
+   specifically about vertical whitespace between the stacked sections. */
+.modal-header, .modal-body, .modal-footer {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+/* Solid maroon/magenta from the theme's own `danger` colour (global.R
+   bs_theme()), cream text (the page's own background colour) — a real
+   colour so "Skip wizard" doesn't read as the neutral/safe default next to
+   the two btn-primary actions either side of it. */
+.btn-wizard-skip {
+  background-color: #993366;
+  border-color: #993366;
+  color: #f7f4ec;
+}
+.btn-wizard-skip:hover {
+  background-color: color-mix(in srgb, #993366 85%, black);
+  border-color: color-mix(in srgb, #993366 85%, black);
+  color: #f7f4ec;
+}
+.btn-wizard-skip:focus, .btn-wizard-skip:active {
+  color: #f7f4ec !important;
 }

@@ -17,6 +17,13 @@ test_that("dat_upload is suspended before column names are confirmed", {
   app <- AppDriver$new(app_dir = here::here(), timeout = 15000)
   on.exit(app$stop())
 
+  # dataset_selected now defaults to "sim" (2026-09-04, FEAT-011 follow-up),
+  # not "upload" — the Review data upload panel and its "cols" button live
+  # in a conditionalPanel gated on dataset_selected == "upload" and Shiny
+  # suspends a hidden renderUI() by default, so the button never renders
+  # without this explicit switch.
+  app$set_inputs(dataset_selected = "upload")
+  app$wait_for_idle()
   app$upload_file(upload = group_a)
   app$wait_for_idle()
 
@@ -27,6 +34,8 @@ test_that("dat_upload renders after confirming column names", {
   app <- AppDriver$new(app_dir = here::here(), timeout = 15000)
   on.exit(app$stop())
 
+  app$set_inputs(dataset_selected = "upload")
+  app$wait_for_idle()
   app$upload_file(upload = group_a)
   app$wait_for_idle()
   app$click("cols")
@@ -38,6 +47,9 @@ test_that("dat_upload renders after confirming column names", {
 test_that("dat_upload reverts to NULL after a new file upload (ISS-020 regression guard)", {
   app <- AppDriver$new(app_dir = here::here(), timeout = 15000)
   on.exit(app$stop())
+
+  app$set_inputs(dataset_selected = "upload")
+  app$wait_for_idle()
 
   # Upload File A and confirm — establishes a known-good state
   app$upload_file(upload = group_a)
@@ -59,6 +71,8 @@ test_that("uploading two files simultaneously sets by_group to TRUE", {
   app <- AppDriver$new(app_dir = here::here(), timeout = 15000)
   on.exit(app$stop())
 
+  app$set_inputs(dataset_selected = "upload")
+  app$wait_for_idle()
   app$upload_file(upload = c(group_a, group_b))
   app$wait_for_idle()
 
@@ -69,6 +83,8 @@ test_that("two-file upload produces a non-suspended dat_upload after confirmatio
   app <- AppDriver$new(app_dir = here::here(), timeout = 15000)
   on.exit(app$stop())
 
+  app$set_inputs(dataset_selected = "upload")
+  app$wait_for_idle()
   app$upload_file(upload = c(group_a, group_b))
   app$wait_for_idle()
   app$click("cols")
