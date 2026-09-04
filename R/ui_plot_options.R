@@ -573,20 +573,29 @@ orderPanelUI <- function() {
 # Export panel — FEAT-009 redesign, resolves ISS-031 (four-button layout wrapped
 # with no spacing). Format radio + single download button for graph export;
 # separate copy/download buttons for code export, since clipboard-copy and
-# file-download are genuinely distinct actions that can't be merged. Sections
-# are colour-separated (.export-section--graph/--code in www/style.css).
+# file-download are genuinely distinct actions that can't be merged. A single
+# thin divider (matching the Data/Variables drawers' own vertical rule)
+# separates the two panels — 2026-09-04 user request, replacing the earlier
+# per-panel coloured left borders. Each panel's button(s) are wrapped in the
+# same .drawer-btnrow class specifically so www/style.css can give both a
+# shared `margin-top: auto`, bottom-aligning "Download" with "Copy R
+# code"/"Download .R script" regardless of the graph panel's extra format
+# radio pushing its own button down — see the .export-section CSS comment.
 exportPanelUI <- function() {
   tagList(
     drawerHeaderUI("download", "Export"),
     div(
-      class = "drawer-columns",
+      class = "drawer-columns export-columns",
       div(
         class = "export-section export-section--graph",
         strong("Export graph"),
         radioButtons("export_format", NULL,
                      choices = c("PNG" = "png", "SVG" = "svg"),
                      selected = "png", inline = TRUE),
-        downloadButton("download_plot", "Download", icon = icon("download"))
+        div(
+          class = "drawer-btnrow",
+          downloadButton("download_plot", "Download", icon = icon("download"))
+        )
       ),
       div(
         class = "export-section export-section--code",

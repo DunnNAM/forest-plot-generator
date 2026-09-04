@@ -21,13 +21,20 @@ body > .container-fluid {
    while the Help tab (no dashboard-body wrapper) showed only the navbar's
    thin grey one. Moving the divider here, once, means both tabs share the
    exact same line regardless of what the active nav_panel's own body does.
-   align-items: flex-end (overriding Bootstrap's default center) is what lets
-   the brand and the nav-links — different font sizes — share one visual
-   baseline at the navbar's bottom edge, right above this border. */
+   Vertical alignment of the brand vs. the tabs is Bootstrap's plain default
+   (align-items: center, not overridden) — an earlier flex-end/shared-baseline
+   attempt (chasing pixel-exact box-edge alignment between .navbar-brand and
+   .nav-link) never actually rendered as intended across several tries, most
+   recently traced to Bootstrap 5.3's own `.nav-underline` utility class
+   (present by default on bslib's generated tab `<ul>`) silently overriding
+   .nav-link's padding-bottom/margin-bottom at a higher CSS specificity than
+   our selector, regardless of source order — see the .nav-link comment
+   below. Switching the active-tab indicator from an underline overlay to a
+   filled pill (also below) removed the need for that alignment to be
+   pixel-exact at all: a pill just needs to look nicely centered, which the
+   unmodified Bootstrap default already does. */
 .navbar {
   position: sticky;
-  display: flex;
-  align-items: flex-end;
   top: 0;
   z-index: 1030;
   border-bottom: 4px solid var(--page-accent, #426175);
@@ -36,16 +43,10 @@ body > .container-fluid {
   padding-bottom: 0;
 }
 
-.navbar > .container-fluid {
-  align-items: flex-end;
-}
-
 /* Mirrors the app's other "page title" treatment (.drawer-header, the Help
    page's own h4) — slate blue, uppercase, bold — rather than the plain small
    bold text bslib gives it by default, which read smaller than the Help
-   page's own title (2026-09-04 user report). padding: 0 replaces Bootstrap's
-   default vertical padding so align-items: flex-end on the navbar controls
-   its position instead. */
+   page's own title (2026-09-04 user report). */
 .navbar-brand {
   font-size: 22px;
   font-weight: 800;
@@ -53,45 +54,73 @@ body > .container-fluid {
   text-transform: uppercase;
   color: #426175;
   padding: 0;
-  margin-top: 0;
-  margin-bottom: 0;
+  margin: 0;
   line-height: 1.1;
+  cursor: default;
 }
 
+/* The brand isn't a link (it's a plain <span>, not an <a> — bslib renders it
+   that way when page_navbar() has no href), but Bootstrap's own
+   .navbar-brand:hover/:focus rule still applies by class regardless of tag
+   and shifts it to --bs-navbar-brand-hover-color, a dark near-black
+   (2026-09-04 user report). Pinning both states back to the same slate as
+   the resting state removes an interactive-looking colour shift from
+   something that isn't interactive. */
+.navbar-brand:hover,
+.navbar-brand:focus {
+  color: #426175;
+}
+
+/* Tab pills: filled slate background + cream text when active, a slate
+   outline + slate text on the cream page when inactive. Replaces an earlier
+   shared-divider underline design (2026-09-04 user report, several rounds):
+   getting a separate underline element to land exactly on the navbar's own
+   border-bottom kept failing in practice regardless of how the offset math
+   was tuned, and the pale gold used for it had poor contrast against the
+   cream page on the Help tab besides. A filled pill sidesteps the whole
+   class of "must overlay another element's border line exactly" problems —
+   its own background is the whole indicator, nothing needs to line up with
+   anything else — and gives much better contrast than the underline did.
+   `!important` on padding/margin: Bootstrap 5.3's `.nav-underline` utility
+   class is present by default on bslib's generated tab `<ul>` and sets its
+   own padding-left/right (`!important`, even) and a padding-bottom/
+   margin-bottom pair (via `.navbar .nav-underline :where(...)>a`, specificity
+   0-2-1) intended to make ITS OWN underline style hug the navbar's border —
+   both are irrelevant to a pill and were silently overriding plain
+   `.navbar-nav .nav-link` (specificity 0-2-0) regardless of source order,
+   which is what actually broke every previous attempt at this. */
 .navbar-nav .nav-link {
-  position: relative;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 16px !important;
+  margin: 0 4px !important;
+  border-radius: 999px;
+  border: 1.5px solid #426175;
+  background: transparent;
+  color: #426175;
+  font-size: 15px;
   font-weight: 500;
-  opacity: 0.78;
-  padding-top: 0;
-  padding-bottom: 0;
-  line-height: 56px;
-}
-
-/* Active-tab indicator: an absolutely-positioned bar overlaid exactly on the
-   navbar's own border-bottom (same 4px weight, same width as the tab label's
-   own hit area) rather than a border-bottom on the link itself. A border on
-   the link sits at the *link's* box edge, one DOM level up from — and a few
-   pixels away from — the navbar's own border, so the two rendered as two
-   separate, misaligned lines (2026-09-04 user report), and the previous gold
-   (#F0DC9A) was hard to see against the Help tab's plain cream background
-   with no slate divider under it at the time. Overlaying it on the divider
-   itself, same weight, fixes both: it reads as one thicker highlighted
-   segment of the single shared line, not a second line, and it's visible on
-   both tabs now that the divider itself is always slate blue. */
-.navbar-nav .nav-link.active {
-  font-weight: 600;
+  line-height: 1.1;
   opacity: 1;
 }
 
-.navbar-nav .nav-link.active::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -4px;
-  height: 4px;
-  background: #F0DC9A;
+.navbar-nav .nav-link:hover {
+  background: rgba(66, 97, 117, 0.08);
+}
+
+/* Horizontal breathing room between the app title and the tab labels
+   (2026-09-04 user report: they read as too close together). */
+.navbar-nav {
+  margin-left: 2.5rem;
+}
+
+.navbar-nav .nav-link.active {
+  background: #426175;
+  border-color: #426175;
+  color: #F7F4EC;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(66, 97, 117, 0.35);
 }
 
 /* Remove bslib's default tab-content padding/margin so dashboard-body sits flush under the navbar */
@@ -522,17 +551,125 @@ body > .container-fluid {
   font-size: 13px;
 }
 
-/* ── Export panel (FEAT-009) — colour-separated graph/code sections ──────── */
+/* ── Export panel (FEAT-009) ─────────────────────────────────────────────── */
 
+/* One thin divider between the graph/code panels (2026-09-04 user request,
+   replacing the earlier per-panel coloured left borders) — same faint
+   slate-blue rule the Data/Variables drawers use for their own field
+   dividers (.drawer-row-divided .drawer-field-block--divided::before),
+   reused here as a plain border-left since both .export-section boxes are
+   already equal height (they're the two items of one .drawer-columns CSS
+   grid row, which stretches its items to match by default) — no need for
+   that other divider's absolute-position/measured-offset approach, which
+   exists only to center a line within a *taller* drawer around content
+   below the divided row. Only .export-section--code gets the divider/inset;
+   .export-section--graph (the first column) stays flush left, matching "not
+   on the left of the export graph panel". */
+/* align-items: center + text-align: center (2026-09-04 user request):
+   abandoning the earlier left-aligned layout for a centred one — label,
+   format radio, and button(s) all centred within each panel, matching the
+   "keep it simple" read a panel with this little content invites. */
 .export-section {
-  border-left: 4px solid #d0d4d8;
-  padding: 4px 0 4px 14px;
+  padding: 4px 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 8px;
 }
-.export-section--graph { border-left-color: #426175; }
-.export-section--code  { border-left-color: #56958F; }
+.export-section--code {
+  padding-left: 28px;
+  border-left: 1px solid color-mix(in srgb, var(--page-accent, #426175) 25%, transparent);
+}
+
+/* Narrower two-column layout, scoped to the Export panel specifically
+   (2026-09-04 user report: the panel reads as taking up too much horizontal
+   space). A second class alongside the shared .drawer-columns rather than
+   editing .drawer-columns itself — that class is also used by the Display
+   panel's own grid, which isn't part of this request and shouldn't shrink
+   too. 640px is over 33% narrower than .drawer-columns' 1280px cap. */
+.export-columns {
+  max-width: 640px;
+}
+
+/* Bottom-aligns each panel's button(s) regardless of how much content sits
+   above them — the graph panel has an extra format radio the code panel
+   doesn't, which otherwise pushes "Download" lower than "Copy R code" /
+   "Download .R script" (2026-09-04 user report). margin-top: auto on a flex
+   column's child pushes it (and, since it's the last child here, only it) to
+   the container's bottom edge; both .export-section boxes are equal height
+   (see comment above), so both button rows land on the same line. Requires
+   the graph panel's single Download button to be wrapped in its own
+   .drawer-btnrow too, for a shared hook — see exportPanelUI(). */
+.export-section .drawer-btnrow {
+  margin-top: auto;
+}
+
+/* The code panel's two buttons stack instead of sitting side by side
+   (2026-09-04 user follow-up): once every button is forced to a shared
+   width matching the widest label ("Download .R script", see .export-section
+   .btn min-width below) inside a panel that's also been made narrower in the
+   same request, two of them side by side would either overflow the column
+   or force it wide again — stacking keeps both goals (narrower column,
+   equal-width pills) compatible. align-items: center overrides flex's own
+   default (stretch) for a column-direction container: without it, the two
+   stacked buttons stretch to the row's full cross-axis width (i.e. wider
+   than their declared 190px) while the graph panel's single button — in a
+   row-direction .drawer-btnrow, where stretch affects height, not width —
+   stays at its own content width, so the two panels' buttons rendered at
+   visibly different widths despite an identical min-width rule (2026-09-04
+   user report: "download plot button looks narrower"; confirmed a real
+   layout bug, not a visual illusion). */
+.export-section--code .drawer-btnrow {
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Rounded pill buttons, matching the navbar tab treatment (2026-09-04 user
+   request). Scoped to the Export panel's own buttons and the wizard's modal
+   footers rather than every .btn in the app — a deliberate, contained echo
+   of the tab pill style in the two other places buttons act like "choose an
+   action" controls, not a global button restyle. .modal-footer is generic
+   Bootstrap markup, but this app only ever calls modalDialog() from the
+   wizard (see www/wizard.js / R/ui_wizard.R — confirmed elsewhere in this
+   stylesheet, .wizard-modal-footer comment above), so scoping to it is safe
+   here without also touching some other modal. */
+.export-section .btn,
+.modal-footer .btn {
+  border-radius: 999px;
+  padding-left: 1.1rem;
+  padding-right: 1.1rem;
+}
+
+/* Inverted colour scheme — solid slate pill, cream text/icon (2026-09-04 user
+   request), matching the active navbar tab pill rather than Bootstrap's
+   default white/grey .btn-default. Icons (font-awesome <i> tags, via the
+   icon = icon(...) argument on these buttons) pick up `color` automatically
+   since FA6's free icon glyphs render via currentColor — no separate icon
+   rule needed. Scoped to the Export panel only, not the wizard's modal
+   footers, which already have their own primary/danger theme colours. */
+.export-section .btn {
+  background: #426175;
+  border-color: #426175;
+  color: #F7F4EC;
+}
+.export-section .btn:hover,
+.export-section .btn:focus {
+  background: color-mix(in srgb, #426175 85%, black);
+  border-color: color-mix(in srgb, #426175 85%, black);
+  color: #F7F4EC;
+}
+
+/* Every Export button shares one width — the widest label's — so "Download",
+   "Copy R code" and "Download .R script" read as a uniform set of pills
+   rather than each sized to its own text (2026-09-04 user request). Sized by
+   hand for this app's own fixed button labels (not derived from measuring
+   the DOM) since they're static English strings, not user content — revisit
+   this value if any of the three labels changes. */
+.export-section .btn {
+  min-width: 190px;
+  text-align: center;
+}
 
 /* ── Drawer internals ─────────────────────────────────────────────────────── */
 
