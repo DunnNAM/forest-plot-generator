@@ -416,6 +416,18 @@
 | FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | ✅ Implemented — CHG-033 (location amended to Export drawer panel) |
 | FEAT-010 | Low | `ui.R`, `R/ui_rail.R`, `R/ui_help.R`, `www/style.css` | DEC-005 Step 7 (phase 2): status-chip strip, rail badges, Help nav panel | ✅ Implemented — CHG-038 |
 | FEAT-011 | — | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js`, `R/ui_plot_options.R`, `www/style.css`, `global.R`, `ui.R`, `server/drawers.R`, `server/plot.R`, `server/export.R`, `tests/testthat/test-shiny-app.R` | Soft-gated setup wizard + Data drawer visual redesign, extended app-wide | 🔲 Draft — branch `design/modal-progression-workflow`, not merged |
+| ISS-043 | — (feature) | `global.R` | Add internal `styling` package as a dependency (colour palettes, fonts) | Open — doc-only, not started |
+| ISS-044 | Low | `www/style.css` | CSS audit quick-fix batch: z-index, `--page-accent` token, dead CSS, fragmented rules, overflow scope | ✅ Resolved — 2026-09-06 |
+| ISS-045 | Low-Medium | `R/ui_wizard.R` | Wizard Step 2 modal layout inconsistency (missing `.wizard-modal-footer`/`.btn-wizard-skip`) | Open |
+| ISS-046 | Medium | `ui.R`, `R/ui_*.R`, `server/*.R` | Widespread un-namespaced function calls (`pkg::fun()`) | Open |
+| ISS-047 | Low/Medium | `server/observers.R` | Pure math helpers (`xticks_default()`, `make_log_range()`) embedded in server file, untestable | Open |
+| ISS-048 | Low | `server/preview.R` | Estimate label logic duplicated instead of reusing `get_est_type()` | Open |
+| ISS-049 | Note/Minor | `R/ui_plot_options.R` | `group_var_name`/`group_var_values` bypass `drawerFieldUI()` wrapper | Open — doc-only |
+| ISS-050 | Drift/Risk | `server.R` | Implicit file execution order unannotated | Open — doc-only |
+| ISS-051 | Drift/Risk | `server/preview.R` | Redundant reactive dereferencing (`data_updated()` 7x, `reg_table()` 2x) | Open — doc-only |
+| ISS-052 | Note/Minor | `server/regression.R` | Redundant `isTruthy()` inside `req()` | Open — doc-only |
+| ISS-053 | Low | `www/style.css` | `.rail-badge` references unbundled `'JetBrains Mono'` font | Open — doc-only |
+| ISS-054 | Low | `www/style.css` | Divergent "cream" colour tokens, undocumented as deliberate | Open — doc-only |
 
 ---
 
@@ -628,7 +640,197 @@
 
 ---
 
-*Document version: 3.16 — ISS-042 partially resolved (CHG-055: navbar tabs redesigned as
+### ISS-044 — CSS audit quick-fix batch: z-index inversion, undeclared token, dead template CSS, fragmented rules, overflow scope
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_css-stylesheet-audit.md` (§2.2, §3, §4.1, §4.2, §5.1) |
+| **Severity** | Low (cosmetic/maintainability; one real stacking bug) |
+| **Status** | **Resolved — 2026-09-06** |
+| **File(s)** | `www/style.css` |
+| **Description** | Five items from the audit's action plan, all mechanical and low-risk: (1) `.drawer-scrim` z-index `98` → `1027` — was inverted below Bootstrap 5/Selectize's own `1000`, letting a dropdown render in front of the dimmed backdrop; (2) declared `:root { --page-accent: #426175; }`, which 13 `var(--page-accent, #426175)` reads were silently relying on as a fallback; (3) removed ~65 lines of dead template CSS never referenced by any `.R`/`.js` file (`.drawer-btn*`, `.drawer-search`, `.drawer-count`, `.drawer-section-label`, `.chips-right`, `.filter-chip.add`/`.active`, `.filter-chips:has(.filter-chip.active)`); (4) consolidated the two pure `.export-section .btn` blocks (background/border/color/min-width/text-align) into one, leaving the separate `.export-section .btn, .modal-footer .btn` shared block alone since it also targets the wizard's buttons; (5) scoped `overflow: visible !important` from every `.tab-pane` down to `#main_tabs .tab-pane[data-value="Plot"]` specifically, so the Review data tab's `DT::dataTableOutput` keeps normal overflow containment instead of spilling past the card on wide tables. |
+| **Not included** | The audit's candidate wizard-modal-footer fix (`wizardVariablesModal()` missing `.wizard-modal-footer`/`.btn-wizard-skip`) is an `R/ui_wizard.R` change, not CSS — left open, see **ISS-045**. |
+| **Verification** | Visual check pending — user to confirm no regression on the Review data tab (wide table scroll) and Plot tab (still grows to full height) after this change; CSS-only edit, no R restart needed. |
+| **Resolution** | All five items applied directly in `www/style.css` with in-situ comments; see file for exact diffs. |
+
+---
+
+### ISS-045 — Wizard Step 2 modal layout inconsistency (`wizardVariablesModal` missing `.wizard-modal-footer`/`.btn-wizard-skip`)
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_css-stylesheet-audit.md` §2.1 (was candidate ISS-046 in that review; renumbered to avoid colliding with the already-registered ISS-043/044) |
+| **Severity** | Low-Medium — visible regression mid-flow, but only on the still-draft FEAT-011 branch |
+| **Status** | **Open — not fixed** |
+| **File(s)** | `R/ui_wizard.R`, `www/style.css` (`:has(.wizard-modal-footer)` scoping) |
+| **Description** | `wizardWelcomeModal()`'s footer is wrapped in `div(class = "wizard-modal-footer", ...)`, which the CSS `:has()` selector uses to widen the modal to 650px and give its buttons equal-width flex. `wizardVariablesModal()` (Step 2) uses a bare `tagList()` with no such wrapper and no `.btn-wizard-skip` class on its skip button. When the wizard auto-advances from Step 1 to Step 2, the modal visibly shrinks back to Bootstrap's default ~500px, button widths lose flex parity, and "Skip wizard" reverts to a plain grey Bootstrap button instead of the maroon pill. |
+| **Recommended fix** | Wrap `wizardVariablesModal()`'s footer in `div(class = "wizard-modal-footer", ...)` and add `class = "btn-wizard-skip"` to its `wizard_skip` button — mirrors `wizardWelcomeModal()` exactly. |
+| **Resolution** | — |
+
+---
+
+### ISS-046 — Widespread un-namespaced function calls (`pkg::fun()`)
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_architecture-code-review.md` §2.4/F-5 (was candidate ISS-043 in that review; renumbered to avoid colliding with the already-registered ISS-043 styling-package entry) |
+| **Severity** | Medium (convention violation — direct contradiction of `CLAUDE.md`'s "Always use explicit package::function() notation") |
+| **Status** | **Open — not started** |
+| **File(s)** | `ui.R`, all of `R/ui_*.R`, all of `server/*.R` |
+| **Description** | Widespread bare calls across every application layer — Shiny core primitives (`reactive()`, `observe()`, `req()`, `renderUI()`, …), `bslib::*`, `sortable::*`, `shinyWidgets::*`, `dplyr::*`, `tidyselect::*`, `rlang::sym()`, and bare `tags$*`/UI builders. Full inventory in the source review. |
+| **Recommended approach** | Not a "quick fix" — large surface area across nearly every file. Do deliberately, one file/topic at a time, verifying the test suite after each. |
+| **Target CHG** | `CHG-058` (per the source review) |
+| **Resolution** | — |
+
+---
+
+### ISS-047 — Pure mathematical helpers embedded in `server/observers.R`
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_architecture-code-review.md` §2.5/F-6 (was candidate ISS-044 in that review; renumbered) |
+| **Severity** | Low/Medium (testability & separation of concerns) |
+| **Status** | **Open — not started** |
+| **File(s)** | `server/observers.R`, `R/helpers.R`, `tests/testthat/test-helpers.R` |
+| **Description** | `xticks_default(n, domain)` and `make_log_range(lo, hi)` are pure numerical utilities with zero reactive dependencies, but live inside the server closure — they can't be unit tested without running the full app. |
+| **Recommended fix** | Extract both to `R/helpers.R`; add unit test coverage in `tests/testthat/test-helpers.R`. |
+| **Target CHG** | `CHG-059` (per the source review) |
+| **Resolution** | — |
+
+---
+
+### ISS-048 — Estimate label logic duplicated in `server/preview.R`
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_architecture-code-review.md` §2.5/F-7 (was candidate ISS-045 in that review; renumbered) |
+| **Severity** | Low (DRY / maintainability) |
+| **Status** | **Open — not started** |
+| **File(s)** | `server/preview.R`, `R/helpers.R` |
+| **Description** | `server/preview.R:74-79` writes an inline `case_when(...)` to format estimate column headers ("RR", "OR", "HR", "1/HR"), duplicating the already-tested `get_est_type()` helper in `R/helpers.R`. |
+| **Recommended fix** | Replace the inline block with a call to `get_est_type(input$regression_type, input$inv)`. |
+| **Target CHG** | `CHG-060` (per the source review) |
+| **Resolution** | — |
+
+---
+
+### ISS-049 — `group_var_name`/`group_var_values` bypass `drawerFieldUI()` wrapper in Data panel
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_architecture-code-review.md` §2.1/F-1 |
+| **Severity** | Note/Minor |
+| **Status** | **Open — doc-only, not started** |
+| **File(s)** | `R/ui_plot_options.R` (`dataPanelUI()`) |
+| **Description** | `group_var_name` and `group_var_values` (lines ~166-168) are raw `textInput()` widgets sitting directly inside a `conditionalPanel()`, the only fields in the Data panel that skip the `drawerFieldUI()` title/content wrapper every other field uses. |
+| **Recommended fix** | Wrap in `drawerFieldUI("Group variable settings", ...)` during the next UI polish pass. |
+| **Resolution** | — |
+
+---
+
+### ISS-050 — Implicit file execution order in `server.R` is unannotated
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_architecture-code-review.md` §2.2/F-2 |
+| **Severity** | Drift/Risk (documentation gap, not a defect) |
+| **Status** | **Open — doc-only, not started** |
+| **File(s)** | `server.R` |
+| **Description** | `server.R` sources the 8 `server/*.R` files sequentially with `local = TRUE` into one shared closure. Downstream files depend on reactives defined upstream (`preview.R` needs `data_updated` from `upload.R` and `reg_table` from `regression.R`, etc.), but this ordering dependency isn't documented in `server.R` itself — reordering the `source()` calls would silently break the app with no comment warning against it. |
+| **Recommended fix** | Add a short comment block in `server.R` documenting the pipeline: `upload.R` (data input) → `regression.R` (model fit) → `preview.R` / `plot.R` → `export.R` / `observers.R` / `drawers.R` / `wizard.R`. |
+| **Resolution** | — |
+
+---
+
+### ISS-051 — Redundant reactive dereferencing in `server/preview.R`
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_architecture-code-review.md` §2.3/F-3 |
+| **Severity** | Drift/Risk (performance/maintainability, not a defect) |
+| **Status** | **Open — doc-only, not started** |
+| **File(s)** | `server/preview.R` |
+| **Description** | `output$dat_upload` calls `data_updated()` 7 separate times within a single render expression (`colnames(data_updated())`, `data_updated() %>% ...`, etc.), and `output$dat_summary` calls `reg_table()` twice — each call re-dereferences the reactive rather than reusing one evaluated value. |
+| **Recommended fix** | Assign a local alias once at the top of each render block (e.g. `df <- data_updated()`, `col_names <- colnames(df)`) and reuse it. |
+| **Resolution** | — |
+
+---
+
+### ISS-052 — Redundant `isTruthy()` inside `req()` in `server/regression.R`
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_architecture-code-review.md` §2.3/F-4 |
+| **Severity** | Note/Minor |
+| **Status** | **Open — doc-only, not started** |
+| **File(s)** | `server/regression.R` (lines 4-5) |
+| **Description** | `req(isTruthy(input$dataset_selected == "sim"), isTruthy(length(input$predictor_vars) > 0))` wraps `isTruthy()` inside `req()`, which already calls `shiny::isTruthy()` internally on all its arguments — harmless but redundant. |
+| **Recommended fix** | Simplify to `req(input$dataset_selected == "sim", length(input$predictor_vars) > 0)`. |
+| **Resolution** | — |
+
+---
+
+### ISS-053 — `.rail-badge` references unbundled `'JetBrains Mono'` font
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_css-stylesheet-audit.md` §5.2 |
+| **Severity** | Low (cosmetic — silent fallback, no visible error) |
+| **Status** | **Open — doc-only, not started** |
+| **File(s)** | `www/style.css` (`.rail-badge`) |
+| **Description** | `.rail-badge` sets `font-family: 'JetBrains Mono', monospace;`, but `JetBrains Mono` is never loaded or bundled anywhere in the app (`global.R`'s `sysfonts`/`showtext` setup doesn't register it). Browsers silently fall back to the generic system monospace font — same class of silent-fallback issue as ISS-029/030, just for a UI chrome element rather than plot text. |
+| **Recommended fix** | Either add `sysfonts::font_add_google("JetBrains Mono")` (consistent with the app's existing Google Fonts pattern in `global.R`) or drop the specific family name from the CSS rule and rely on the generic `monospace` fallback deliberately. |
+| **Resolution** | — |
+
+---
+
+### ISS-054 — Divergent "cream" colour tokens, undocumented as deliberate
+
+| Field | Detail |
+|---|---|
+| **Source** | `reviews/architecture/2026-09-04_css-stylesheet-audit.md` §5.3 |
+| **Severity** | Low (documentation/consistency, not a visible defect) |
+| **Status** | **Open — doc-only, not started** |
+| **File(s)** | `www/style.css` |
+| **Description** | Two different "cream" values are in use: `#f7f4ec` (page body background, navbar active-pill text, theme default) and `#f3eedb` (rail text colour, active rail button background). May be a deliberate two-tone palette choice (rail vs. page-level cream) or may be drift from separate design passes — the audit couldn't tell which from the stylesheet alone. |
+| **Recommended fix** | Confirm with whoever owns the CAQ palette intent; either declare both as named custom properties (e.g. `--cream-page`, `--cream-rail`) to make the two-tone choice explicit, or consolidate to one value if the difference wasn't deliberate. |
+| **Resolution** | — |
+
+---
+
+### ISS-043 — Add internal `styling` package as a dependency (colour palettes, fonts)
+
+| Field | Detail |
+|---|---|
+| **Source** | USER, session 2026-09-06, during Connect Cloud publish planning |
+| **Severity** | — (feature request, not a defect) |
+| **Status** | **Open — not started, doc-only entry** |
+| **File(s)** | Likely `global.R` (package load), possibly `R/helpers.R` / plot styling code once implemented |
+| **Description** | Queensland Health has an internal `styling` package (colour palettes, fonts, etc. — analogous provenance to `forestHelperR`: not on CRAN, installed locally from a `.tar.gz`) that the user wants to bring in as a dependency so the app's visual styling (CAQ palette, fonts) can be updated by changing the package rather than editing app code directly. |
+| **Why it matters** | Same deployability question as **ISS-036** (`forestHelperR`'s unresolvable `renv.lock` source) applies here too — whatever fix is chosen for ISS-036 (internal package repository vs. `renv/cellar/` bundling) should probably cover `styling` as well, since it's the same category of problem. |
+| **Recommended approach** | Treat as a follow-up piece of real work, not a doc-only change: (1) decide how `styling` is sourced for deployment (see ISS-036's options — internal Package Manager repo is the robust long-term fix); (2) add it to `global.R` and `renv.lock`; (3) work out which existing styling logic (palette/font handling, currently hardcoded per `CLAUDE.md`'s "CAQ palette") it should replace or wrap. Not scoped or started this session — raised so the Connect Cloud publish work happening in parallel doesn't quietly assume this is already handled. |
+| **Related** | ISS-036 (same class of internal-package deployability problem) |
+| **Resolution** | — |
+
+---
+
+*Document version: 3.18 — ISS-049 through ISS-054 raised (doc-only): remaining findings
+from the 2026-09-04 architecture/CSS review docs that weren't already covered by
+ISS-044..048 — Data panel field wrapper inconsistency, unannotated server.R file-order
+dependency, redundant reactive dereferencing in server/preview.R, redundant
+isTruthy()-in-req() in server/regression.R, unbundled 'JetBrains Mono' font reference,
+and undocumented divergent cream colour tokens. Previously: Document version 3.17 —
+ISS-044 raised and resolved (CSS audit quick-fix batch: `.drawer-scrim` z-index 98→1027,
+`--page-accent` token declared, ~65 lines dead template CSS removed, `.export-section
+.btn` rules consolidated, `overflow: visible` scoped from every `.tab-pane` to the Plot
+tab only). ISS-045/046/047/048 raised (renumbered from the 2026-09-04 architecture/CSS
+review docs' candidate IDs, which collided with the already-registered ISS-043 — wizard
+Step 2 modal footer inconsistency; widespread un-namespaced calls; pure math helpers
+embedded in server/observers.R; duplicated estimate-label logic in server/preview.R —
+all still open). Previously: ISS-043 raised (internal `styling` package dependency,
+doc-only, raised during Connect Cloud publish planning; same deployability question as
+ISS-036). Previously: Document version: 3.16 — ISS-042 partially resolved (CHG-055:
+navbar tabs redesigned as
 filled pills, resolving sub-issues 2/3 — done via live user-directed visual iteration
 after the Chrome extension was removed from the session entirely; sub-issue 1, Help page
 title alignment, not touched and still open). FEAT-011 updated (CHG-055–057: navbar pill

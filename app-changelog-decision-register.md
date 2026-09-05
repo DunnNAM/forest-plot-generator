@@ -239,6 +239,30 @@ manual retry also fails.
 > unchanged. Commit subject lines on the branch still cite the old numbers — treat this
 > register as the authoritative numbering going forward.
 
+### CHG-058 — CSS audit quick-fix batch: z-index inversion, undeclared token, dead template CSS, fragmented rules, overflow scope; resolves ISS-044
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-06 |
+| **Branch** | `design/modal-progression-workflow` (merged to `main`) |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-044, `reviews/architecture/2026-09-04_css-stylesheet-audit.md` |
+
+Five low-risk items from the 2026-09-04 CSS stylesheet audit, all applied directly to `www/style.css`:
+
+1. **`.drawer-scrim` z-index `98` → `1027`** (audit §2.2) — was inverted below Bootstrap 5/Selectize.js's own `1000`, letting a dropdown or floating widget render in front of the dimmed backdrop scrim instead of behind it. Now sits directly under `.filter-drawer` (`1028`), the intended stacking order.
+2. **Declared `:root { --page-accent: #426175; }`** (audit §5.1) — the variable was referenced 13 times as `var(--page-accent, #426175)` but never declared; every read was silently relying on its own fallback. No visual change, since the fallback already matched.
+3. **Removed ~65 lines of dead template CSS** (audit §3): `.drawer-btn*` (Export uses plain `.btn`, not `.drawer-btn`), `.drawer-search`, `.drawer-count`, `.drawer-section-label`, `.chips-right`, `.filter-chip.add`, `.filter-chip.active` (+ its `.caret` variant and the `.filter-chips:has(.filter-chip.active)` accent border) — confirmed unreferenced by any `.R`/`.js` file, leftover from the mdt-activity-dashboard template this stylesheet was ported from.
+4. **Consolidated `.export-section .btn`** (audit §4.2) — merged the two pure `.export-section .btn` blocks (background/border/color, then min-width/text-align) into one; left the separate `.export-section .btn, .modal-footer .btn { border-radius; padding }` block alone since it also targets the wizard's modal buttons.
+5. **Scoped `overflow: visible !important` to the Plot tab only** (audit §4.1) — previously applied to every `.tab-pane` inside `.content-area .bslib-card`, which also stripped horizontal overflow containment from the Review data tab's `DT::dataTableOutput`, letting a wide table spill past the card border instead of scrolling internally. Now targets `#main_tabs .tab-pane[data-value="Plot"]` specifically; `height`/`max-height` auto overrides (needed for the Plot tab to grow to the plot's full height, CHG-049) remain applied to both tabs' `.bslib-card`/`.card-body`/`.tab-pane` since those don't affect overflow clipping.
+
+Not included from the same audit: the wizard Step 2 modal footer fix (audit §2.1) is an `R/ui_wizard.R` change, not CSS — left open as **ISS-045**.
+
+CSS-only change, no reactive/input ID touched — consistent with prior CSS-only entries, not re-run against the automated test suite. Visual verification (Review data tab wide-table scroll, Plot tab full-height growth) pending the user's own live check per the standing process (see CHG-055's note).
+
+---
+
 ### CHG-057 — Export drawer redesign: single divider, centred content, uniform-width inverted pills (FEAT-011)
 
 | Field | Detail |

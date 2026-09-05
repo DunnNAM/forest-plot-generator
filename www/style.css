@@ -3,6 +3,15 @@
    bottom rail + slide-up drawer (this app has no left side rail — plots are wide,
    so both side columns are removed to give the plot the full viewport width). */
 
+/* CSS audit 2026-09-04 (§5.1): var(--page-accent, #426175) was referenced
+   13 times with #426175 as its own fallback, but never actually declared —
+   every one of those reads was silently relying on the fallback. Declaring
+   it here changes nothing visually (the fallback already matched) and just
+   removes the silent dependency. */
+:root {
+  --page-accent: #426175;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -244,6 +253,17 @@ body > .container-fluid {
 .content-area .bslib-card .shiny-plot-output {
   height: auto !important;
   max-height: none !important;
+}
+
+/* overflow: visible scoped to the Plot tab only (CSS audit 2026-09-04, §4.1,
+   applied 2026-09-06): the block above used to also set overflow: visible on
+   every .tab-pane, which stripped horizontal overflow containment from the
+   Review data tab's DT::dataTableOutput too — a wide table could spill past
+   the card border instead of scrolling internally. #main_tabs is the id on
+   this app's one navset_card_tab() (ui.R); nav_panel("Plot", ...) with no
+   explicit value renders its data-value as the title string "Plot". */
+#main_tabs .tab-pane[data-value="Plot"],
+#main_tabs .tab-pane[data-value="Plot"] .shiny-plot-output {
   overflow: visible !important;
 }
 
@@ -370,7 +390,12 @@ body > .container-fluid {
   position: fixed;
   left: 0; right: 0;
   top: 56px; bottom: 60px;
-  z-index: 98;
+  /* CSS audit 2026-09-04 (§2.2): was 98 — far below Bootstrap 5's own
+     $zindex-dropdown (1000) and Selectize.js dropdowns (1000), so an open
+     dropdown/floating widget rendered in front of the dimmed backdrop
+     instead of behind it. 1027 sits directly under .filter-drawer (1028),
+     which is the intended stacking order. */
+  z-index: 1027;
   background: rgba(0,0,0,0.28);
   cursor: pointer;
 }
@@ -648,27 +673,26 @@ body > .container-fluid {
    since FA6's free icon glyphs render via currentColor — no separate icon
    rule needed. Scoped to the Export panel only, not the wizard's modal
    footers, which already have their own primary/danger theme colours. */
+/* Consolidated 2026-09-06 (CSS audit §4.2 — was three separate rule blocks
+   for the same selector). Inverted colour scheme (solid slate pill, cream
+   text/icon) plus the shared-width sizing: every Export button reads as one
+   uniform pill set ("Download", "Copy R code", "Download .R script") rather
+   than each sized to its own label (2026-09-04 user request). min-width is
+   sized by hand for this app's own fixed button labels (not derived from
+   measuring the DOM) since they're static English strings, not user content
+   — revisit this value if any of the three labels changes. */
 .export-section .btn {
   background: #426175;
   border-color: #426175;
   color: #F7F4EC;
+  min-width: 190px;
+  text-align: center;
 }
 .export-section .btn:hover,
 .export-section .btn:focus {
   background: color-mix(in srgb, #426175 85%, black);
   border-color: color-mix(in srgb, #426175 85%, black);
   color: #F7F4EC;
-}
-
-/* Every Export button shares one width — the widest label's — so "Download",
-   "Copy R code" and "Download .R script" read as a uniform set of pills
-   rather than each sized to its own text (2026-09-04 user request). Sized by
-   hand for this app's own fixed button labels (not derived from measuring
-   the DOM) since they're static English strings, not user content — revisit
-   this value if any of the three labels changes. */
-.export-section .btn {
-  min-width: 190px;
-  text-align: center;
 }
 
 /* ── Drawer internals ─────────────────────────────────────────────────────── */
@@ -700,48 +724,6 @@ body > .container-fluid {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.drawer-count {
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
-  background: #426175;
-  padding: 2px 8px;
-  border-radius: 99px;
-}
-
-.drawer-search {
-  background: #fff;
-  border: 1px solid #d8e0e8;
-  border-radius: 8px;
-  padding: 8px 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #8b8e92;
-}
-.drawer-search .shiny-input-container { flex: 1; margin-bottom: 0; }
-.drawer-search .form-group            { margin-bottom: 0; }
-.drawer-search input {
-  border: none;
-  outline: none;
-  background: transparent;
-  padding: 0;
-  width: 100%;
-  font-family: inherit;
-  font-size: 13px;
-  color: #4a4a4a;
-}
-
-.drawer-section-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #8b8e92;
-  margin: 10px 0 4px;
 }
 
 /* Display panel groups (2026-09-04, revised same day): each drawerGroupUI()
@@ -796,29 +778,11 @@ body > .container-fluid {
   padding-top: 12px;
 }
 
-.drawer-btn {
-  border: 1px solid #d0d4d8;
-  background: #fff;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  color: #4a4a4a;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-}
-.drawer-btn:hover { border-color: #426175; }
-.drawer-btn.primary { background: #426175; color: #fff; border-color: #426175; }
-.drawer-btn.primary:hover { background: #375263; }
-.drawer-btn.block { flex: 1; justify-content: center; }
-
-.drawer-btn:focus-visible {
-  outline: 2px solid #F0DC9A;
-  outline-offset: 2px;
-}
+/* .drawer-count, .drawer-search, .drawer-section-label, and .drawer-btn*
+   (~65 lines total) removed 2026-09-06 per the CSS audit (§3, 2026-09-04):
+   none were referenced by any .R/.js file in the app — leftover from the
+   mdt-activity-dashboard template this stylesheet was ported from. Export's
+   buttons use plain .btn (.export-section .btn below), not .drawer-btn. */
 
 /* ── Chip strip (FEAT-010 — read-only status, click a chip to open its drawer) ─ */
 
@@ -843,12 +807,6 @@ body > .container-fluid {
   text-transform: uppercase;
 }
 
-.chips-right {
-  margin-left: auto;
-  font-size: 11px;
-  color: #8b8e92;
-}
-
 .filter-chip {
   display: inline-flex;
   align-items: center;
@@ -866,20 +824,18 @@ body > .container-fluid {
   transition: border-color 0.15s;
 }
 .filter-chip:hover { border-color: #426175; color: #1c1c1c; }
-.filter-chip.active { background: #426175; color: #fff; border-color: #426175; }
-.filter-chip.add { background: transparent; border-style: dashed; color: #8b8e92; }
 .filter-chip .caret { font-size: 10px; color: #8b8e92; }
-.filter-chip.active .caret { color: rgba(255,255,255,0.7); }
 
 .filter-chip:focus-visible {
   outline: 2px solid #F0DC9A;
   outline-offset: 2px;
 }
 
-.filter-chips:has(.filter-chip.active) {
-  border-left: 4px solid #993366;
-  padding-left: 11px;
-}
+/* .chips-right, .filter-chip.add, .filter-chip.active (+ its .caret variant
+   and the .filter-chips:has(.filter-chip.active) accent border) removed
+   2026-09-06 per the CSS audit (§3, 2026-09-04): neither server/drawers.R
+   nor drawer.js ever applies .active or renders an "add chip" affordance —
+   dead template CSS, same batch as the .drawer-btn* cleanup above. */
 
 /* ── sortable::bucket_list / rank_list (Step 6 — merged from www/styles.css,
    recoloured #2c3e50 → #426175 to match the CAQ palette) ────────────────── */
