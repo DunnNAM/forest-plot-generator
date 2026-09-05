@@ -58,3 +58,8 @@ lock/
 python/
 sandbox/
 staging/
+
+# ISS-036 workaround (2026-09-06, Connect Cloud publish prep): renv/cellar/
+# holds a committed forestHelperR .tar.gz — see renv/.gitignore for the
+# actual un-ignore rule (a negation here can't reach into a directory a
+# closer, more specific .gitignore already excludes).

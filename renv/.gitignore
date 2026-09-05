@@ -5,3 +5,12 @@ lock/
 python/
 sandbox/
 staging/
+
+# ISS-036 workaround (2026-09-06, Connect Cloud publish prep): forestHelperR
+# has "Source": "unknown" in renv.lock (no repository to fetch it from), so
+# its .tar.gz is committed here to give it a locally-resolvable source
+# without touching renv.lock itself. A negation in the parent .gitignore
+# alone can't do this — git won't re-include a file under a directory a
+# *closer* .gitignore excludes, so the un-ignore has to live in this file.
+!cellar/
+!cellar/forestHelperR_0.2.0.tar.gz

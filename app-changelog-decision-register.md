@@ -231,6 +231,26 @@ manual retry also fails.
 
 ## Changes
 
+### CHG-039 — Generate Connect Cloud manifest.json; commit forestHelperR cellar tarball (ISS-036 partial)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-06 |
+| **Branch** | `main` |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-036 (partial), ISS-035 |
+
+Prep for publishing `main` to Posit Connect Cloud:
+
+- `rsconnect::writeManifest()` failed outright in its default (lockfile-based) mode on a small pre-existing library/lockfile drift (`codetools` version — fixed with `renv::restore(packages = "codetools")`, which doesn't touch `renv.lock`), and in library-resolution mode on **ISS-036** itself: `forestHelperR`'s `"Source": "unknown"` in `renv.lock` fails `rsconnect`'s internal `renv::snapshot()` pre-flight validation, which refuses any package with no resolvable source — not a soft warning, a hard abort. This is the first time ISS-036 was confirmed to block something beyond the R 4.5.2 migration.
+- Fixed by placing `forestHelperR_0.2.0.tar.gz` (found at `~/Downloads/`, matching the version already recorded in `renv.lock`) in `renv/cellar/` and reinstalling it via `renv::install()` from that path — this gives the **installed package** a resolvable `"Cellar"` source without editing `renv.lock` (`CLAUDE.md` reserves lockfile edits for the R 4.5.2 migration, DEC-006). `renv/.gitignore` excludes `cellar/` by default; added a targeted un-ignore there (a negation in the root `.gitignore` alone can't reach into a directory a closer, more specific `.gitignore` already excludes — the un-ignore has to live in `renv/.gitignore` itself).
+- Diffed the generated `manifest.json`'s package list against `renv.lock` in full (not just spot-checked): found `svglite`, `systemfonts`, and `textshaping` (needed by `ggplot2::ggsave(device = "svg")`, the SVG export handler) missing — the same root cause as **ISS-035** (nothing calls them via `::` directly, so dependency scanning can't see them). Patched all three into `manifest.json` from their already-correct `renv.lock` entries. Final manifest: 138/138 packages match `renv.lock` exactly, no gaps either direction, no spurious extras.
+
+**`renv.lock` itself is intentionally untouched — ISS-036 is only partially resolved.** If Connect Cloud's GitHub-integrated deploy does its own server-side `renv::restore()` against the committed lockfile rather than trusting the committed `manifest.json`, it may hit the identical "unknown source" failure independently; that would be the next thing to fix if so, and would need the same kind of explicit convention-override authorization DEC-006 gave the R 4.5.2 migration.
+
+---
+
 ### CHG-038 — DEC-005 Step 7: status-chip strip, rail badges, Help nav panel (FEAT-010)
 
 | Field | Detail |
