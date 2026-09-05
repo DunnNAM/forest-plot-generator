@@ -26,6 +26,15 @@ package (already stabilised, 112 tests passing).
 - `www/style.css` — single stylesheet (CAQ palette); linked with a `?v=` cache-buster
 - `app-changelog-decision-register.md` — decisions and changes log (update this for every change)
 - `issues-register.md` — open issues register
+- `manifest.json` — Posit Connect Cloud deployment manifest (CHG-039, 2026-09-06).
+  Generated via `rsconnect::writeManifest()`, then hand-patched (see CHG-039) to add
+  `svglite`/`systemfonts`/`textshaping`, which the dependency scanner misses. Regenerate
+  rather than hand-edit for anything beyond that specific gap — see CHG-039 for the
+  exact recipe (`dependencyResolution = "library"`, plus the `renv/cellar/` step below).
+- `renv/cellar/forestHelperR_0.2.0.tar.gz` — committed workaround for ISS-036
+  (`forestHelperR` has no resolvable source in `renv.lock`). Gives the installed
+  package a resolvable source for `rsconnect`/`renv` without editing `renv.lock`
+  itself. `renv/.gitignore` has a targeted un-ignore for this one file.
 
 ## Environment
 **The project targets R 4.3.x.** `renv.lock` pins R 4.3.1 and `renv/library/R-4.3/`
@@ -100,8 +109,15 @@ suspends any output inside them — including `downloadButton`s, which render as
 - ISS-030: `"Source Sans Pro"` renamed on Google Fonts, silently absent (Low)
 
 **Next session:** Restyle (including Step 7 / FEAT-010) is shipped and committed.
-Pick up ISS-036 (blocks the R 4.5.2 migration) or one of the open issues above.
 `handover-dec004-file-split.md` is now historical — DEC-004 is complete.
+
+**2026-09-06 — Connect Cloud publish in progress.** See `session-handoff.md` §3 for
+full detail and current status. ISS-036 (`forestHelperR`'s unresolvable `renv.lock`
+source) turned out to block this too, not just the R 4.5.2 migration — partially
+resolved (CHG-039) via a committed `renv/cellar/` tarball, `renv.lock` itself still
+unfixed. Next: push, attempt the actual deploy (untested whether the workaround is
+sufficient for Connect Cloud's own dependency resolution), enable auto-deploy, then
+merge `design/modal-progression-workflow` into `main`.
 
 ## Conventions
 - Always use explicit package::function() notation
