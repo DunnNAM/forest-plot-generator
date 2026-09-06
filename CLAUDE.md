@@ -127,7 +127,6 @@ references by commit subject line, not hash.
   un-namespaced calls; testability/DRY items) — all open, none started
 - ISS-028/029/030: pre-existing, unchanged (age-group sort order, OS fonts, renamed
   Google Font — all Low/Medium, mostly out of this repo's scope)
-- FEAT-012 (doc-only idea): Back/Next drawer-navigation buttons — not started
 
 **Next session:** see `session-handoff.md` for the full post-merge checklist — it has
 specific things still worth verifying (GitHub Support's response on the history-purge

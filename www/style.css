@@ -673,10 +673,112 @@ body > .container-fluid {
    stylesheet, .wizard-modal-footer comment above), so scoping to it is safe
    here without also touching some other modal. */
 .export-section .btn,
-.modal-footer .btn {
+.modal-footer .btn,
+.drawer-nav-btn {
   border-radius: 999px;
   padding-left: 1.1rem;
   padding-right: 1.1rem;
+}
+
+/* ── Drawer Back/Next navigation (FEAT-012) ──────────────────────────────── */
+
+/* Positioned against .filter-drawer itself (already `position: fixed`, a
+   valid positioning context), not .filter-drawer-inner — see the comment
+   above drawerUI() for why. Vertically centred against the drawer's own open
+   height, not any particular panel's content, so they don't jump position
+   as panels of different heights become active. z-index above the drawer's
+   own content (panel content has no z-index of its own, so any positive
+   value clears it) but nowhere near .drawer-scrim (1027) or .filter-drawer
+   itself (1028) — no stacking-context conflict, this is a sibling inside the
+   same drawer. `hidden`/`disabled` are toggled entirely client-side by
+   www/drawer.js's updateDrawerNavButtons() — position: absolute means
+   toggling `hidden` never reflows the drawer's own scrolling content
+   underneath, so no reserved-space/visibility-hidden trick is needed here
+   the way ISS-045-adjacent layout-shift concerns might otherwise suggest.
+   A small fixed-size circle, not a text pill (2026-09-06 user follow-up,
+   after seeing the labeled pill version live) — width/height/padding/
+   border-radius override the shared `.export-section .btn, .modal-footer
+   .btn, .drawer-nav-btn { border-radius: 999px; padding-left/right: 1.1rem }`
+   rule above (a circle needs equal width/height and no directional padding,
+   not a pill's asymmetric horizontal padding); flex centring keeps the FA
+   chevron glyph centred regardless of its own natural icon-font metrics. */
+.drawer-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.drawer-nav-btn--back { left: 16px; }
+.drawer-nav-btn--next { right: 16px; }
+
+/* On a wide viewport, pin Back/Next just outside the drawer's own centred
+   content column instead of the screen edge (2026-09-06 user report: at
+   16px-from-edge they read as "a long way from the panels showing options"
+   on a wide monitor). Every panel's content shares the identical
+   `max-width: 1280px; margin: 0 auto` box (.drawer-row-divided,
+   .drawer-columns, .drawer-fullwidth, .drawer-header all use it) — anchoring
+   to that box via the same `calc(50% - Npx)` centering math means the
+   buttons land in the same place relative to the content on every drawer,
+   not just relative to the screen, without needing per-panel adjustment or a
+   new wrapper element.
+   700 = 640 (half of 1280) + 60 (a fixed clearance: comfortably more than
+   this button's own 40px width, so the button's box — which extends inward
+   from this anchor — ends with a visible ~20px gap before the content edge,
+   never overlapping it; recalculated for the 40px circle, was 780/140 for
+   the original ~100-110px text pill). The 1400px breakpoint is chosen so the
+   two rules meet smoothly at the boundary (at exactly 1400px, calc(50% -
+   700px) = 0px, close to the plain 16px above) and so there's always at
+   least (1400-1280)/2 = 60px of gutter available on each side once this rule
+   is active — exactly the button width + clearance, so it can never be
+   triggered without room to fit. First-pass values — re-check live and
+   adjust if the gap looks wrong. */
+@media (min-width: 1400px) {
+  .drawer-nav-btn--back { left: calc(50% - 700px); }
+  .drawer-nav-btn--next { right: calc(50% - 700px); }
+}
+
+/* Outline, not the Export panel's solid slate fill (2026-09-06 design
+   discussion) — deliberately: the Export buttons are one-off committal
+   actions ("Download", "Copy R code") that should draw the eye as "the thing
+   to click"; Back/Next recur on every drawer in the sequence and would
+   dilute that hierarchy if styled identically to a real action button. Same
+   accent colour for one consistent app-wide vocabulary, but a lighter fill
+   so these read as navigation, not a data-committing action — solid slate
+   only on hover, i.e. inverted from .export-section .btn's always-solid
+   treatment. */
+.drawer-nav-btn {
+  background: transparent;
+  border: 1px solid #426175;
+  border-radius: 50%;
+  color: #426175;
+}
+/* :hover only, not :focus (2026-09-06 user report: after a click, the
+   clicked button stayed solid slate even without the mouse hovering it).
+   Clicking a button focuses it, and unlike the Export buttons — which are
+   real Shiny actionButton()/downloadButton()s whose click reloads/downloads
+   something, naturally moving focus away — this button stays in the DOM,
+   just disabled/re-enabled in place, across every drawer switch
+   (drawerNavClick() in www/drawer.js), so a lingering `:focus` rule kept it
+   permanently solid until the user happened to click or tab elsewhere.
+   `:focus-visible` (keyboard-only) gets a plain outline instead, so keyboard
+   users still get a visible focus indicator without the mouse-click version
+   sticking around. */
+.drawer-nav-btn:hover:not(:disabled) {
+  background: #426175;
+  border-color: #426175;
+  color: #F7F4EC;
+}
+.drawer-nav-btn:focus-visible:not(:disabled) {
+  outline: 2px solid #426175;
+  outline-offset: 2px;
 }
 
 /* Inverted colour scheme — solid slate pill, cream text/icon (2026-09-04 user

@@ -30,6 +30,64 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ---
 
+### CHG-064 — Back/Next drawer-navigation buttons; resolves FEAT-012
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-06 |
+| **Branch** | `main` |
+| **Author** | Nathan Dunn (request/design direction) / Claude (Anthropic) |
+| **Status** | Implemented — confirmed live by Nathan |
+| **Refs** | FEAT-012, `session-handoff.md` |
+
+In addition to the rail icons, each open drawer now has a Back/Next control that
+steps to the adjacent drawer in sequence (Data → Variables → Display → Text →
+Order). Data (first) shows Next only; Order (last) shows Back only; Export sits
+outside the sequence entirely (a terminal action panel, not a guided step) and
+gets neither. Implementation is deliberately server-free: `www/drawer.js`'s
+`updateDrawerNavButtons()` computes visibility/target key entirely client-side
+from the same `drawer-open` custom message that already toggles the active
+panel, and a click just fires `Shiny.setInputValue("rail_key", ...)` — the exact
+same input the rail buttons themselves use — so `server/drawers.R` needed no
+changes at all. The two buttons are new siblings of `.filter-drawer-inner`
+(`R/ui_drawers.R`), not children of it — nesting them inside would have meant
+restructuring `.filter-drawer-inner`'s own flex layout, which the Data/Variables
+divided-row divider's measured absolute-position offset depends on (see
+`www/style.css`'s `.drawer-row-divided .drawer-field-block--divided::before`
+comment) — positioned absolutely against `.filter-drawer` itself instead (already
+`position: fixed`, a valid positioning context), so nothing about the existing
+divider math was touched.
+
+Styling went through two live rounds, per this project's standing "verify live,
+iterate" process: first pass was an outline pill (Claude's recommendation —
+same shape as the Export buttons' solid pills, but transparent/slate-outline so
+Back/Next, which recur on every drawer, wouldn't visually compete with a
+one-off committal action like Download). Nathan's own follow-up replaced this
+with small (40px) circular chevron-only buttons (`<`/`>`, no text) — his own
+idea, adopted since a smaller control is both a lighter visual footprint and
+easier to place near content without overlap risk; `aria-label` carries the
+accessible name since there's no visible text. Nathan's live check also
+surfaced two real bugs, both fixed same session: (1) the buttons sat a fixed
+16px from the *screen* edge, which on a wide monitor left them "a long way from
+the panels showing options" — fixed by anchoring to the same centred 1280px
+content column every panel already uses (`.drawer-row-divided`/`.drawer-
+columns`/`.drawer-fullwidth`/`.drawer-header`'s shared `max-width: 1280px;
+margin: 0 auto`) via a `calc(50% - Npx)` media-query rule active ≥1400px,
+falling back to the original edge inset below that; (2) a clicked button stayed
+permanently solid-filled instead of resetting — caused by a `:focus` rule that
+never cleared, since this hand-rolled button (a plain `tags$button()`, not a
+real Shiny `actionButton()`) persists in the DOM across every drawer switch
+rather than reloading — fixed by dropping `:focus` from the hover-fill trigger
+(kept a plain `:focus-visible` outline for keyboard users) and calling
+`btn.blur()` immediately after firing the click.
+
+Both suites re-run after the R file change: 48/48 unit assertions, 9/9
+integration assertions (one integration run needed a retry after a transient
+Chromote timeout, consistent with the known flaky pattern noted in
+`session-handoff.md` §6).
+
+---
+
 ### CHG-063 — `README.md` rewritten for current state; resolves ISS-041
 
 | Field | Detail |
