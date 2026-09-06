@@ -123,7 +123,6 @@ force-pushed. **Every commit hash predating 2026-09-06 no longer exists** — ma
 references by commit subject line, not hash.
 
 **Open issues (see `issues-register.md` for full detail on all of these):**
-- ISS-041: `README.md` describes the pre-restyle app — stale, not yet rewritten (Medium)
 - ISS-045–048: architecture-review findings (wizard Step 2 modal styling gap; widespread
   un-namespaced calls; testability/DRY items) — all open, none started
 - ISS-028/029/030: pre-existing, unchanged (age-group sort order, OS fonts, renamed

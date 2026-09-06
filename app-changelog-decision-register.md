@@ -30,6 +30,34 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ---
 
+### CHG-063 — `README.md` rewritten for current state; resolves ISS-041
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-06 |
+| **Branch** | `main` |
+| **Author** | Nathan Dunn (request) / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-041, DEC-004, DEC-005, DEC-006 |
+
+Documentation-only, no app code touched. `README.md` had been stale since before
+DEC-004/DEC-005 (see ISS-041's full description) — rewritten section by section:
+Installation now documents `renv::restore()` (dependencies are locked, not installed
+ad hoc, and `forestHelperR` has a real GitHub source since CHG-040 — no more manual
+`.tar.gz`/undeclared-dependency workaround) and the bundled-TTF/Google-Fonts font setup
+(`sysfonts`/`showtext`, not `extrafont::font_import()`, per DEC-003); Usage overview
+rewritten around the bottom-rail + drawer model and the FEAT-011 first-visit wizard
+(replacing the described left-sidebar/right-accordion layout, retired by DEC-005); a
+new Testing section documents both `testthat` suites and the `NOT_CRAN=true` gotcha
+(ISS-037); Known limitations trimmed from four resolved issues (ISS-002/004/011/012)
+to what's actually open today (ISS-028/029/030/039/040/046); Project structure rewritten
+to match the DEC-004 `server/`+`R/` file split and current `www/*.js` files (`drawer.js`,
+`wizard.js`, `export.js`); a new Deployment section documents the Posit Connect Cloud
+publish and `manifest.json`; Prerequisites/Conventions brought in line with `CLAUDE.md`
+(R 4.3.x specifically, DEC-006's `renv.lock` exception).
+
+---
+
 ### CHG-062 — Export drawer: PNG/SVG radio moved into the bottom-pinned button block, aligning with "Copy R code"
 
 | Field | Detail |

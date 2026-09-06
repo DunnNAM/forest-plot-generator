@@ -93,9 +93,8 @@ review's findings: a wizard Step-2 modal styling gap; widespread un-namespaced
 `pkg::fun()` calls; a couple of testability/DRY items) — none of these are started.
 ISS-042 is now fully resolved (all three sub-issues, see §3 item 3 below). See §5.
 
-**Also still open, unrelated to FEAT-011:** `README.md` (ISS-041) has been stale since
-before DEC-004/DEC-005 — still describes the old sidebar+accordion layout and lists
-resolved issues as current limitations. Deliberately not rewritten yet.
+**`README.md` (ISS-041) — resolved 2026-09-06 (CHG-063).** Rewritten in full to match
+the current DEC-004/DEC-005 architecture; see the changelog entry for what changed.
 
 ---
 
@@ -143,7 +142,7 @@ rebasing" even though `HEAD` is a normal branch ref pointing at the right commit
 plain `rm -rf .git/rebase-merge` (or the PowerShell equivalent) clears it; harmless
 either way.
 
-Beyond those four, the open queue in §5 (README refresh, R 4.5.2 migration, the
+Beyond those four, the open queue in §5 (R 4.5.2 migration, the
 internal `styling` package, the architecture-review findings) is genuinely just a
 backlog — pick whatever seems most useful, or ask the user.
 
@@ -199,7 +198,6 @@ order:
 | ID | Sev | What | Note |
 |---|---|---|---|
 | **ISS-042** | Low | Sub-issue 1 only: Help page title left-alignment | Navbar sub-issues (2, 3) resolved — CHG-055. Sub-issue 1 never touched; see §3. |
-| **ISS-041** | Medium | `README.md` describes the pre-restyle app (sidebar/accordion, no tests, no renv) | User-facing and actively misleading, not just incomplete. Deliberately not fixed yet — worth its own pass. |
 | **ISS-045** | Low-Medium | Wizard Step 2 modal missing `.wizard-modal-footer`/`.btn-wizard-skip` wrapper classes | Visible regression mid-wizard-flow: modal shrinks, buttons lose flex parity. Fix mirrors `wizardWelcomeModal()` exactly — see `issues-register.md`. |
 | **ISS-046** | Medium | Widespread un-namespaced `pkg::fun()` calls across `ui.R`/`R/ui_*.R`/`server/*.R` | Direct contradiction of `CLAUDE.md`'s own convention. Large surface area — do deliberately, one file/topic at a time, verifying tests after each. |
 | **ISS-047** | Low/Medium | `xticks_default()`/`make_log_range()` are pure math but live inside `server/observers.R` | Extract to `R/helpers.R`; add unit tests. |
