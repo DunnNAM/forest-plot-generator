@@ -62,7 +62,7 @@ Confirmed visually by Nathan after a full R restart (R file change, not CSS-only
 | **Date** | 2026-09-06 |
 | **Branch** | `main` |
 | **Author** | Nathan Dunn (report) / Claude (Anthropic) |
-| **Status** | Implemented — confirmed working locally; Connect Cloud confirmation pending next deploy |
+| **Status** | Implemented — confirmed working locally and on Connect Cloud (2026-09-06) |
 | **Refs** | `session-handoff.md` §3 item 2 |
 
 Nathan reported "Copy R code" failing on the published Connect Cloud app with "Could
@@ -84,11 +84,11 @@ before, now driven by the browser's real result instead of a server-side `tryCat
 `manifest.json` — not touched per the standing "don't modify `renv.lock`" convention
 outside the DEC-006 migration; a harmless unused entry, candidate for a future prune).
 
-**Not yet confirmed:** whether this actually fixes the Connect Cloud case specifically —
-confirmed working in the local dev session; next step is redeploying and testing there,
-since a headless container's behaviour can't be fully assumed from a local check even
-though `navigator.clipboard` is a client-side, browser-only API that shouldn't care
-where the R process runs.
+**Confirmed 2026-09-06:** Nathan tested "Copy R code" on the published Connect Cloud app
+after the CHG-062/061 commit (`c818023`) auto-deployed — it works there too, no longer
+reporting the clipboard-unavailable error. As expected: `navigator.clipboard` is a
+client-side, browser-only API, so it never depended on the server's environment in the
+first place.
 
 ---
 

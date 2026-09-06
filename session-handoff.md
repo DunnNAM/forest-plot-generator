@@ -110,16 +110,20 @@ work" handoff, it's a "check the work" one. Four things specifically:
    name/email, no longer reachable from any branch but not yet garbage-collected by
    GitHub). If they've confirmed the purge, note it in `app-changelog-decision-
    register.md`; if not, no action needed yet, just don't assume it's done.
-2. **Do a live visual check of the merged FEAT-011 UI end-to-end.** Most of FEAT-011's
-   individual pieces were verified in isolation (either via served HTML/CSS text with
-   no browser tool, or via the user's own live checks turn-by-turn) — nobody has
-   looked at the *whole* merged app running together yet. Specifically worth eyeballing:
-   the wizard's first-visit flow, the navbar pills across both tabs, the Export
-   drawer's new layout, and — per item 3 below — the Help page title alignment.
-   **The Chrome browser extension is gone from this session, on purpose — do not try
-   to reconnect it** (see the `no-chrome-extension-user-inspects-visually` memory).
-   The user does the visual checking and directs fixes turn by turn; this is the
-   standing process now, not a one-off workaround (see §7's CHG-055 entry for why).
+2. ~~**Do a live visual check of the merged FEAT-011 UI end-to-end.**~~ **Done
+   2026-09-06 (CHG-062, CHG-061).** Nathan checked the wizard's first-visit flow
+   (fine), the navbar pills on both tabs (fine), and the Export drawer — which
+   surfaced two real issues, both fixed and reconfirmed the same session: (1) the
+   PNG/SVG format radio was misaligned with "Copy R code" (CHG-062); (2) "Copy R
+   code" failed outright on Connect Cloud with a clipboard-unavailable error —
+   `clipr::write_clip()` was writing to the server's own OS clipboard, meaningless
+   on a headless container; replaced with a client-side Clipboard-API copy
+   (CHG-061), confirmed working both locally and on the published Connect Cloud app
+   after redeploy. Only the Help page title (item 3 below) remains unchecked from
+   this pass. As before, this checking happened via Nathan's own browser, Claude
+   iterating on direction — no Chrome extension in this session (see the
+   `no-chrome-extension-user-inspects-visually` memory) — this is the standing
+   process, not a one-off (see §7's CHG-055 entry for why).
 3. **ISS-042 sub-issue 1 (Help page title left-alignment) is still open** — confirmed
    not touched by any FEAT-011 commit. Worth a quick check next time the Help tab is
    open. The original hypothesis (an `R/ui_help.R` class rename needing a full R
