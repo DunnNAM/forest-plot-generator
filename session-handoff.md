@@ -9,6 +9,22 @@
 > map). This document is the *current* state of play and what to pick up next. If the
 > two disagree, `CLAUDE.md` wins on conventions and this file wins on status.
 
+> **2026-09-06 — every commit hash on both `main` and this branch was rewritten, for
+> real this time.** CHG-040 sanitized `renv.lock`'s *current* content but deliberately
+> left git history unrewritten (its own text says so). That left the colleague's real
+> full name and personal email address still recoverable from old commits on a public
+> repo. A follow-up session used `git filter-branch` (a BFG-style history rewrite) to
+> scrub both strings from every historical version of `renv.lock`/`manifest.json`
+> across both branches, verified by scanning every blob in the object database (not
+> just `git log`), then force-pushed both branches to `origin`. A GitHub Support
+> ticket was also filed to purge the orphaned pre-rewrite objects, since force-pushing
+> alone doesn't guarantee GitHub's servers drop them immediately. Every hash this
+> document, `CLAUDE.md`, and `issues-register.md` cite was updated at the time of this
+> rewrite — but if you're reading an older cached copy of any of these docs, or
+> comparing against a note/link from before 2026-09-06, the hash it names no longer
+> exists. Match by commit **subject line** (unchanged by the rewrite) instead, or ask
+> rather than assume a stale hash is wrong content.
+
 ---
 
 ## 1. Project overview
