@@ -163,4 +163,4 @@ This is a private development repository. If you find a bug or want to propose a
 ---
 
 > **Organisation:** Cancer Alliance Queensland  
-> **Contact:** Nathan Dunn — nathan.dunn@health.qld.gov.au
+> **Author / Maintainer:** Nathan Dunn — nathan.dunn@health.qld.gov.au

@@ -231,7 +231,36 @@ manual retry also fails.
 
 ## Changes
 
-### CHG-039 — Generate Connect Cloud manifest.json; commit forestHelperR cellar tarball (ISS-036 partial)
+### CHG-040 — Publish forestHelperR to GitHub, sanitized; fixes ISS-036 for real; two exposure incidents fixed along the way
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-06 |
+| **Branch** | `main` |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | ISS-036 (resolved), PDEC-005 (effectively actioned), CHG-039 |
+
+CHG-039's `renv/cellar/` workaround was confirmed insufficient the same day: the first real Connect Cloud deploy attempt from `main` failed with `Package forestHelperR has invalid package source Cellar. Check your manifest.json or renv.lock.` Connect Cloud's GitHub-integrated deploy does its own server-side dependency resolution against the cloned repo's `manifest.json`/`renv.lock` — it doesn't bundle a local library the way `rsconnect::deployApp()` would — so `"Cellar"`, a reference to *this machine's* directory, is meaningless to it even though the tarball sits right there in the repo.
+
+**Real fix:** published `forestHelperR`'s source to a new repo, `github.com/DunnNAM/forestHelperR` (public — matches the app repo's own visibility for the same Connect Cloud reason). Before publishing:
+- Extracted the tarball and grepped the full source tree (code, docs, vendored JS libs, binary-inclusive) for Gitea URLs, `qld.gov.au`, internal IPs/paths, and credentials — found nothing beyond the maintainer's own email.
+- Confirmed every one of `forestHelperR`'s own dependencies (`broom`, `dplyr`, `extrafont`, `forcats`, `forestploter`, `gtable`, `lmtest`, `magrittr`, `rlang`, `sandwich`, `scales`, `stringr`, `tibble`, `tidyr`, plus base `grid`/`stats`) is a plain CRAN package — nothing else needed the same treatment.
+- **Sanitized attribution, not stripped:** the original author's personal work email was in `DESCRIPTION` and the generated `man/forestHelperR-package.Rd`. At the user's explicit direction, the original author is still credited (`Helen ***`, contact masked as `H*.*@health.qld.gov.au`) pending her own confirmation she's comfortable being publicly identified, and Nathan Dunn is added as the package's maintainer (`role = c("aut", "cre")`) with a real, working contact — a publicly-hosted package needs one. Verified the sanitized source still installs and passes the app's own test suite unchanged (48/48, 9/9) before publishing.
+
+**Reinstalled and re-recorded:** `renv::install("DunnNAM/forestHelperR")` gives the installed package real `RemoteType`/`RemoteRepo`/`RemoteSha` GitHub provenance. Updated `renv.lock`'s `forestHelperR` entry to match via `renv::record()` — **this is the scoped `renv.lock` override the user explicitly authorized** for this fix, the same kind of deliberate exception DEC-006 made for the R 4.5.2 migration, scoped to this one package entry only (not a full `renv::snapshot()`, which CHG-028's experience already showed rewrites unrelated `Repository` fields and can drop packages `renv`'s implicit-type detection doesn't consider "used"). Note: `renv::record()`'s own return value, when passed a manually-assembled record already containing `Source`, wrote a duplicate `"Source"` JSON key — worked around by hand-editing the one duplicate line rather than fighting the undocumented internal API further.
+
+`manifest.json` regenerated via `rsconnect::writeManifest()`'s **default, lockfile-based** path this time — no `dependencyResolution = "library"` workaround needed, since `renv.lock` now correctly resolves everything itself. 138/138 packages match exactly, including `svglite`/`systemfonts`/`textshaping` (the ISS-035-pattern gap from CHG-039's manifest, resolved automatically this time since the lockfile path picks them up correctly).
+
+**Two real, live exposure incidents found and fixed in the process, not just the intended sanitization:**
+1. CHG-039's commit had put the *original, unsanitized* tarball — containing the real email — into `renv/cellar/` on the now-public `forest-plot-generator` repo. Removed from `main`'s current tree this session (`git rm`); **git history on `main` was deliberately left unrewritten** — a lower-disruption call given `design/modal-progression-workflow` is an active, unmerged branch that forked before this point and would need rebasing onto any rewritten `main` history. The now-unused `renv/cellar/` un-ignore rules in `.gitignore`/`renv/.gitignore` were reverted alongside.
+2. The first `forestHelperR` publish commit's own message quoted the real email in prose while describing its removal from the files — an ironic self-inflicted leak. Fixed by amending that commit and force-pushing; safe here specifically because `forestHelperR` was a brand-new single-commit repo with nothing else depending on it yet, unlike `main`.
+
+Verified end to end: 48/48 unit + 9/9 integration assertions pass; no occurrence of the real email anywhere in the current `forestHelperR` repo (files or commit messages), `renv.lock`, or `manifest.json`.
+
+---
+
+### CHG-039 — Generate Connect Cloud manifest.json; commit forestHelperR cellar tarball (ISS-036 partial, superseded by CHG-040)
 
 | Field | Detail |
 |---|---|

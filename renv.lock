@@ -1556,9 +1556,9 @@
     "forestHelperR": {
       "Package": "forestHelperR",
       "Version": "0.2.0",
-      "Source": "unknown",
+      "Source": "GitHub",
       "Title": "Creates CAQ formatted forest plots",
-      "Authors@R": "c( person(\"Helen\", \"Hunt\", , \"REDACTED\", c(\"aut\", \"cre\")))",
+      "Authors@R": "c( person(\"Helen\", \"***\", email = \"H*.*@health.qld.gov.au\", role = \"aut\"), person(\"Nathan\", \"Dunn\", email = \"nathan.dunn@health.qld.gov.au\", role = c(\"aut\", \"cre\")))",
       "Description": "Helps create forest plots with flexible styling.",
       "License": "MIT + file LICENSE",
       "Encoding": "UTF-8",
@@ -1593,8 +1593,14 @@
       "LazyDataCompression": "xz",
       "Config/testthat/edition": "3",
       "NeedsCompilation": "no",
-      "Author": "Helen *** [aut, cre]",
-      "Maintainer": "Helen *** <REDACTED>"
+      "Author": "Helen *** [aut], Nathan Dunn [aut, cre]",
+      "Maintainer": "Nathan Dunn <nathan.dunn@health.qld.gov.au>",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "DunnNAM",
+      "RemoteRepo": "forestHelperR",
+      "RemoteRef": "main",
+      "RemoteSha": "1eb5d59bddb9cc4ac58e3ecf1a8e3dc9c72905d9"
     },
     "forestploter": {
       "Package": "forestploter",

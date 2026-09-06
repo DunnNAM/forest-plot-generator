@@ -56,50 +56,61 @@ Goal: publish `main` to Posit Connect Cloud via its GitHub-integrated deploy, tu
 auto-deploy on push, then merge `design/modal-progression-workflow` into `main` as a
 git-workflow exercise.
 
-**Done so far (CHG-039):**
-- `manifest.json` generated and committed at the repo root — required for the deploy.
-  Verified complete: all 138 packages in `renv.lock` are represented, no gaps, no
-  spurious extras.
-- **Hit ISS-036 as a hard blocker along the way** (not just an R 4.5.2 migration
-  issue as previously scoped — see §5 below): `rsconnect::writeManifest()` calls
-  `renv::snapshot()` internally, and its pre-flight validation aborts outright on any
-  package with an "unknown" source, which `forestHelperR` is in `renv.lock`. **Fixed
-  for the manifest only**, not the lockfile: `forestHelperR_0.2.0.tar.gz` is now
-  committed at `renv/cellar/` (required a targeted un-ignore in `renv/.gitignore` —
-  see that file's own comment) and reinstalled via `renv::install()` from that path,
-  which gives the *installed package* a resolvable `"Cellar"` source without touching
-  `renv.lock` itself (reserved for the R 4.5.2 migration per DEC-006).
-- Also caught a recurrence of **ISS-035**'s pattern while diffing the manifest against
-  `renv.lock`: `svglite`, `systemfonts`, `textshaping` (needed by
-  `ggplot2::ggsave(device = "svg")`) were silently missing from the generated
-  manifest, for the identical reason as ISS-035 — nothing calls them via `::`
-  directly, so dependency scanning can't see them. Patched in from their already-
-  correct `renv.lock` entries.
-- Repo confirmed **private** on GitHub; decided (2026-09-06) to try Connect Cloud's
-  GitHub App flow with the repo private first, rather than making it public
-  pre-emptively — Connect Cloud's GitHub integration is expected to support granting
-  access to specific private repos. Not yet confirmed live (needs the browser-based
-  step below).
+**Done so far:**
+- **CHG-039 (interim, superseded):** `manifest.json` generated with `forestHelperR`
+  resolved via a committed `renv/cellar/` tarball. **First real deploy attempt from
+  `main` failed** with `Package forestHelperR has invalid package source Cellar.` —
+  Connect Cloud does its own server-side dependency resolution against the cloned
+  repo's `manifest.json`/`renv.lock`, and `"Cellar"` is a reference to *this
+  machine's* directory, meaningless to its build servers. Confirms ISS-036 needed a
+  real fix, not a local workaround.
+- **CHG-040 (real fix): `forestHelperR` published to `github.com/DunnNAM/forestHelperR`
+  (new repo, public).** Sanitized before publishing (full source-tree scan found only
+  the maintainer's personal email — no Gitea/internal references elsewhere);
+  reattributed rather than stripped, at the user's direction: original author
+  credited with a masked identity (`Helen ***` / `H*.*@health.qld.gov.au`) pending
+  her own confirmation, Nathan Dunn added as maintainer with a real contact.
+  `renv.lock`'s `forestHelperR` entry updated to a real `"Source": "GitHub"` record
+  — **the scoped `renv.lock` override the user explicitly authorized**, DEC-006-style
+  but for this deploy blocker. `manifest.json` regenerated via the *default*
+  lockfile-based path this time (no workaround needed) — 138/138 packages match,
+  including `svglite`/`systemfonts`/`textshaping` (the ISS-035-pattern gap from
+  CHG-039, resolved automatically this time). **ISS-036 is now fully resolved.**
+- **Repo visibility:** tried Connect Cloud's GitHub App flow with `main` private
+  first, per plan — confirmed **Connect Cloud's free tier only lists public repos**
+  in its repository picker regardless of GitHub App permissions (public repos showed,
+  private ones didn't, even with access correctly granted and the right GitHub
+  account). `main` was made public as a result. `forestHelperR` was made public too,
+  for the same reason (Connect Cloud's build step needs to fetch it).
+- **Two real, live privacy exposures found and fixed along the way** (not hypothetical
+  — both were actually live on GitHub for a window): (1) CHG-039's cellar commit put
+  the *original, unsanitized* tarball on the now-public `main` — removed from the
+  current tree, **git history on `main` deliberately left unrewritten** (the
+  unmerged `design/modal-progression-workflow` branch would need rebasing onto any
+  rewritten history — a bigger, separate decision, not made this session); (2) the
+  first `forestHelperR` publish commit's own message quoted the real email while
+  describing its removal — fixed via amend + force-push, safe only because that repo
+  had exactly one commit and nothing depended on it yet.
+- Verified throughout: 48/48 unit + 9/9 integration assertions pass.
 
 **Not yet done — pick up here:**
-1. Push this session's commit (`efbc6d0` or its successor) to `origin/main`.
-2. In a browser (no Chrome extension in this session — see the standing memory on
-   that): go to connect.posit.cloud, "Publish from GitHub", authorize the Posit
-   Connect Cloud GitHub App, grant it access to `DunnNAM/forest-plot-generator`
-   specifically, and attempt the deploy from `main`. **This is the real test of
-   whether the ISS-036 workaround above is sufficient** — if Connect Cloud's deploy
-   does its own server-side `renv::restore()` against the committed `renv.lock`
-   rather than trusting the committed `manifest.json`, it may hit the "unknown
-   source" failure again independently. If so, the fix is the same class of thing
-   (give `renv.lock` a resolvable source for `forestHelperR`), just applied to the
-   lockfile itself — which needs the same kind of explicit convention-override
-   `CLAUDE.md`/DEC-006 gave the R 4.5.2 migration.
+1. Push this session's commits to `origin/main` (manifest/renv.lock/register updates,
+   cellar-tarball removal, README attribution).
+2. Retry the Connect Cloud deploy from `main` — should now find the repo (public) and
+   resolve `forestHelperR` correctly (real GitHub source, no more "Cellar" error).
+   This is the next real test; not yet confirmed end-to-end successful as of this
+   writing.
 3. Once deployed, turn on auto-deploy on push to `main`.
 4. Merge `design/modal-progression-workflow` into `main` (decided: merge as-is, not
    cherry-picked, as a git-workflow exercise — see §1).
-5. Separately flagged, not yet started: the user wants to add an internal `styling`
+5. **Follow up with Helen** on whether she's comfortable with her real name/email on
+   the now-public `forestHelperR` repo — currently masked pending that confirmation.
+6. Separately flagged, not yet started: the user wants to add an internal `styling`
    package (colour palettes, fonts) as a future dependency, same deployability
-   category as `forestHelperR` — logged as **ISS-043** (doc-only).
+   category `forestHelperR` was in — logged as **ISS-043** (doc-only).
+7. Worth a deliberate look later, not urgent: whether to fully purge `main`'s git
+   history of the leaked tarball (see point 3 under "Done so far" above) — deferred,
+   not decided against, just not done today.
 
 ---
 
@@ -114,10 +125,11 @@ before retrying so you don't repeat it.
 
 **What blocked the automated attempt:**
 
-1. **`forestHelperR` has no resolvable source (ISS-036).** `renv.lock` records it as
-   `"Source": "unknown"`, so renv cannot fetch or reinstall it on *any* R version. This
-   is structural — no `renv::restore()` will fully succeed until it is fixed, and it is
-   worth fixing on its own terms rather than under migration pressure. **Do this first.**
+1. ~~**`forestHelperR` has no resolvable source (ISS-036).**~~ **Resolved 2026-09-06,
+   CHG-040** — `renv.lock` now records a real `"Source": "GitHub"` entry
+   (`github.com/DunnNAM/forestHelperR`). `renv::restore()` should no longer fail on
+   this package specifically; not yet re-verified against an actual 4.5.2 restore
+   attempt, so treat as likely-fixed rather than confirmed until retried.
 2. **A compiled-package cascade.** `renv::restore()` aborted with 12 failures — `DT`,
    `broom`, `colourpicker`, `forestHelperR`, `forestploter`, `ggplot2`, `gridExtra`,
    `stringi`, `stringr`, `svglite`, `textshaping`, `tidyr`. `stringi` compiles from
@@ -150,7 +162,7 @@ Beyond the two live items above (§3 Connect Cloud, §4 migration), this is a ba
 
 | ID | Sev | What | Note |
 |---|---|---|---|
-| **ISS-036** | Medium | `forestHelperR` recorded as `Source: "unknown"` in `renv.lock` | 🟡 Partially resolved (CHG-039) — fixed for the Connect Cloud manifest via a committed `renv/cellar/` tarball; `renv.lock`'s own entry still unfixed. Still blocks any real `renv::restore()`, including the migration. |
+| **ISS-036** | — | ~~`forestHelperR` recorded as `Source: "unknown"` in `renv.lock`~~ | ✅ Resolved (CHG-040) — published to `github.com/DunnNAM/forestHelperR`, `renv.lock` now records a real `"Source": "GitHub"`. `renv::restore()` should now fully succeed, unblocking the R 4.5.2 migration's own prerequisite too — not yet re-verified on 4.5.2 itself. |
 | **ISS-043** | — (feature) | Add internal `styling` package as a dependency (colour palettes, fonts) | Doc-only, not started. Same deployability question as ISS-036 — whatever eventually fixes ISS-036 properly should probably cover this too. |
 | **ISS-028** | Medium | Age group levels not in clinical sort order | Highest-severity pre-existing item and the only one affecting output correctness — but it lives in `forestHelperR`, so it needs a session in *that* repo. Explicitly out of scope per plan §10. |
 | **ISS-029** | Low | OS system fonts absent from selector after `sysfonts` migration | |

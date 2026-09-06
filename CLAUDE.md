@@ -26,15 +26,13 @@ package (already stabilised, 112 tests passing).
 - `www/style.css` — single stylesheet (CAQ palette); linked with a `?v=` cache-buster
 - `app-changelog-decision-register.md` — decisions and changes log (update this for every change)
 - `issues-register.md` — open issues register
-- `manifest.json` — Posit Connect Cloud deployment manifest (CHG-039, 2026-09-06).
-  Generated via `rsconnect::writeManifest()`, then hand-patched (see CHG-039) to add
-  `svglite`/`systemfonts`/`textshaping`, which the dependency scanner misses. Regenerate
-  rather than hand-edit for anything beyond that specific gap — see CHG-039 for the
-  exact recipe (`dependencyResolution = "library"`, plus the `renv/cellar/` step below).
-- `renv/cellar/forestHelperR_0.2.0.tar.gz` — committed workaround for ISS-036
-  (`forestHelperR` has no resolvable source in `renv.lock`). Gives the installed
-  package a resolvable source for `rsconnect`/`renv` without editing `renv.lock`
-  itself. `renv/.gitignore` has a targeted un-ignore for this one file.
+- `manifest.json` — Posit Connect Cloud deployment manifest (CHG-039/CHG-040,
+  2026-09-06). Regenerate via the plain `rsconnect::writeManifest(appDir = ".")` —
+  as of CHG-040 (`forestHelperR`'s `renv.lock` entry now has a real GitHub source)
+  the default lockfile-based path works cleanly; the `dependencyResolution =
+  "library"` workaround from CHG-039 is no longer needed and shouldn't be, since it
+  can silently miss packages nothing calls via `::` directly (see CHG-040's account
+  of that recurring, ISS-035-shaped failure mode).
 
 ## Environment
 **The project targets R 4.3.x.** `renv.lock` pins R 4.3.1 and `renv/library/R-4.3/`
@@ -42,9 +40,11 @@ is the populated library. Use `C:\Program Files\R\R-4.3.3\bin\` — R 4.5.2 is
 installed on this machine but its renv library is empty.
 
 A migration to R 4.5.2 was attempted on 2026-09-03 and failed (CHG-037); a manual
-retry is planned. Two things block it, both recorded in `session-handoff.md` §3:
-`forestHelperR` has no resolvable source in the lockfile (**ISS-036**), and a
-compiled-package cascade led by `stringi` aborted the restore.
+retry is planned — recorded in `session-handoff.md` §4. One of its two original
+blockers, **ISS-036** (`forestHelperR` had no resolvable source in the lockfile), is
+now resolved (CHG-040, 2026-09-06) as part of unrelated Connect Cloud publish work —
+not yet re-verified against an actual restore under 4.5.2. The other blocker, a
+compiled-package cascade led by `stringi`, is untouched.
 
 **Toolchain:** Rtools45 (`C:\rtools45`). Rtools43 was removed by the winget upgrade,
 so compiling source packages under R 4.3.x needs it reinstalled from CRAN first;
@@ -112,11 +112,15 @@ suspends any output inside them — including `downloadButton`s, which render as
 `handover-dec004-file-split.md` is now historical — DEC-004 is complete.
 
 **2026-09-06 — Connect Cloud publish in progress.** See `session-handoff.md` §3 for
-full detail and current status. ISS-036 (`forestHelperR`'s unresolvable `renv.lock`
-source) turned out to block this too, not just the R 4.5.2 migration — partially
-resolved (CHG-039) via a committed `renv/cellar/` tarball, `renv.lock` itself still
-unfixed. Next: push, attempt the actual deploy (untested whether the workaround is
-sufficient for Connect Cloud's own dependency resolution), enable auto-deploy, then
+full detail and current status. ISS-036 turned out to block this too, not just the
+R 4.5.2 migration — first deploy attempt failed on it directly (`forestHelperR`'s
+`"Cellar"` source meant nothing to Connect Cloud's own server-side resolution), so
+it's now **fully resolved** (CHG-040): `forestHelperR` published to
+`github.com/DunnNAM/forestHelperR` (sanitized — see that repo and CHG-040 for what
+attribution changed and why), `renv.lock` updated to a real GitHub source. Also
+turned up that Connect Cloud's free tier only lists public repos regardless of
+GitHub App permissions — both this repo and `forestHelperR` are now public as a
+result. Next: push, retry the deploy (should now succeed), enable auto-deploy, then
 merge `design/modal-progression-workflow` into `main`.
 
 ## Conventions

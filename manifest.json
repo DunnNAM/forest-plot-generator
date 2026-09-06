@@ -9,6 +9,11 @@
     "content_category": null,
     "has_parameters": false
   },
+  "environment": {
+    "r": {
+      "requires": "~=4.3.0"
+    }
+  },
   "packages": {
     "AsioHeaders": {
       "Source": "CRAN",
@@ -752,7 +757,7 @@
       "Repository": "https://packagemanager.posit.co/cran/latest",
       "description": {
         "Package": "codetools",
-        "Version": "0.2-20",
+        "Version": "0.2-19",
         "Priority": "recommended",
         "Author": "Luke Tierney <luke-tierney@uiowa.edu>",
         "Description": "Code analysis tools for R.",
@@ -762,11 +767,18 @@
         "URL": "https://gitlab.com/luke-tierney/codetools",
         "License": "GPL",
         "NeedsCompilation": "no",
-        "Packaged": "2024-03-31 18:18:09 UTC; luke",
+        "Packaged": "2023-01-31 19:16:51 UTC; luke",
         "Repository": "RSPM",
-        "Date/Publication": "2024-03-31 20:10:06 UTC",
+        "Date/Publication": "2023-02-01 13:21:59 UTC",
         "Encoding": "UTF-8",
-        "Built": "R 4.3.0; ; 2025-12-02 12:36:53 UTC; windows"
+        "Built": "R 4.3.3; ; 2026-09-05 23:18:36 UTC; windows",
+        "RemoteType": "standard",
+        "RemoteRef": "codetools",
+        "RemotePkgRef": "codetools",
+        "RemoteRepos": "https://packagemanager.posit.co/cran/latest",
+        "RemoteReposName": "CRAN",
+        "RemotePkgPlatform": "source",
+        "RemoteSha": "0.2-19"
       }
     },
     "colorspace": {
@@ -1348,13 +1360,13 @@
       }
     },
     "forestHelperR": {
-      "Source": "Cellar",
+      "Source": "github",
       "Repository": null,
       "description": {
         "Package": "forestHelperR",
         "Title": "Creates CAQ formatted forest plots",
         "Version": "0.2.0",
-        "Authors@R": "c(\n    person(\"Helen\", \"Hunt\", , \"REDACTED\", c(\"aut\", \"cre\")))",
+        "Authors@R": "c(\n    person(\"Helen\", \"***\", email = \"H*.*@health.qld.gov.au\", role = \"aut\"),\n    person(\"Nathan\", \"Dunn\", email = \"nathan.dunn@health.qld.gov.au\", role = c(\"aut\", \"cre\")))",
         "Description": "Helps create forest plots with flexible styling.",
         "License": "MIT + file LICENSE",
         "Encoding": "UTF-8",
@@ -1368,9 +1380,20 @@
         "Config/testthat/edition": "3",
         "NeedsCompilation": "no",
         "Packaged": "2026-05-08 06:06:09 UTC; DunnNM",
-        "Author": "Helen *** [aut, cre]",
-        "Maintainer": "Helen *** <REDACTED>",
-        "Built": "R 4.3.3; ; 2026-09-05 23:16:30 UTC; windows"
+        "Author": "Helen *** [aut],\n    Nathan Dunn [aut, cre]",
+        "Maintainer": "Nathan Dunn <nathan.dunn@health.qld.gov.au>",
+        "Built": "R 4.3.3; ; 2026-09-06 00:44:01 UTC; windows",
+        "RemoteType": "github",
+        "RemoteHost": "api.github.com",
+        "RemoteUsername": "DunnNAM",
+        "RemoteRepo": "forestHelperR",
+        "RemoteRef": "main",
+        "RemoteSha": "1eb5d59bddb9cc4ac58e3ecf1a8e3dc9c72905d9",
+        "GithubHost": "api.github.com",
+        "GithubRepo": "forestHelperR",
+        "GithubUsername": "DunnNAM",
+        "GithubRef": "main",
+        "GithubSHA1": "1eb5d59bddb9cc4ac58e3ecf1a8e3dc9c72905d9"
       }
     },
     "forestploter": {
@@ -2098,34 +2121,27 @@
       "description": {
         "Package": "lifecycle",
         "Title": "Manage the Life Cycle of your Package Functions",
-        "Version": "1.0.5",
+        "Version": "1.0.4",
         "Authors@R": "c(\n    person(\"Lionel\", \"Henry\", , \"lionel@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"aut\",\n           comment = c(ORCID = \"0000-0003-4757-117X\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
         "Description": "Manage the life cycle of your exported functions with shared\n    conventions, documentation badges, and user-friendly deprecation\n    warnings.",
         "License": "MIT + file LICENSE",
         "URL": "https://lifecycle.r-lib.org/, https://github.com/r-lib/lifecycle",
         "BugReports": "https://github.com/r-lib/lifecycle/issues",
         "Depends": "R (>= 3.6)",
-        "Imports": "cli (>= 3.4.0), rlang (>= 1.1.0)",
-        "Suggests": "covr, knitr, lintr (>= 3.1.0), rmarkdown, testthat (>=\n3.0.1), tibble, tidyverse, tools, vctrs, withr, xml2",
+        "Imports": "cli (>= 3.4.0), glue, rlang (>= 1.1.0)",
+        "Suggests": "covr, crayon, knitr, lintr, rmarkdown, testthat (>= 3.0.1),\ntibble, tidyverse, tools, vctrs, withr",
         "VignetteBuilder": "knitr",
         "Config/Needs/website": "tidyverse/tidytemplate, usethis",
         "Config/testthat/edition": "3",
         "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.3",
+        "RoxygenNote": "7.2.1",
         "NeedsCompilation": "no",
-        "Packaged": "2026-01-07 15:00:49 UTC; lionel",
-        "Author": "Lionel Henry [aut, cre],\n  Hadley Wickham [aut] (ORCID: <https://orcid.org/0000-0003-4757-117X>),\n  Posit Software, PBC [cph, fnd]",
+        "Packaged": "2023-11-06 16:07:36 UTC; lionel",
+        "Author": "Lionel Henry [aut, cre],\n  Hadley Wickham [aut] (<https://orcid.org/0000-0003-4757-117X>),\n  Posit Software, PBC [cph, fnd]",
         "Maintainer": "Lionel Henry <lionel@posit.co>",
-        "Repository": "RSPM",
-        "Date/Publication": "2026-01-08 08:00:02 UTC",
-        "Built": "R 4.3.0; ; 2026-01-09 04:36:45 UTC; windows",
-        "RemoteType": "standard",
-        "RemoteRef": "lifecycle",
-        "RemotePkgRef": "lifecycle",
-        "RemoteRepos": "https://packagemanager.posit.co/cran/latest",
-        "RemoteReposName": "CRAN",
-        "RemotePkgPlatform": "x86_64-w64-mingw32",
-        "RemoteSha": "1.0.5"
+        "Repository": "CRAN",
+        "Date/Publication": "2023-11-07 10:10:10 UTC",
+        "Built": "R 4.4.2; ; 2024-12-21 02:27:33 UTC; windows"
       }
     },
     "lmtest": {
@@ -2397,7 +2413,7 @@
         "Package": "openssl",
         "Type": "Package",
         "Title": "Toolkit for Encryption, Signatures and Certificates Based on\nOpenSSL",
-        "Version": "2.4.2",
+        "Version": "2.4.0",
         "Authors@R": "c(person(\"Jeroen\", \"Ooms\", role = c(\"aut\", \"cre\"), email = \"jeroenooms@gmail.com\",\n    comment = c(ORCID = \"0000-0002-4035-0289\")),\n    person(\"Oliver\", \"Keyes\", role = \"ctb\"))",
         "Description": "Bindings to OpenSSL libssl and libcrypto, plus custom SSH key parsers.\n    Supports RSA, DSA and EC curves P-256, P-384, P-521, and curve25519. Cryptographic\n    signatures can either be created and verified manually or via x509 certificates. \n    AES can be used in cbc, ctr or gcm mode for symmetric encryption; RSA for asymmetric\n    (public key) encryption or EC for Diffie Hellman. High-level envelope functions \n    combine RSA and AES for encrypting arbitrary sized data. Other utilities include key\n    generators, hash functions (md5, sha1, sha256, etc), base64 encoder, a secure random\n    number generator, and 'bignum' math methods for manually performing crypto \n    calculations on large multibyte integers.",
         "License": "MIT + file LICENSE",
@@ -2407,15 +2423,15 @@
         "VignetteBuilder": "knitr",
         "Imports": "askpass",
         "Suggests": "curl, testthat (>= 2.1.0), digest, knitr, rmarkdown,\njsonlite, jose, sodium",
+        "RoxygenNote": "7.3.2",
         "Encoding": "UTF-8",
-        "Config/roxygen2/version": "8.0.0",
         "NeedsCompilation": "yes",
-        "Packaged": "2026-06-09 10:51:42 UTC; jeroen",
+        "Packaged": "2026-04-14 21:27:09 UTC; jeroen",
         "Author": "Jeroen Ooms [aut, cre] (ORCID: <https://orcid.org/0000-0002-4035-0289>),\n  Oliver Keyes [ctb]",
         "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
         "Repository": "RSPM",
-        "Date/Publication": "2026-06-09 13:30:02 UTC",
-        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-06-10 05:11:14 UTC; windows",
+        "Date/Publication": "2026-04-15 06:30:02 UTC",
+        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-04-16 17:01:07 UTC; windows",
         "Archs": "x64",
         "RemoteType": "standard",
         "RemoteRef": "openssl",
@@ -2423,7 +2439,7 @@
         "RemoteRepos": "https://packagemanager.posit.co/cran/latest",
         "RemoteReposName": "CRAN",
         "RemotePkgPlatform": "x86_64-w64-mingw32",
-        "RemoteSha": "2.4.2"
+        "RemoteSha": "2.4.0"
       }
     },
     "otel": {
@@ -2978,32 +2994,31 @@
       "Repository": "https://packagemanager.posit.co/cran/latest",
       "description": {
         "Package": "rlang",
-        "Version": "1.3.0",
+        "Version": "1.2.0",
         "Title": "Functions for Base Types and Core R and 'Tidyverse' Features",
-        "Authors@R": "c(\n    person(\"Lionel\", \"Henry\", , \"lionel@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"aut\"),\n    person(\"mikefc\", , , \"mikefc@coolbutuseless.com\", role = \"cph\",\n           comment = \"Hash implementation based on Mike's xxhashlite\"),\n    person(\"Yann\", \"Collet\", role = \"cph\",\n           comment = \"Author of the embedded xxHash library\"),\n    person(\"Posit, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
-        "Description": "A toolbox for working with base types, core R features like\n    the condition system, and core 'Tidyverse' features like tidy\n    evaluation.",
+        "Description": "A toolbox for working with base types, core R features\n  like the condition system, and core 'Tidyverse' features like tidy\n  evaluation.",
+        "Authors@R": "c(\n    person(\"Lionel\", \"Henry\", ,\"lionel@posit.co\", c(\"aut\", \"cre\")),\n    person(\"Hadley\", \"Wickham\", ,\"hadley@posit.co\", \"aut\"),\n    person(given = \"mikefc\",\n           email = \"mikefc@coolbutuseless.com\",\n           role = \"cph\",\n           comment = \"Hash implementation based on Mike's xxhashlite\"),\n    person(given = \"Yann\",\n           family = \"Collet\",\n           role = \"cph\",\n           comment = \"Author of the embedded xxHash library\"),\n    person(given = \"Posit, PBC\", role = c(\"cph\", \"fnd\"))\n    )",
         "License": "MIT + file LICENSE",
-        "URL": "https://rlang.r-lib.org, https://github.com/r-lib/rlang",
-        "BugReports": "https://github.com/r-lib/rlang/issues",
+        "ByteCompile": "true",
+        "Biarch": "true",
         "Depends": "R (>= 4.0.0)",
         "Imports": "utils",
         "Suggests": "cli (>= 3.1.0), covr, crayon, desc, fs, glue, knitr,\nmagrittr, methods, pillar, pkgload, rmarkdown, stats, testthat\n(>= 3.3.2), tibble, usethis, vctrs (>= 0.2.3), withr",
         "Enhances": "winch",
-        "Biarch": "true",
-        "ByteCompile": "true",
-        "Config/build/compilation-database": "true",
-        "Config/Needs/website": "dplyr, tidyverse/tidytemplate",
-        "Config/roxygen2/version": "8.0.0",
-        "Config/testthat/edition": "3",
-        "Config/testthat/parallel": "true",
         "Encoding": "UTF-8",
+        "RoxygenNote": "7.3.3",
+        "URL": "https://rlang.r-lib.org, https://github.com/r-lib/rlang",
+        "BugReports": "https://github.com/r-lib/rlang/issues",
+        "Config/build/compilation-database": "true",
+        "Config/testthat/edition": "3",
+        "Config/Needs/website": "dplyr, tidyverse/tidytemplate",
         "NeedsCompilation": "yes",
-        "Packaged": "2026-07-01 15:54:09 UTC; lionel",
+        "Packaged": "2026-04-02 12:23:10 UTC; lionel",
         "Author": "Lionel Henry [aut, cre],\n  Hadley Wickham [aut],\n  mikefc [cph] (Hash implementation based on Mike's xxhashlite),\n  Yann Collet [cph] (Author of the embedded xxHash library),\n  Posit, PBC [cph, fnd]",
         "Maintainer": "Lionel Henry <lionel@posit.co>",
         "Repository": "RSPM",
-        "Date/Publication": "2026-07-05 08:40:02 UTC",
-        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-07-06 08:15:05 UTC; windows",
+        "Date/Publication": "2026-04-06 10:40:02 UTC",
+        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-04-07 04:42:32 UTC; windows",
         "Archs": "x64",
         "RemoteType": "standard",
         "RemoteRef": "rlang",
@@ -3011,7 +3026,7 @@
         "RemoteRepos": "https://packagemanager.posit.co/cran/latest",
         "RemoteReposName": "CRAN",
         "RemotePkgPlatform": "x86_64-w64-mingw32",
-        "RemoteSha": "1.3.0"
+        "RemoteSha": "1.2.0"
       }
     },
     "rmarkdown": {
@@ -3499,6 +3514,40 @@
         "Archs": "x64"
       }
     },
+    "svglite": {
+      "Source": "CRAN",
+      "Repository": "https://packagemanager.posit.co/cran/latest",
+      "description": {
+        "Package": "svglite",
+        "Title": "An 'SVG' Graphics Device",
+        "Version": "2.2.2",
+        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"aut\"),\n    person(\"Lionel\", \"Henry\", , \"lionel@posit.co\", role = \"aut\"),\n    person(\"Thomas Lin\", \"Pedersen\", , \"thomas.pedersen@posit.co\", role = c(\"cre\", \"aut\"),\n           comment = c(ORCID = \"0000-0002-5147-4711\")),\n    person(\"T Jake\", \"Luciani\", , \"jake@apache.org\", role = \"aut\"),\n    person(\"Matthieu\", \"Decorde\", , \"matthieu.decorde@ens-lyon.fr\", role = \"aut\"),\n    person(\"Vaudor\", \"Lise\", , \"lise.vaudor@ens-lyon.fr\", role = \"aut\"),\n    person(\"Tony\", \"Plate\", role = \"ctb\",\n           comment = \"Early line dashing code\"),\n    person(\"David\", \"Gohel\", role = \"ctb\",\n           comment = \"Line dashing code and early raster code\"),\n    person(\"Yixuan\", \"Qiu\", role = \"ctb\",\n           comment = \"Improved styles; polypath implementation\"),\n    person(\"Håkon\", \"Malmedal\", role = \"ctb\",\n           comment = \"Opacity code\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
+        "Description": "A graphics device for R that produces 'Scalable Vector\n    Graphics'. 'svglite' is a fork of the older 'RSvgDevice' package.",
+        "License": "GPL (>= 2)",
+        "URL": "https://svglite.r-lib.org, https://github.com/r-lib/svglite",
+        "BugReports": "https://github.com/r-lib/svglite/issues",
+        "Depends": "R (>= 4.1)",
+        "Imports": "base64enc, cli, lifecycle, rlang (>= 1.1.0), systemfonts (>=\n1.3.0), textshaping (>= 0.3.0)",
+        "Suggests": "covr, fontquiver (>= 0.2.0), htmltools, knitr, rmarkdown,\ntestthat (>= 3.0.0), xml2 (>= 1.0.0)",
+        "LinkingTo": "cpp11, systemfonts, textshaping",
+        "VignetteBuilder": "knitr",
+        "Config/build/compilation-database": "true",
+        "Config/Needs/website": "tidyverse/tidytemplate",
+        "Config/testthat/edition": "3",
+        "Config/usethis/last-upkeep": "2025-04-25",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.3.2",
+        "SystemRequirements": "libpng",
+        "NeedsCompilation": "yes",
+        "Packaged": "2025-10-20 15:57:25 UTC; thomas",
+        "Author": "Hadley Wickham [aut],\n  Lionel Henry [aut],\n  Thomas Lin Pedersen [cre, aut] (ORCID:\n    <https://orcid.org/0000-0002-5147-4711>),\n  T Jake Luciani [aut],\n  Matthieu Decorde [aut],\n  Vaudor Lise [aut],\n  Tony Plate [ctb] (Early line dashing code),\n  David Gohel [ctb] (Line dashing code and early raster code),\n  Yixuan Qiu [ctb] (Improved styles; polypath implementation),\n  Håkon Malmedal [ctb] (Opacity code),\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+        "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
+        "Repository": "RSPM",
+        "Date/Publication": "2025-10-21 16:10:02 UTC",
+        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-05-07 05:33:22 UTC; windows",
+        "Archs": "x64"
+      }
+    },
     "sys": {
       "Source": "CRAN",
       "Repository": "https://packagemanager.posit.co/cran/latest",
@@ -3568,6 +3617,40 @@
         "RemoteSha": "0.8.9"
       }
     },
+    "systemfonts": {
+      "Source": "CRAN",
+      "Repository": "https://packagemanager.posit.co/cran/latest",
+      "description": {
+        "Type": "Package",
+        "Package": "systemfonts",
+        "Title": "System Native Font Finding",
+        "Version": "1.3.2",
+        "Authors@R": "c(\n    person(\"Thomas Lin\", \"Pedersen\", , \"thomas.pedersen@posit.co\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-5147-4711\")),\n    person(\"Jeroen\", \"Ooms\", , \"jeroen@berkeley.edu\", role = \"aut\",\n           comment = c(ORCID = \"0000-0002-4035-0289\")),\n    person(\"Devon\", \"Govett\", role = \"aut\",\n           comment = \"Author of font-manager\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
+        "Description": "Provides system native access to the font catalogue. As font\n    handling varies between systems it is difficult to correctly locate\n    installed fonts across different operating systems. The 'systemfonts'\n    package provides bindings to the native libraries on Windows, macOS\n    and Linux for finding font files that can then be used further by e.g.\n    graphic devices. The main use is intended to be from compiled code but\n    'systemfonts' also provides access from R.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://github.com/r-lib/systemfonts,\nhttps://systemfonts.r-lib.org",
+        "BugReports": "https://github.com/r-lib/systemfonts/issues",
+        "Depends": "R (>= 3.2.0)",
+        "Imports": "base64enc, grid, jsonlite, lifecycle, tools, utils",
+        "Suggests": "covr, farver, ggplot2, graphics, knitr, ragg, rmarkdown,\nsvglite, testthat (>= 2.1.0)",
+        "LinkingTo": "cpp11 (>= 0.2.1)",
+        "VignetteBuilder": "knitr",
+        "Config/build/compilation-database": "true",
+        "Config/Needs/website": "tidyverse/tidytemplate",
+        "Config/usethis/last-upkeep": "2025-04-23",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.3.2",
+        "SystemRequirements": "fontconfig, freetype2",
+        "NeedsCompilation": "yes",
+        "Packaged": "2026-03-05 12:24:52 UTC; thomas",
+        "Author": "Thomas Lin Pedersen [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-5147-4711>),\n  Jeroen Ooms [aut] (ORCID: <https://orcid.org/0000-0002-4035-0289>),\n  Devon Govett [aut] (Author of font-manager),\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+        "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
+        "Repository": "RSPM",
+        "Date/Publication": "2026-03-05 13:10:02 UTC",
+        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-05-07 05:25:53 UTC; windows",
+        "Archs": "x64"
+      }
+    },
     "testthat": {
       "Source": "CRAN",
       "Repository": "https://packagemanager.posit.co/cran/latest",
@@ -3605,6 +3688,39 @@
         "RemoteReposName": "CRAN",
         "RemotePkgPlatform": "x86_64-w64-mingw32",
         "RemoteSha": "3.3.2"
+      }
+    },
+    "textshaping": {
+      "Source": "CRAN",
+      "Repository": "https://packagemanager.posit.co/cran/latest",
+      "description": {
+        "Package": "textshaping",
+        "Title": "Bindings to the 'HarfBuzz' and 'Fribidi' Libraries for Text\nShaping",
+        "Version": "1.0.5",
+        "Authors@R": "c(\n    person(\"Thomas Lin\", \"Pedersen\", , \"thomas.pedersen@posit.co\", role = c(\"cre\", \"aut\"),\n           comment = c(ORCID = \"0000-0002-5147-4711\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
+        "Description": "Provides access to the text shaping functionality in the\n    'HarfBuzz' library and the bidirectional algorithm in the 'Fribidi'\n    library. 'textshaping' is a low-level utility package mainly for\n    graphic devices that expands upon the font tool-set provided by the\n    'systemfonts' package.",
+        "License": "MIT + file LICENSE",
+        "URL": "https://github.com/r-lib/textshaping",
+        "BugReports": "https://github.com/r-lib/textshaping/issues",
+        "Depends": "R (>= 3.2.0)",
+        "Imports": "lifecycle, stats, stringi, systemfonts (>= 1.3.0), utils",
+        "Suggests": "covr, grDevices, grid, knitr, rmarkdown, testthat (>= 3.0.0)",
+        "LinkingTo": "cpp11 (>= 0.2.1), systemfonts (>= 1.0.0)",
+        "VignetteBuilder": "knitr",
+        "Config/build/compilation-database": "true",
+        "Config/testthat/edition": "3",
+        "Config/usethis/last-upkeep": "2025-04-23",
+        "Encoding": "UTF-8",
+        "RoxygenNote": "7.3.2",
+        "SystemRequirements": "freetype2, harfbuzz, fribidi",
+        "NeedsCompilation": "yes",
+        "Packaged": "2026-03-06 09:57:58 UTC; thomas",
+        "Author": "Thomas Lin Pedersen [cre, aut] (ORCID:\n    <https://orcid.org/0000-0002-5147-4711>),\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+        "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
+        "Repository": "RSPM",
+        "Date/Publication": "2026-03-06 10:40:02 UTC",
+        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-05-07 05:28:13 UTC; windows",
+        "Archs": "x64"
       }
     },
     "tibble": {
@@ -3794,39 +3910,29 @@
       "description": {
         "Package": "vctrs",
         "Title": "Vector Helpers",
-        "Version": "0.7.3",
+        "Version": "0.6.5",
         "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"aut\"),\n    person(\"Lionel\", \"Henry\", , \"lionel@posit.co\", role = \"aut\"),\n    person(\"Davis\", \"Vaughan\", , \"davis@posit.co\", role = c(\"aut\", \"cre\")),\n    person(\"data.table team\", role = \"cph\",\n           comment = \"Radix sort based on data.table's forder() and their contribution to R's order()\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"))\n  )",
         "Description": "Defines new notions of prototype and size that are used to\n    provide tools for consistent and well-founded type-coercion and\n    size-recycling, and are in turn connected to ideas of type- and\n    size-stability useful for analysing function interfaces.",
         "License": "MIT + file LICENSE",
         "URL": "https://vctrs.r-lib.org/, https://github.com/r-lib/vctrs",
         "BugReports": "https://github.com/r-lib/vctrs/issues",
-        "Depends": "R (>= 4.0.0)",
-        "Imports": "cli (>= 3.4.0), glue, lifecycle (>= 1.0.3), rlang (>= 1.1.7)",
+        "Depends": "R (>= 3.5.0)",
+        "Imports": "cli (>= 3.4.0), glue, lifecycle (>= 1.0.3), rlang (>= 1.1.0)",
         "Suggests": "bit64, covr, crayon, dplyr (>= 0.8.5), generics, knitr,\npillar (>= 1.4.4), pkgdown (>= 2.0.1), rmarkdown, testthat (>=\n3.0.0), tibble (>= 3.1.3), waldo (>= 0.2.0), withr, xml2,\nzeallot",
         "VignetteBuilder": "knitr",
-        "Config/build/compilation-database": "true",
         "Config/Needs/website": "tidyverse/tidytemplate",
         "Config/testthat/edition": "3",
-        "Config/testthat/parallel": "true",
         "Encoding": "UTF-8",
-        "KeepSource": "true",
         "Language": "en-GB",
-        "RoxygenNote": "7.3.3",
+        "RoxygenNote": "7.2.3",
         "NeedsCompilation": "yes",
-        "Packaged": "2026-04-10 14:27:17 UTC; davis",
+        "Packaged": "2023-12-01 16:27:12 UTC; davis",
         "Author": "Hadley Wickham [aut],\n  Lionel Henry [aut],\n  Davis Vaughan [aut, cre],\n  data.table team [cph] (Radix sort based on data.table's forder() and\n    their contribution to R's order()),\n  Posit Software, PBC [cph, fnd]",
         "Maintainer": "Davis Vaughan <davis@posit.co>",
-        "Repository": "RSPM",
-        "Date/Publication": "2026-04-11 06:20:03 UTC",
-        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-04-12 04:42:17 UTC; windows",
-        "Archs": "x64",
-        "RemoteType": "standard",
-        "RemoteRef": "vctrs",
-        "RemotePkgRef": "vctrs",
-        "RemoteRepos": "https://packagemanager.posit.co/cran/latest",
-        "RemoteReposName": "CRAN",
-        "RemotePkgPlatform": "x86_64-w64-mingw32",
-        "RemoteSha": "0.7.3"
+        "Repository": "CRAN",
+        "Date/Publication": "2023-12-01 23:50:02 UTC",
+        "Built": "R 4.3.3; x86_64-w64-mingw32; 2024-03-17 02:35:33 UTC; windows",
+        "Archs": "x64"
       }
     },
     "viridisLite": {
@@ -4135,107 +4241,6 @@
         "Built": "R 4.3.1; x86_64-w64-mingw32; 2026-05-08 06:10:42 UTC; windows",
         "Archs": "x64"
       }
-    },
-    "svglite": {
-      "Source": "CRAN",
-      "Repository": "https://packagemanager.posit.co/cran/latest",
-      "description": {
-        "Package": "svglite",
-        "Title": "An 'SVG' Graphics Device",
-        "Version": "2.2.2",
-        "Authors@R": "c(\n    person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = \"aut\"),\n    person(\"Lionel\", \"Henry\", , \"lionel@posit.co\", role = \"aut\"),\n    person(\"Thomas Lin\", \"Pedersen\", , \"thomas.pedersen@posit.co\", role = c(\"cre\", \"aut\"),\n           comment = c(ORCID = \"0000-0002-5147-4711\")),\n    person(\"T Jake\", \"Luciani\", , \"jake@apache.org\", role = \"aut\"),\n    person(\"Matthieu\", \"Decorde\", , \"matthieu.decorde@ens-lyon.fr\", role = \"aut\"),\n    person(\"Vaudor\", \"Lise\", , \"lise.vaudor@ens-lyon.fr\", role = \"aut\"),\n    person(\"Tony\", \"Plate\", role = \"ctb\",\n           comment = \"Early line dashing code\"),\n    person(\"David\", \"Gohel\", role = \"ctb\",\n           comment = \"Line dashing code and early raster code\"),\n    person(\"Yixuan\", \"Qiu\", role = \"ctb\",\n           comment = \"Improved styles; polypath implementation\"),\n    person(\"Håkon\", \"Malmedal\", role = \"ctb\",\n           comment = \"Opacity code\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
-        "Description": "A graphics device for R that produces 'Scalable Vector\n    Graphics'. 'svglite' is a fork of the older 'RSvgDevice' package.",
-        "License": "GPL (>= 2)",
-        "URL": "https://svglite.r-lib.org, https://github.com/r-lib/svglite",
-        "BugReports": "https://github.com/r-lib/svglite/issues",
-        "Depends": "R (>= 4.1)",
-        "Imports": "base64enc, cli, lifecycle, rlang (>= 1.1.0), systemfonts (>=\n1.3.0), textshaping (>= 0.3.0)",
-        "Suggests": "covr, fontquiver (>= 0.2.0), htmltools, knitr, rmarkdown,\ntestthat (>= 3.0.0), xml2 (>= 1.0.0)",
-        "LinkingTo": "cpp11, systemfonts, textshaping",
-        "VignetteBuilder": "knitr",
-        "Config/build/compilation-database": "true",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/testthat/edition": "3",
-        "Config/usethis/last-upkeep": "2025-04-25",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.2",
-        "SystemRequirements": "libpng",
-        "NeedsCompilation": "yes",
-        "Packaged": "2025-10-20 15:57:25 UTC; thomas",
-        "Author": "Hadley Wickham [aut],\n  Lionel Henry [aut],\n  Thomas Lin Pedersen [cre, aut] (ORCID:\n    <https://orcid.org/0000-0002-5147-4711>),\n  T Jake Luciani [aut],\n  Matthieu Decorde [aut],\n  Vaudor Lise [aut],\n  Tony Plate [ctb] (Early line dashing code),\n  David Gohel [ctb] (Line dashing code and early raster code),\n  Yixuan Qiu [ctb] (Improved styles; polypath implementation),\n  Håkon Malmedal [ctb] (Opacity code),\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
-        "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
-        "Repository": "RSPM",
-        "Date/Publication": "2025-10-21 16:10:02 UTC",
-        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-05-07 05:33:22 UTC; windows",
-        "Archs": "x64"
-      }
-    },
-    "systemfonts": {
-      "Source": "CRAN",
-      "Repository": "https://packagemanager.posit.co/cran/latest",
-      "description": {
-        "Type": "Package",
-        "Package": "systemfonts",
-        "Title": "System Native Font Finding",
-        "Version": "1.3.2",
-        "Authors@R": "c(\n    person(\"Thomas Lin\", \"Pedersen\", , \"thomas.pedersen@posit.co\", role = c(\"aut\", \"cre\"),\n           comment = c(ORCID = \"0000-0002-5147-4711\")),\n    person(\"Jeroen\", \"Ooms\", , \"jeroen@berkeley.edu\", role = \"aut\",\n           comment = c(ORCID = \"0000-0002-4035-0289\")),\n    person(\"Devon\", \"Govett\", role = \"aut\",\n           comment = \"Author of font-manager\"),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
-        "Description": "Provides system native access to the font catalogue. As font\n    handling varies between systems it is difficult to correctly locate\n    installed fonts across different operating systems. The 'systemfonts'\n    package provides bindings to the native libraries on Windows, macOS\n    and Linux for finding font files that can then be used further by e.g.\n    graphic devices. The main use is intended to be from compiled code but\n    'systemfonts' also provides access from R.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://github.com/r-lib/systemfonts,\nhttps://systemfonts.r-lib.org",
-        "BugReports": "https://github.com/r-lib/systemfonts/issues",
-        "Depends": "R (>= 3.2.0)",
-        "Imports": "base64enc, grid, jsonlite, lifecycle, tools, utils",
-        "Suggests": "covr, farver, ggplot2, graphics, knitr, ragg, rmarkdown,\nsvglite, testthat (>= 2.1.0)",
-        "LinkingTo": "cpp11 (>= 0.2.1)",
-        "VignetteBuilder": "knitr",
-        "Config/build/compilation-database": "true",
-        "Config/Needs/website": "tidyverse/tidytemplate",
-        "Config/usethis/last-upkeep": "2025-04-23",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.2",
-        "SystemRequirements": "fontconfig, freetype2",
-        "NeedsCompilation": "yes",
-        "Packaged": "2026-03-05 12:24:52 UTC; thomas",
-        "Author": "Thomas Lin Pedersen [aut, cre] (ORCID:\n    <https://orcid.org/0000-0002-5147-4711>),\n  Jeroen Ooms [aut] (ORCID: <https://orcid.org/0000-0002-4035-0289>),\n  Devon Govett [aut] (Author of font-manager),\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
-        "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
-        "Repository": "RSPM",
-        "Date/Publication": "2026-03-05 13:10:02 UTC",
-        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-05-07 05:25:53 UTC; windows",
-        "Archs": "x64"
-      }
-    },
-    "textshaping": {
-      "Source": "CRAN",
-      "Repository": "https://packagemanager.posit.co/cran/latest",
-      "description": {
-        "Package": "textshaping",
-        "Title": "Bindings to the 'HarfBuzz' and 'Fribidi' Libraries for Text\nShaping",
-        "Version": "1.0.5",
-        "Authors@R": "c(\n    person(\"Thomas Lin\", \"Pedersen\", , \"thomas.pedersen@posit.co\", role = c(\"cre\", \"aut\"),\n           comment = c(ORCID = \"0000-0002-5147-4711\")),\n    person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"),\n           comment = c(ROR = \"03wc8by49\"))\n  )",
-        "Description": "Provides access to the text shaping functionality in the\n    'HarfBuzz' library and the bidirectional algorithm in the 'Fribidi'\n    library. 'textshaping' is a low-level utility package mainly for\n    graphic devices that expands upon the font tool-set provided by the\n    'systemfonts' package.",
-        "License": "MIT + file LICENSE",
-        "URL": "https://github.com/r-lib/textshaping",
-        "BugReports": "https://github.com/r-lib/textshaping/issues",
-        "Depends": "R (>= 3.2.0)",
-        "Imports": "lifecycle, stats, stringi, systemfonts (>= 1.3.0), utils",
-        "Suggests": "covr, grDevices, grid, knitr, rmarkdown, testthat (>= 3.0.0)",
-        "LinkingTo": "cpp11 (>= 0.2.1), systemfonts (>= 1.0.0)",
-        "VignetteBuilder": "knitr",
-        "Config/build/compilation-database": "true",
-        "Config/testthat/edition": "3",
-        "Config/usethis/last-upkeep": "2025-04-23",
-        "Encoding": "UTF-8",
-        "RoxygenNote": "7.3.2",
-        "SystemRequirements": "freetype2, harfbuzz, fribidi",
-        "NeedsCompilation": "yes",
-        "Packaged": "2026-03-06 09:57:58 UTC; thomas",
-        "Author": "Thomas Lin Pedersen [cre, aut] (ORCID:\n    <https://orcid.org/0000-0002-5147-4711>),\n  Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
-        "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
-        "Repository": "RSPM",
-        "Date/Publication": "2026-03-06 10:40:02 UTC",
-        "Built": "R 4.3.0; x86_64-w64-mingw32; 2026-05-07 05:28:13 UTC; windows",
-        "Archs": "x64"
-      }
     }
   },
   "files": {
@@ -4255,16 +4260,16 @@
       "checksum": "1d5261a0ccf792a7050dbc5431374cdf"
     },
     ".Rprofile": {
-      "checksum": "a235648e6464cd41a0f5b7b9331b4ac0"
+      "checksum": "8cba10c9fd1335eee04410b7ff634d22"
     },
     "2026-09-04 19_02_29-EAWorkWindow.png": {
       "checksum": "dbd8e2b80185dbd94a9b3570de5769b3"
     },
     "app-changelog-decision-register.md": {
-      "checksum": "02fd430cfbdb135fff7d34a6e97c9c98"
+      "checksum": "5062d8bb11c03ae7c157523628ee2fc6"
     },
     "CLAUDE.md": {
-      "checksum": "fddad78793d8f1ceea8e3b3c9519e168"
+      "checksum": "5c8297b450d958deb8f0ddd2a5533fc4"
     },
     "data/dat.rds": {
       "checksum": "be29bb19e906cc9ed3f4649d5cbdc3f9"
@@ -4288,7 +4293,7 @@
       "checksum": "65577d6fb04590b044380b183c4322ff"
     },
     "issues-register.md": {
-      "checksum": "4b7dc4fa5cbba6e34d280ce52fbdbd4c"
+      "checksum": "5c883bb820d66a92edeae27767898053"
     },
     "Lato/Lato-Black.ttf": {
       "checksum": "d83ab24f5cf2be8b7a9873dd64f6060a"
@@ -4338,6 +4343,9 @@
     "README.md": {
       "checksum": "7d6d00a5d5335be9948430abfdb9a6ae"
     },
+    "renv.lock": {
+      "checksum": "08807c4eae62e2a556288cad097ddbf2"
+    },
     "restyle-implementation-plan.md": {
       "checksum": "de095f81c9f6ae11a551ed982ec10df3"
     },
@@ -4346,6 +4354,9 @@
     },
     "reviews/README.md": {
       "checksum": "6227ddaf97fde35cd92612213ce9b313"
+    },
+    "Rplots.pdf": {
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e"
     },
     "server.R": {
       "checksum": "109a3bc0323f9478eb1496d2bf1250b5"
@@ -4372,7 +4383,7 @@
       "checksum": "7473ea116f27fa1879b9417ed9eb1f91"
     },
     "session-handoff.md": {
-      "checksum": "a31ad4fc035915480272d3b37d6ee1cf"
+      "checksum": "8f8870ade1b72f2a10cb04d9d4e642b9"
     },
     "tests/fixtures/group_a.csv": {
       "checksum": "26ad2bfb46155afbafc4abc262ec81e2"
