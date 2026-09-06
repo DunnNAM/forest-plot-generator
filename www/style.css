@@ -650,6 +650,19 @@ body > .container-fluid {
   align-items: center;
 }
 
+/* Graph panel's format radio stacks above the Download button inside the same
+   bottom-pinned .drawer-btnrow, matching the code panel's own stacked pair
+   directly above (2026-09-06 user report: the radio sat outside the
+   bottom-pinned block, near the panel's top, well above where "Copy R code"
+   sits in the code panel — the two panels' top rows didn't line up). Same
+   flex-direction/align-items treatment as .export-section--code above, for
+   the same reason (radioButtons()'s own wrapper would otherwise stretch to
+   the row's cross-axis width in a column-direction flex container). */
+.export-section--graph .drawer-btnrow {
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Rounded pill buttons, matching the navbar tab treatment (2026-09-04 user
    request). Scoped to the Export panel's own buttons and the wizard's modal
    footers rather than every .btn in the app — a deliberate, contained echo

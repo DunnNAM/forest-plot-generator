@@ -30,6 +30,91 @@ Entries are listed in reverse chronological order (newest first) within each sec
 
 ---
 
+### CHG-062 — Export drawer: PNG/SVG radio moved into the bottom-pinned button block, aligning with "Copy R code"
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-06 |
+| **Branch** | `main` |
+| **Author** | Nathan Dunn (report) / Claude (Anthropic) |
+| **Status** | Implemented — confirmed live by Nathan |
+| **Refs** | FEAT-011, `session-handoff.md` §3 item 2 |
+
+Live visual check of the merged Export drawer (§3 item 2's checklist) surfaced a real
+layout gap: the graph panel's PNG/SVG format radio sat outside the `.drawer-btnrow`
+block that CHG-057/058 bottom-pin via `margin-top: auto`, so it stayed stranded near
+the panel's top while the code panel's "Copy R code" sat much lower, inside its own
+bottom-pinned, stacked pair with "Download .R script" — the two panels' top rows
+didn't line up. Fix: moved the radio inside the same `.drawer-btnrow` as the Download
+button (`R/ui_plot_options.R`), and added a matching `.export-section--graph
+.drawer-btnrow { flex-direction: column; align-items: center; }` rule (`www/style.css`)
+mirroring the code panel's own stacked-pair treatment. Both panels' top rows (radio /
+"Copy R code") and bottom rows (Download / "Download .R script") now line up, with the
+same 8px gap in both. Stylesheet cache-buster bumped (`feat011-19` → `feat011-20`).
+Confirmed visually by Nathan after a full R restart (R file change, not CSS-only).
+
+---
+
+### CHG-061 — "Copy R code" now copies client-side; fixes clipboard failure on Connect Cloud
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-06 |
+| **Branch** | `main` |
+| **Author** | Nathan Dunn (report) / Claude (Anthropic) |
+| **Status** | Implemented — confirmed working locally; Connect Cloud confirmation pending next deploy |
+| **Refs** | `session-handoff.md` §3 item 2 |
+
+Nathan reported "Copy R code" failing on the published Connect Cloud app with "Could
+not copy to clipboard — clipboard unavailable on this server," despite working
+locally. Root cause: `clipr::write_clip()` writes to the *server's* OS clipboard —
+present on a local dev machine, but Connect Cloud runs the R process in a headless
+container with no clipboard device at all, and even where a server clipboard exists,
+it was never the visiting browser's clipboard to begin with. Fix, not a workaround: the
+copy now happens client-side via the browser's Clipboard API. `server/export.R`'s
+`copy_r_code` observer sends the generated code string to the browser with
+`session$sendCustomMessage("copy-r-code", ...)` instead of calling `clipr`; a new
+`www/export.js` (registered in `ui.R` alongside `drawer.js`/`wizard.js`) does the actual
+`navigator.clipboard.writeText()` call, with a hidden-`<textarea>` +
+`document.execCommand("copy")` fallback for browsers without the Clipboard API, and
+reports success/failure back via `Shiny.setInputValue("copy_r_code_result", ...)`; a new
+`copy_r_code_result` observer in `server/export.R` shows the same two notifications as
+before, now driven by the browser's real result instead of a server-side `tryCatch`.
+`library(clipr)` dropped from `global.R` as now-unused (left in `renv.lock`/
+`manifest.json` — not touched per the standing "don't modify `renv.lock`" convention
+outside the DEC-006 migration; a harmless unused entry, candidate for a future prune).
+
+**Not yet confirmed:** whether this actually fixes the Connect Cloud case specifically —
+confirmed working in the local dev session; next step is redeploying and testing there,
+since a headless container's behaviour can't be fully assumed from a local check even
+though `navigator.clipboard` is a client-side, browser-only API that shouldn't care
+where the R process runs.
+
+---
+
+### CHG-060 — Connect Cloud auto-deploy confirmed live with FEAT-011 (verification only, no code change)
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-06 |
+| **Branch** | `main` |
+| **Author** | Nathan Dunn |
+| **Status** | Implemented |
+| **Refs** | FEAT-011, `session-handoff.md` §3 item 4 |
+
+Verification-only entry, no app code touched. Nathan confirmed by visiting the published
+Connect Cloud app directly that it is serving the merged FEAT-011 redesign — the setup
+wizard modal and the updated bottom-rail/drawer layout are both present in production, not
+a stale pre-merge build. This confirms Connect Cloud's auto-deploy-on-push actually picked
+up the FEAT-011 merge commit, closing the "not yet confirmed" question left open in the
+prior handoff (§3 item 4).
+
+Not covered by this check: a detailed pass over every individual FEAT-011 piece (navbar
+pill styling specifics, Export drawer layout, Help page title alignment) — see
+`session-handoff.md` §3 item 2 and ISS-042, still open.
+
+---
+
 ## Decisions
 
 ### DEC-006 — `renv::snapshot()` authorised for the R 4.5.2 migration

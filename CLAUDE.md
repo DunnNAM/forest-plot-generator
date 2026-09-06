@@ -105,8 +105,9 @@ why the merge shifted them by +2 to avoid colliding with `main`'s real CHG-039/0
   `forestHelperR` is installed from a real GitHub source
   (`github.com/DunnNAM/forestHelperR`, sanitized), not a local `.tar.gz` — both that
   repo and this one are now **public** (Connect Cloud's free tier only lists public
-  repos in its picker). **Not yet confirmed:** whether auto-deploy-on-push is turned
-  on — check Connect Cloud directly.
+  repos in its picker). **Auto-deploy-on-push confirmed working** (CHG-060,
+  2026-09-06) — the published app was checked directly and is serving the merged
+  FEAT-011 redesign, not a stale pre-merge build.
 
 **Gotcha worth remembering:** drawer panels are `display:none` by default, so Shiny
 suspends any output inside them — including `downloadButton`s, which render as
@@ -131,9 +132,9 @@ references by commit subject line, not hash.
   Google Font — all Low/Medium, mostly out of this repo's scope)
 
 **Next session:** see `session-handoff.md` for the full post-merge checklist — it has
-specific things worth verifying that this session didn't (Connect Cloud auto-deploy
-status, a live visual check of the merged FEAT-011 UI, GitHub Support's response on
-the history-purge ticket).
+specific things still worth verifying (a detailed live visual check of the merged
+FEAT-011 UI piece-by-piece, GitHub Support's response on the history-purge ticket).
+Connect Cloud auto-deploy is now confirmed (CHG-060) — see above.
 
 ## Conventions
 - Always use explicit package::function() notation

@@ -93,17 +93,28 @@
     )
   })
 
+  # CHG-061: clipr::write_clip() writes to the *server's* OS clipboard, which
+  # doesn't exist in Connect Cloud's headless container (and wouldn't be the
+  # visiting user's clipboard even if it did) — every Connect Cloud user hit
+  # "clipboard unavailable on this server" on every click. The actual copy now
+  # happens client-side (www/export.js, via the Clipboard API) — this handler
+  # just hands the generated code string over and waits for the browser to
+  # report back whether the copy succeeded.
   observeEvent(input$copy_r_code, {
-    tryCatch({
-      clipr::write_clip(r_code_string())
+    session$sendCustomMessage("copy-r-code", r_code_string())
+  })
+
+  observeEvent(input$copy_r_code_result, {
+    result <- input$copy_r_code_result
+    if (identical(result$status, "success")) {
       shiny::showNotification("R code copied to clipboard.", type = "message")
-    }, error = function(e) {
+    } else {
       shiny::showNotification(
-        "Could not copy to clipboard — clipboard unavailable on this server.",
+        "Could not copy to clipboard — your browser blocked or doesn't support copying.",
         type = "warning"
       )
-    })
-  })
+    }
+  }, ignoreInit = TRUE)
 
   output$download_r_code <- downloadHandler(
     filename = "forestplot_code.R",

@@ -29,7 +29,12 @@ library(sortable)
 library(shinyWidgets)
 library(forestHelperR)
 library(glue)
-library(clipr)
+# clipr no longer used (CHG-061) — "Copy R code" now copies client-side via
+# the Clipboard API (www/export.js), since clipr::write_clip() wrote to the
+# server's own OS clipboard, which doesn't exist on Connect Cloud. Left in
+# renv.lock/manifest.json for now (not touching renv.lock outside the DEC-006
+# migration per CLAUDE.md) — a harmless unused entry, candidate for a future
+# lockfile prune, not urgent.
 
 
 # Setup -------------------------------------------------------------------

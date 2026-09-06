@@ -581,6 +581,16 @@ orderPanelUI <- function() {
 # shared `margin-top: auto`, bottom-aligning "Download" with "Copy R
 # code"/"Download .R script" regardless of the graph panel's extra format
 # radio pushing its own button down — see the .export-section CSS comment.
+# The format radio lives *inside* .drawer-btnrow, stacked above the Download
+# button (2026-09-06 follow-up, user report), not above it as a sibling: it
+# used to sit outside the bottom-pinned block, stranded near the panel's top
+# while the code panel's "Copy R code" sat much lower (inside its own
+# bottom-pinned, stacked block) — the two panels' top rows didn't line up.
+# Moving the radio inside the same .drawer-btnrow mirrors the code panel's
+# own stacked-pair structure exactly, so both panels' top rows (radio /
+# "Copy R code") and bottom rows (Download / "Download .R script") land on
+# the same lines, with the same 8px gap between them (see
+# .export-section--graph .drawer-btnrow in www/style.css).
 exportPanelUI <- function() {
   tagList(
     drawerHeaderUI("download", "Export"),
@@ -589,11 +599,11 @@ exportPanelUI <- function() {
       div(
         class = "export-section export-section--graph",
         strong("Export graph"),
-        radioButtons("export_format", NULL,
-                     choices = c("PNG" = "png", "SVG" = "svg"),
-                     selected = "png", inline = TRUE),
         div(
           class = "drawer-btnrow",
+          radioButtons("export_format", NULL,
+                       choices = c("PNG" = "png", "SVG" = "svg"),
+                       selected = "png", inline = TRUE),
           downloadButton("download_plot", "Download", icon = icon("download"))
         )
       ),

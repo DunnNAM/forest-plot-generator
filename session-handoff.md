@@ -125,10 +125,10 @@ work" handoff, it's a "check the work" one. Four things specifically:
    open. The original hypothesis (an `R/ui_help.R` class rename needing a full R
    restart, not just a browser refresh, to actually take effect) was never confirmed
    or ruled out — restart R fully before concluding it's still broken.
-4. **Confirm Connect Cloud's auto-deploy actually picked up today's push.** The
-   handoff before this merge listed "turn on auto-deploy" as not-yet-confirmed
-   end-to-end; if it's on, the FEAT-011 merge should already be live — check the
-   deployed app matches what's in `main` now, not a stale pre-merge build.
+4. ~~**Confirm Connect Cloud's auto-deploy actually picked up today's push.**~~
+   **Confirmed 2026-09-06 (CHG-060)** — Nathan checked the published app directly; it's
+   serving the merged FEAT-011 redesign (wizard modal + updated layout), not a stale
+   pre-merge build. Auto-deploy-on-push is working end-to-end.
 
 Housekeeping, not urgent: `.git/rebase-merge/` is an empty leftover directory from
 this session's rebase — the sandbox this session ran in couldn't delete it

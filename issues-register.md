@@ -814,7 +814,24 @@
 
 ---
 
-*Document version: 3.18 — ISS-049 through ISS-054 raised (doc-only): remaining findings
+### FEAT-012 — Back/Next navigation buttons on each open drawer
+
+| Field | Detail |
+|---|---|
+| **Source** | USER, session 2026-09-06, raised alongside the Export drawer layout fix (CHG-061) |
+| **Severity** | — (feature idea, not a defect) |
+| **Status** | **Open — not started, doc-only entry** |
+| **File(s)** | Likely `R/ui_plot_options.R` (a shared `drawerNavUI()`-style helper, one call per panel), `www/style.css`, `server/drawers.R` (to advance/retreat the open-drawer state) |
+| **Description** | In addition to jumping between drawers via the rail icons, add a "Back"/"Next" button pair inside each open drawer (left/right, presumably bottom-anchored near the panel content) that steps to the adjacent drawer in rail order. Data (first in the sequence) only needs "Next"; Order (last) only needs "Back"; every drawer in between gets both. |
+| **Design notes** | User's own suggestion: reuse the Export drawer's pill button sizing (CHG-057/061) rather than a new size. Claude's recommendation (2026-09-06, not yet actioned): keep the same shape/size/radius as the Export buttons for one consistent button vocabulary, but give Back/Next a *lighter/outline* variant (slate text+border on a light/transparent fill, inverting to solid on hover) rather than the identical solid slate fill — the Export buttons are one-off committal actions (Download, Copy) that should read as "the thing to click," while Back/Next will recur on every drawer and would dilute that hierarchy if styled identically. Not settled — worth confirming visually once actually built, per this project's standing "verify live, don't just reason about CSS" process (see `session-handoff.md` §7, CHG-055's account of why). |
+| **Related** | CHG-057 (Export drawer redesign — the pill button styling this borrows from), CHG-061 (Export layout fix, same session this idea was raised in) |
+| **Resolution** | — |
+
+---
+
+*Document version: 3.19 — FEAT-012 raised (doc-only): Back/Next drawer-navigation buttons,
+idea only, not yet built — see entry for the open styling question. Previously: Document
+version 3.18 — ISS-049 through ISS-054 raised (doc-only): remaining findings
 from the 2026-09-04 architecture/CSS review docs that weren't already covered by
 ISS-044..048 — Data panel field wrapper inconsistency, unannotated server.R file-order
 dependency, redundant reactive dereferencing in server/preview.R, redundant
