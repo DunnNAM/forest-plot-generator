@@ -222,10 +222,10 @@ manual retry also fails.
 | ~~PDEC-001~~ | ~~Should the app be refactored from the 3-file structure (`ui.R`, `server.R`, `global.R`) to a Shiny module architecture? Decision requires reading `server.R` to assess complexity.~~ | FEAT-007 | — | **Closed as DEC-004** |
 | ~~PDEC-003~~ | ~~Should `extrafont` be replaced with `sysfonts`/`showtext`?~~ | ISS-002 | — | **Closed as DEC-003** |
 | PDEC-004 | Should the `officer` dependency be removed from `global.R` until Word/PowerPoint export is implemented? | ISS-006, FEAT-004 | Low | Early in code review |
-| PDEC-005 | Should `forestHelperR` be moved to its own GitHub repository? | ISS-008, PKG-006 | **Deferred** — no hosting or sharing requirement at this stage. Leave package in current local location. Revisit when publication or server hosting is being planned. | When hosting/publication is scoped |
+| ~~PDEC-005~~ | ~~Should `forestHelperR` be moved to its own GitHub repository?~~ | ISS-008, PKG-006, CHG-040 | — | **Effectively actioned by CHG-040** (2026-09-06) — Connect Cloud's deployment needs forced the question earlier than "when publication is scoped": `forestHelperR` is now published to `github.com/DunnNAM/forestHelperR`, public, sanitized. No formal DEC raised for this, but there's no remaining open question — closing here. |
 | PDEC-006 | Should `forestHelperR` declare its dependencies more explicitly so that `.tar.gz` installs resolve them automatically, or should the install documentation be updated to instruct users to install dependencies first? | ISS-014 (app), `forestHelperR` `DESCRIPTION` | Low — parked for future package maintenance cycle | Future package release |
 
-> **Closed pending decisions:** PDEC-001 → DEC-004 (2026-05-11). PDEC-002 → DEC-002 (May 2026).
+> **Closed pending decisions:** PDEC-001 → DEC-004 (2026-05-11). PDEC-002 → DEC-002 (May 2026). PDEC-005 → effectively actioned by CHG-040 (2026-09-06, no formal DEC raised).
 
 ---
 
@@ -238,6 +238,42 @@ manual retry also fails.
 > is renumbered **+2** here (→ CHG-041–CHG-058); `main`'s real CHG-039/CHG-040 are
 > unchanged. Commit subject lines on the branch still cite the old numbers — treat this
 > register as the authoritative numbering going forward.
+
+### CHG-059 — Post-merge doc refresh: `CLAUDE.md`, `session-handoff.md` rewritten for current state; PDEC-005 closed
+
+| Field | Detail |
+|---|---|
+| **Date** | 2026-09-06 |
+| **Branch** | `main` |
+| **Author** | Nathan Dunn / Claude (Anthropic) |
+| **Status** | Implemented |
+| **Refs** | FEAT-011, PDEC-005 |
+
+Documentation-only, no app code touched. `CLAUDE.md`'s "Current phase" section rewritten
+from a pre-merge, pre-Connect-Cloud-publish snapshot to reflect actual current state:
+FEAT-011 merged, Connect Cloud published, the real history purge, and a trimmed current
+open-issues list (pointing to `issues-register.md` rather than duplicating it). `Key
+files` gained the FEAT-011 files (`R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js`).
+
+`session-handoff.md` rewritten in full — the prior version was a blow-by-blow merge-
+conflict-resolution log (accurate at each historical point, but no longer a useful
+"what to check next" document once the merge finished). New version leads with a
+concrete four-item checklist for the next session (GitHub Support ticket status, a
+live end-to-end visual check of the merged UI, ISS-042 sub-issue 1, Connect Cloud
+auto-deploy confirmation) rather than historical narrative; the accumulated "Traps"
+section was kept (renumbering its CHG references to match the merge's renumbering) since
+it's genuine reusable knowledge, not merge-specific noise.
+
+`app-changelog-decision-register.md`'s Pending Decisions table: **PDEC-005 closed** —
+it was already marked "effectively actioned" in CHG-040's own Refs field but the table
+row itself still said "Deferred"; corrected to match, since the underlying question
+(should `forestHelperR` move to its own repo) has in fact been answered by CHG-040's
+publish, no formal DEC needed for something already done.
+
+Not fixed: `README.md` (ISS-041) remains stale — out of scope for this pass, which was
+about `CLAUDE.md`/`session-handoff.md` specifically.
+
+---
 
 ### CHG-058 — CSS audit quick-fix batch: z-index inversion, undeclared token, dead template CSS, fragmented rules, overflow scope; resolves ISS-044
 

@@ -415,7 +415,7 @@
 | ISS-037 | Medium | `CLAUDE.md`, test docs | Documented test command silently skips all 6 integration tests | ✅ Resolved — CHG-037 |
 | FEAT-009 | Medium | `ui.R`, `server.R` | Redesign export controls into sidebar accordion panel | ✅ Implemented — CHG-033 (location amended to Export drawer panel) |
 | FEAT-010 | Low | `ui.R`, `R/ui_rail.R`, `R/ui_help.R`, `www/style.css` | DEC-005 Step 7 (phase 2): status-chip strip, rail badges, Help nav panel | ✅ Implemented — CHG-038 |
-| FEAT-011 | — | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js`, `R/ui_plot_options.R`, `www/style.css`, `global.R`, `ui.R`, `server/drawers.R`, `server/plot.R`, `server/export.R`, `tests/testthat/test-shiny-app.R` | Soft-gated setup wizard + Data drawer visual redesign, extended app-wide | 🔲 Draft — branch `design/modal-progression-workflow`, not merged |
+| FEAT-011 | — | `R/ui_wizard.R`, `server/wizard.R`, `www/wizard.js`, `R/ui_plot_options.R`, `www/style.css`, `global.R`, `ui.R`, `server/drawers.R`, `server/plot.R`, `server/export.R`, `tests/testthat/test-shiny-app.R` | Soft-gated setup wizard + Data drawer/navbar visual redesign, extended app-wide | ✅ Merged to `main` — 2026-09-06 |
 | ISS-043 | — (feature) | `global.R` | Add internal `styling` package as a dependency (colour palettes, fonts) | Open — doc-only, not started |
 | ISS-044 | Low | `www/style.css` | CSS audit quick-fix batch: z-index, `--page-accent` token, dead CSS, fragmented rules, overflow scope | ✅ Resolved — 2026-09-06 |
 | ISS-045 | Low-Medium | `R/ui_wizard.R` | Wizard Step 2 modal layout inconsistency (missing `.wizard-modal-footer`/`.btn-wizard-skip`) | Open |

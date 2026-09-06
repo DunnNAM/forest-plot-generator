@@ -16,13 +16,20 @@ package (already stabilised, 112 tests passing).
   - `export.R` — download handlers + R code serialiser
   - `observers.R` — misc observers (variables_displayed, sortable_cols, by_group, sigfigs)
   - `drawers.R` — rail/drawer panel switching + `suspendWhenHidden` overrides
+  - `wizard.R` — first-visit setup wizard show/skip/auto-advance logic (FEAT-011,
+    merged 2026-09-06)
 - `R/` — pure helpers and UI helper functions (auto-sourced by Shiny):
   - `helpers.R` — pure helper functions (also used by tests)
-  - `ui_rail.R` — `railUI()`, the six bottom-rail buttons
+  - `ui_rail.R` — `railUI()`, the seven bottom-rail buttons (adds "Tour", FEAT-011)
   - `ui_drawers.R` — drawer shell
   - `ui_plot_options.R` — per-panel UI (`dataPanelUI()`, `variablesPanelUI()`,
     `displayPanelUI()`, `textPanelUI()`, `orderPanelUI()`, `exportPanelUI()`)
   - `ui_help.R` — `helpPanelUI()`, the static Help nav panel content (FEAT-010)
+  - `ui_wizard.R` — `wizardWelcomeModal()`/`wizardVariablesModal()`, the first-visit
+    setup wizard's modal content (FEAT-011)
+- `www/wizard.js` — first-visit `localStorage` detection for the wizard, bound via
+  jQuery (`shiny:connected` fires through `.trigger()`, which a native
+  `addEventListener` can't catch — ISS-038, fixed)
 - `www/style.css` — single stylesheet (CAQ palette); linked with a `?v=` cache-buster
 - `app-changelog-decision-register.md` — decisions and changes log (update this for every change)
 - `issues-register.md` — open issues register
@@ -75,9 +82,13 @@ Counts above are assertions, not blocks — the register's per-CHG "48 unit test
 9/9 integration assertions" refers to the same figures.
 
 ## Current phase
-DEC-005 restyle — **complete, including phase 2**. See `restyle-implementation-plan.md`
-for the full plan and `app-changelog-decision-register.md` (CHG-029 – CHG-034, CHG-038) for
-what each step did.
+DEC-005 restyle — **complete** (Steps 0-7, CHG-029–034/038). `design/modal-progression-
+workflow` (FEAT-011, the first-visit wizard + Data-drawer/navbar visual redesign) —
+**merged to `main` 2026-09-06** via rebase + fast-forward; both branches now point at
+the same commit. See `restyle-implementation-plan.md` for the DEC-005 plan and
+`app-changelog-decision-register.md`'s **CHG-041–058** for what FEAT-011 shipped (its
+own commits/docs originally used CHG-039–056 — see that file's renumbering note for
+why the merge shifted them by +2 to avoid colliding with `main`'s real CHG-039/040).
 
 **Architecture decisions in force:**
 - **DEC-004** — no Shiny modules. `source()` split into named files in `server/` +
@@ -86,42 +97,43 @@ what each step did.
 - **DEC-005** — MDT visual language (CAQ palette, cream background, navbar) with a
   full-width **bottom** rail and a drawer sliding **up**. No sidebar. Drawer panels
   are rendered *statically* in `ui.R` and the active panel is chosen by toggling a
-  CSS class — every input ID stays in the DOM from app start.
-
-**Restyle progress:**
-- Step 1 ✅ CHG-029: theme, stylesheet, `page_navbar` shell
-- Step 2 ✅ CHG-030: rail + drawer shell, empty panels
-- Step 3 ✅ CHG-031: Variables/Display/Text drawer panels (`bslib::accordion()` retired)
-- Step 4 ✅ CHG-032: Data panel — sidebar removed from `ui.R` entirely
-- Step 5 ✅ CHG-033: Order panel + Export redesign (FEAT-009, ISS-031)
-- Step 6 ✅ CHG-034: CSS merge/polish, dead-code prune
-- Step 7 ✅ CHG-038: status-chip strip, rail badges (Variables count, Display dot),
-  Help nav panel (FEAT-010)
+  CSS class — every input ID stays in the DOM from app start. Navbar tabs are now
+  filled slate/cream **pills** (CHG-055), not an underline/divider — see that entry
+  if touching navbar CSS again.
+- **Posit Connect Cloud** — `main` is published there (confirmed 2026-09-06). Deploy
+  manifest is `manifest.json`, regenerated via `rsconnect::writeManifest(appDir = ".")`.
+  `forestHelperR` is installed from a real GitHub source
+  (`github.com/DunnNAM/forestHelperR`, sanitized), not a local `.tar.gz` — both that
+  repo and this one are now **public** (Connect Cloud's free tier only lists public
+  repos in its picker). **Not yet confirmed:** whether auto-deploy-on-push is turned
+  on — check Connect Cloud directly.
 
 **Gotcha worth remembering:** drawer panels are `display:none` by default, so Shiny
 suspends any output inside them — including `downloadButton`s, which render as
 `disabled` with an empty `href`. Anything live inside a hidden panel needs
 `outputOptions(output, "<id>", suspendWhenHidden = FALSE)` in `server/drawers.R`.
 
-**Open issues (see `issues-register.md`):**
-- ISS-028: age group sort order in simulated data (Medium — likely in `forestHelperR`)
-- ISS-029: OS system fonts absent from selector after sysfonts migration (Low)
-- ISS-030: `"Source Sans Pro"` renamed on Google Fonts, silently absent (Low)
+**A real history purge happened 2026-09-06** (see `session-handoff.md`'s top-of-file
+note): a colleague's real name/email were in every historical version of `renv.lock`
+(CHG-040 had sanitized the *current* content but deliberately left history
+unrewritten). A `git filter-branch` pass scrubbed it from every historical blob on
+both `main` and this branch, verified by scanning the object database directly, then
+force-pushed. **Every commit hash predating 2026-09-06 no longer exists** — match old
+references by commit subject line, not hash.
 
-**Next session:** Restyle (including Step 7 / FEAT-010) is shipped and committed.
-`handover-dec004-file-split.md` is now historical — DEC-004 is complete.
+**Open issues (see `issues-register.md` for full detail on all of these):**
+- ISS-042: Help page title still not left-aligned (Low — navbar sub-issues 2/3 already
+  resolved, CHG-055)
+- ISS-041: `README.md` describes the pre-restyle app — stale, not yet rewritten (Medium)
+- ISS-045–048: architecture-review findings (wizard Step 2 modal styling gap; widespread
+  un-namespaced calls; testability/DRY items) — all open, none started
+- ISS-028/029/030: pre-existing, unchanged (age-group sort order, OS fonts, renamed
+  Google Font — all Low/Medium, mostly out of this repo's scope)
 
-**2026-09-06 — Connect Cloud publish in progress.** See `session-handoff.md` §3 for
-full detail and current status. ISS-036 turned out to block this too, not just the
-R 4.5.2 migration — first deploy attempt failed on it directly (`forestHelperR`'s
-`"Cellar"` source meant nothing to Connect Cloud's own server-side resolution), so
-it's now **fully resolved** (CHG-040): `forestHelperR` published to
-`github.com/DunnNAM/forestHelperR` (sanitized — see that repo and CHG-040 for what
-attribution changed and why), `renv.lock` updated to a real GitHub source. Also
-turned up that Connect Cloud's free tier only lists public repos regardless of
-GitHub App permissions — both this repo and `forestHelperR` are now public as a
-result. Next: push, retry the deploy (should now succeed), enable auto-deploy, then
-merge `design/modal-progression-workflow` into `main`.
+**Next session:** see `session-handoff.md` for the full post-merge checklist — it has
+specific things worth verifying that this session didn't (Connect Cloud auto-deploy
+status, a live visual check of the merged FEAT-011 UI, GitHub Support's response on
+the history-purge ticket).
 
 ## Conventions
 - Always use explicit package::function() notation

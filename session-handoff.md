@@ -1,29 +1,30 @@
 # Forest Plot Builder — Session Handoff
 
-> **Last refreshed:** 2026-09-06 (CHG-039/040, Connect Cloud publish prep; merged with
-> `design/modal-progression-workflow`'s own handoff refresh through CHG-058 — see
-> `app-changelog-decision-register.md`'s renumbering note for why the branch's own
-> CHG-039..056 became CHG-041..058 in the merge)
+> **Last refreshed:** 2026-09-06 — FEAT-011 merged to `main`; a real git history purge
+> and Connect Cloud publish also happened this window. This is a genuine handoff to a
+> **new session** — read this whole file before doing anything else.
 > **Purpose:** Session continuity — read at the start of a session, alongside `CLAUDE.md`.
 > **Scope note:** `CLAUDE.md` is the standing context (architecture, conventions, file
 > map). This document is the *current* state of play and what to pick up next. If the
 > two disagree, `CLAUDE.md` wins on conventions and this file wins on status.
 
-> **2026-09-06 — every commit hash on both `main` and this branch was rewritten, for
-> real this time.** CHG-040 sanitized `renv.lock`'s *current* content but deliberately
-> left git history unrewritten (its own text says so). That left the colleague's real
-> full name and personal email address still recoverable from old commits on a public
-> repo. A follow-up session used `git filter-branch` (a BFG-style history rewrite) to
-> scrub both strings from every historical version of `renv.lock`/`manifest.json`
-> across both branches, verified by scanning every blob in the object database (not
-> just `git log`), then force-pushed both branches to `origin`. A GitHub Support
-> ticket was also filed to purge the orphaned pre-rewrite objects, since force-pushing
-> alone doesn't guarantee GitHub's servers drop them immediately. Every hash this
-> document, `CLAUDE.md`, and `issues-register.md` cite was updated at the time of this
-> rewrite — but if you're reading an older cached copy of any of these docs, or
-> comparing against a note/link from before 2026-09-06, the hash it names no longer
-> exists. Match by commit **subject line** (unchanged by the rewrite) instead, or ask
-> rather than assume a stale hash is wrong content.
+> **2026-09-06 — every commit hash on both `main` and `design/modal-progression-workflow`
+> was rewritten, for real this time.** An earlier commit (CHG-040) sanitized
+> `renv.lock`'s *current* content but deliberately left git history unrewritten (its
+> own text says so) — that left a colleague's real full name and personal email
+> address still recoverable from old commits on what is now a **public** repo. A
+> follow-up pass used `git filter-branch` (a BFG-style history rewrite) to scrub both
+> strings from every historical version of `renv.lock`/`manifest.json` on both
+> branches, verified by scanning every blob in the object database directly (not just
+> `git log`), then force-pushed both branches to `origin`. A GitHub Support ticket was
+> also filed to purge the orphaned pre-rewrite objects, since force-pushing alone
+> doesn't guarantee GitHub's servers drop them immediately — **check for a reply next
+> session, see §3 item 1.** Every hash this document, `CLAUDE.md`, and
+> `issues-register.md` cite was updated at the time of this rewrite — but if you're
+> reading an older cached copy of any of these docs, or comparing against a note/link
+> from before 2026-09-06, the hash it names no longer exists. Match by commit
+> **subject line** (unchanged by the rewrite) instead, or ask rather than assume a
+> stale hash is wrong content.
 
 ---
 
@@ -34,58 +35,18 @@ Shiny app providing a GUI for publication-ready forest plots from regression out
 (`regTabler()`, `forestPloter()`), which was stabilised in an earlier phase and is
 **not** modified from this repo.
 
-Version control: GitHub, `DunnNAM/forest-plot-generator` (private repo), single `main`
-branch, linear history (DEC-001) — plus one active experimental branch, see below.
-
-**Also worth knowing:** an experimental branch, `design/modal-progression-workflow`
-(FEAT-011, a first-visit setup wizard + Data drawer visual redesign), diverged from
-`main` at CHG-038 (2026-09-04) and is still in progress as of this writing — not
-merged, no DEC raised on whether to adopt it. It's on a separate publish/merge track
-from the Connect Cloud work below; see that branch's own commits and `issues-register.md`
-(FEAT-011, ISS-042, ISS-044..048) for its state.
+Version control: GitHub, `DunnNAM/forest-plot-generator` (**public** repo — see the
+history-purge note above for why), single `main` branch, linear history (DEC-001).
+The `design/modal-progression-workflow` branch that DEC-001 used to treat as "the one
+active experimental branch" is **now merged and identical to `main`** (same commit,
+`394ea5d` as of this writing) — it's still on `origin` but has nothing left to do; no
+DEC has been raised on formally deleting it.
 
 ---
 
 ## 2. State of play
 
-**All planned programmes of work on `main`'s application code are complete.** There is
-no in-flight migration or half-finished refactor in the app itself. The one piece of
-live work right now is deployment prep (see §3), not a code change. See §1 above for
-the `design/modal-progression-workflow` branch's own, separate status; ISS-038 (a real
-pre-existing first-visit-trigger bug the branch found and fixed) is detailed in
-`issues-register.md`. The branch also attempted to unify the navbar divider/active-tab
-indicator and restyle the app title to match the Help page title (CHG-054) — but per
-the user's own live check immediately after, **none of the three actually landed as
-intended, and one regressed** (title/tab baseline alignment got worse); see **ISS-042**
-in the open queue below.
-
-**ISS-042 (navbar) was then largely resolved (CHG-055..057).** The user removed the
-Chrome browser extension from that session entirely (it was "burning tokens
-wastefully") and instead checked each CSS round live in their own browser, directing
-the next fix — this is what actually got ISS-042's navbar sub-issues resolved, after
-the prior blind CSS-text reasoning (CHG-054) had produced the opposite of its intended
-result. **Two real root causes were found along the way, both only discoverable by
-fetching the served HTML/CSS directly** (the browser tool wasn't available even to
-Claude that session — the user does the visual checking now, per their explicit
-direction): bslib's `page_navbar()` uses Bootstrap-3-style markup where `.navbar-brand`
-is nested inside a `.navbar-header` wrapper rather than being a direct flex child; and
-Bootstrap 5.3's `.nav-underline` utility class (present by default on the tab `<ul>`)
-was silently overriding `.nav-link` spacing at a higher CSS specificity than expected,
-regardless of stylesheet load order. The fix that actually stuck was structural, not
-another alignment tweak: **navbar tabs are now filled slate/cream pills**, which
-removes the whole "must overlay another element's border exactly" problem outright.
-The same pill treatment was extended to the wizard's modal-footer buttons and the
-Export drawer's buttons at the user's request, and the Export drawer itself was
-reworked — single divider between its two panels (not a coloured border each), buttons
-bottom-aligned, panel narrowed over 33%, buttons inverted to slate/cream with a
-uniform width, and a centred (not left-aligned) layout. **ISS-042's sub-issue 1 (Help
-page title alignment) was not touched and is still open** — see the open queue below.
-
-**Also worth knowing:** `README.md` (both on this branch and on `main`) is
-significantly stale — untouched since before DEC-004/DEC-005, still describing the
-old sidebar+accordion layout and listing resolved issues (no tests, no renv lockfile)
-as current limitations. Raised as **ISS-041**, deliberately not rewritten yet —
-flagged for its own pass rather than folded into unrelated UI work.
+**Everything that was in flight is now either done or explicitly deferred.** In order:
 
 | Phase | Outcome |
 |---|---|
@@ -94,109 +55,91 @@ flagged for its own pass rather than folded into unrelated UI work.
 | Test infrastructure (ISS-004) | Complete — `testthat` + `shinytest2` (CHG-014/015) |
 | Font migration (DEC-003) | Complete — `extrafont` → `sysfonts`/`showtext` (CHG-016) |
 | **DEC-004** file split | Complete — `server/` + `R/` split, no Shiny modules (CHG-018 … CHG-024) |
-| **DEC-005** restyle | **Complete** — Steps 0-7 (CHG-029 … CHG-034, CHG-038). Step 7 / FEAT-010 shipped 2026-09-04 |
+| **DEC-005** restyle | Complete — Steps 0-7 (CHG-029 … CHG-034, CHG-038) |
+| **Connect Cloud publish** | Complete — `main` is published (confirmed by the user); ISS-036 fully resolved along the way (CHG-040) |
+| **FEAT-011** (wizard + Data-drawer/navbar redesign) | **Merged to `main` 2026-09-06** — see below |
+| **Git history purge** | Complete — see the top-of-file note |
 
-The app's current layout is the DEC-005 bottom-rail + drawer design. The design
-rationale lives in `restyle-implementation-plan.md` (a historical record — do not add
-new scope to it) and its companion audit in
-`reviews/architecture/2026-06-10_restyle-readiness-review.md`.
+The app's current layout is the DEC-005 bottom-rail + drawer design, now with **filled
+pill navbar tabs** (CHG-055, replacing the original underline/divider design — see §7)
+and a first-visit **setup wizard** (FEAT-011). Design rationale for the base restyle
+lives in `restyle-implementation-plan.md` (historical — do not add new scope to it);
+FEAT-011's own rationale is scattered across `app-changelog-decision-register.md`'s
+CHG-041–058 (see that file's renumbering note — the branch used its own CHG-039–056
+numbering before the merge, now shifted +2 to avoid colliding with `main`'s real
+CHG-039/040) and `issues-register.md`'s FEAT-011 entry.
+
+**What FEAT-011 actually shipped**, briefly (full detail in the changelog entries
+above): a soft-gated setup wizard (skippable, restartable via a new "Tour" rail item);
+a titled-field/divider visual convention extended to every drawer panel except Export;
+combined Variables estimate-column toggles into one radio group; the app now loads
+with a working Simulated-data example already plotted; rail/status-chip clicks anchor
+the main tab to whichever drawer is open; the Plot tab's card grows to the plot's full
+height instead of an internal scrollbar; the Display panel was reshaped into a 3-group
+50/25/25 layout with a configurable x-axis tick count and domain-scoped mirror-pairing;
+the navbar was redesigned as filled pills (fixing ISS-042's navbar sub-issues, after an
+earlier attempt — CHG-054 — landed none of its three intended fixes); the same pill
+treatment reached the wizard's modal footers and the Export drawer, which was also
+narrowed, centred, and given a single divider; a CSS audit's five low-risk quick fixes
+were applied (z-index, an undeclared custom property, dead template CSS, overflow
+scope). Along the way, one real pre-existing bug was found and fixed: `www/wizard.js`'s
+first-visit detection listened for `"shiny:connected"` via `document.addEventListener`,
+which can never catch an event Shiny fires through jQuery's `.trigger()` — the wizard
+had silently never shown itself to a genuine first-time visitor since it was written
+(ISS-038, fixed CHG-049).
+
+**Still genuinely open from FEAT-011:** ISS-042's sub-issue 1 (Help page title still
+not left-aligned — the navbar work never touched `R/ui_help.R`) and ISS-045 through
+ISS-048 (an architecture review's findings: a wizard Step-2 modal styling gap;
+widespread un-namespaced `pkg::fun()` calls; a couple of testability/DRY items) — none
+of these are started. See §5.
+
+**Also still open, unrelated to FEAT-011:** `README.md` (ISS-041) has been stale since
+before DEC-004/DEC-005 — still describes the old sidebar+accordion layout and lists
+resolved issues as current limitations. Deliberately not rewritten yet.
 
 ---
 
-## 3. NEXT SESSION
+## 3. NEXT SESSION — things this session did NOT verify
 
-**No working-tool blocker anymore, and no single mandated priority** — the previous
-"fix ISS-042 first" instruction is done (its navbar sub-issues; see §2). The Connect
-Cloud publish thread (real, `main`-side work) is a separate track — see §3a below; it
-does not depend on ISS-042. Two small things worth knowing before picking whatever's
-next:
+**No code is half-finished and no test is red** (see §6) — this isn't a "finish the
+work" handoff, it's a "check the work" one. Four things specifically:
 
-1. **The Chrome extension is gone from this session, on purpose — do not try to
-   reconnect it.** The user removed it because it was burning tokens wastefully.
-   Going forward, **the user does the visual checking themselves** and directs CSS/
-   layout fixes turn by turn; don't call `tabs_context_mcp` or any other
-   `mcp__claude-in-chrome__*` tool expecting it to work. This is recorded as a
-   standing memory (`no-chrome-extension-user-inspects-visually`) — it should already
-   be in context at session start, but flagging here too since it reverses this
-   section's earlier framing (before ISS-042's navbar sub-issues were resolved, a
-   working browser connection was called out as the missing piece).
-2. **ISS-042 sub-issue 1 (Help page title left-alignment) is still open** — the
-   session that resolved CHG-055..057 was entirely on the navbar tabs/brand (sub-issues
-   2, 3) and never touched `R/ui_help.R` or the Help page's own CSS. Worth a quick
-   check next time the Help tab is open — the original hypothesis (CHG-054's
-   `R/ui_help.R` class rename needing a full R restart, not just a browser refresh, to
-   actually take effect) was never confirmed or ruled out.
+1. **Check for a reply on the GitHub Support ticket** about purging the orphaned
+   pre-history-purge commit objects (the ones containing the colleague's real
+   name/email, no longer reachable from any branch but not yet garbage-collected by
+   GitHub). If they've confirmed the purge, note it in `app-changelog-decision-
+   register.md`; if not, no action needed yet, just don't assume it's done.
+2. **Do a live visual check of the merged FEAT-011 UI end-to-end.** Most of FEAT-011's
+   individual pieces were verified in isolation (either via served HTML/CSS text with
+   no browser tool, or via the user's own live checks turn-by-turn) — nobody has
+   looked at the *whole* merged app running together yet. Specifically worth eyeballing:
+   the wizard's first-visit flow, the navbar pills across both tabs, the Export
+   drawer's new layout, and — per item 3 below — the Help page title alignment.
+   **The Chrome browser extension is gone from this session, on purpose — do not try
+   to reconnect it** (see the `no-chrome-extension-user-inspects-visually` memory).
+   The user does the visual checking and directs fixes turn by turn; this is the
+   standing process now, not a one-off workaround (see §7's CHG-055 entry for why).
+3. **ISS-042 sub-issue 1 (Help page title left-alignment) is still open** — confirmed
+   not touched by any FEAT-011 commit. Worth a quick check next time the Help tab is
+   open. The original hypothesis (an `R/ui_help.R` class rename needing a full R
+   restart, not just a browser refresh, to actually take effect) was never confirmed
+   or ruled out — restart R fully before concluding it's still broken.
+4. **Confirm Connect Cloud's auto-deploy actually picked up today's push.** The
+   handoff before this merge listed "turn on auto-deploy" as not-yet-confirmed
+   end-to-end; if it's on, the FEAT-011 merge should already be live — check the
+   deployed app matches what's in `main` now, not a stale pre-merge build.
 
-Otherwise, the open queue below (ISS-041 README refresh, ISS-036 renv/migration
-prerequisite, FEAT-011's own merge decision) is genuinely just a backlog — pick
-whatever seems most useful, or ask the user.
+Housekeeping, not urgent: `.git/rebase-merge/` is an empty leftover directory from
+this session's rebase — the sandbox this session ran in couldn't delete it
+(`.git` internals are protected), so `git status` may still say "You are currently
+rebasing" even though `HEAD` is a normal branch ref pointing at the right commit. A
+plain `rm -rf .git/rebase-merge` (or the PowerShell equivalent) clears it; harmless
+either way.
 
----
-
-### 3a. Connect Cloud publish (started 2026-09-06, `main`)
-
----
-
-**This is the live piece of work right now**, ahead of the R 4.5.2 migration below.
-Goal: publish `main` to Posit Connect Cloud via its GitHub-integrated deploy, turn on
-auto-deploy on push, then merge `design/modal-progression-workflow` into `main` as a
-git-workflow exercise.
-
-**Done so far:**
-- **CHG-039 (interim, superseded):** `manifest.json` generated with `forestHelperR`
-  resolved via a committed `renv/cellar/` tarball. **First real deploy attempt from
-  `main` failed** with `Package forestHelperR has invalid package source Cellar.` —
-  Connect Cloud does its own server-side dependency resolution against the cloned
-  repo's `manifest.json`/`renv.lock`, and `"Cellar"` is a reference to *this
-  machine's* directory, meaningless to its build servers. Confirms ISS-036 needed a
-  real fix, not a local workaround.
-- **CHG-040 (real fix): `forestHelperR` published to `github.com/DunnNAM/forestHelperR`
-  (new repo, public).** Sanitized before publishing (full source-tree scan found only
-  the maintainer's personal email — no Gitea/internal references elsewhere);
-  reattributed rather than stripped, at the user's direction: original author
-  credited with a masked identity (`Helen ***` / `H*.*@health.qld.gov.au`) pending
-  her own confirmation, Nathan Dunn added as maintainer with a real contact.
-  `renv.lock`'s `forestHelperR` entry updated to a real `"Source": "GitHub"` record
-  — **the scoped `renv.lock` override the user explicitly authorized**, DEC-006-style
-  but for this deploy blocker. `manifest.json` regenerated via the *default*
-  lockfile-based path this time (no workaround needed) — 138/138 packages match,
-  including `svglite`/`systemfonts`/`textshaping` (the ISS-035-pattern gap from
-  CHG-039, resolved automatically this time). **ISS-036 is now fully resolved.**
-- **Repo visibility:** tried Connect Cloud's GitHub App flow with `main` private
-  first, per plan — confirmed **Connect Cloud's free tier only lists public repos**
-  in its repository picker regardless of GitHub App permissions (public repos showed,
-  private ones didn't, even with access correctly granted and the right GitHub
-  account). `main` was made public as a result. `forestHelperR` was made public too,
-  for the same reason (Connect Cloud's build step needs to fetch it).
-- **Two real, live privacy exposures found and fixed along the way** (not hypothetical
-  — both were actually live on GitHub for a window): (1) CHG-039's cellar commit put
-  the *original, unsanitized* tarball on the now-public `main` — removed from the
-  current tree, **git history on `main` deliberately left unrewritten** (the
-  unmerged `design/modal-progression-workflow` branch would need rebasing onto any
-  rewritten history — a bigger, separate decision, not made this session); (2) the
-  first `forestHelperR` publish commit's own message quoted the real email while
-  describing its removal — fixed via amend + force-push, safe only because that repo
-  had exactly one commit and nothing depended on it yet.
-- Verified throughout: 48/48 unit + 9/9 integration assertions pass.
-
-**Not yet done — pick up here:**
-1. Push this session's commits to `origin/main` (manifest/renv.lock/register updates,
-   cellar-tarball removal, README attribution).
-2. Retry the Connect Cloud deploy from `main` — should now find the repo (public) and
-   resolve `forestHelperR` correctly (real GitHub source, no more "Cellar" error).
-   This is the next real test; not yet confirmed end-to-end successful as of this
-   writing.
-3. Once deployed, turn on auto-deploy on push to `main`.
-4. Merge `design/modal-progression-workflow` into `main` (decided: merge as-is, not
-   cherry-picked, as a git-workflow exercise — see §1).
-5. **Follow up with Helen** on whether she's comfortable with her real name/email on
-   the now-public `forestHelperR` repo — currently masked pending that confirmation.
-6. Separately flagged, not yet started: the user wants to add an internal `styling`
-   package (colour palettes, fonts) as a future dependency, same deployability
-   category `forestHelperR` was in — logged as **ISS-043** (doc-only).
-7. Worth a deliberate look later, not urgent: whether to fully purge `main`'s git
-   history of the leaked tarball (see point 3 under "Done so far" above) — deferred,
-   not decided against, just not done today.
+Beyond those four, the open queue in §5 (README refresh, R 4.5.2 migration, the
+internal `styling` package, the architecture-review findings) is genuinely just a
+backlog — pick whatever seems most useful, or ask the user.
 
 ---
 
@@ -236,30 +179,34 @@ convention. Snapshot **only after** the suite is green under 4.5.2 — a lockfil
 recording a broken environment is worse than a stale one. Rollback is
 `git checkout renv.lock`.
 
-**Verification gate:** the pre-migration baseline is **48 assertions / 23 blocks** and
-**9 assertions / 6 blocks**, all passing under R 4.3.3 (see §6). Re-run both under 4.5.2
-and compare before snapshotting.
+**Verification gate:** the baseline is **48 assertions / 23 blocks** and
+**9 assertions / 6 blocks**, all passing under R 4.3.3 (see §6, reverified 2026-09-06
+post-merge). Re-run both under 4.5.2 and compare before snapshotting.
 
 ---
 
 ## 5. Open queue
 
-Beyond §3a (Connect Cloud) and §4 (migration), this is a backlog — no single mandated
-order anymore (see §3):
+Beyond §3 (things to check) and §4 (the migration), this is a backlog — no mandated
+order:
 
 | ID | Sev | What | Note |
 |---|---|---|---|
-| **ISS-042** | Low (was Medium) | Sub-issue 1 only: Help page title left-alignment | Navbar sub-issues (2, 3) resolved — CHG-055. Sub-issue 1 never touched; see §3. |
-| **ISS-036** | — | ~~`forestHelperR` recorded as `Source: "unknown"` in `renv.lock`~~ | ✅ Resolved (CHG-040) — published to `github.com/DunnNAM/forestHelperR`, `renv.lock` now records a real `"Source": "GitHub"`. `renv::restore()` should now fully succeed, unblocking the R 4.5.2 migration's own prerequisite too — not yet re-verified on 4.5.2 itself. |
-| **ISS-043** | — (feature) | Add internal `styling` package as a dependency (colour palettes, fonts) | Doc-only, not started. Same deployability question as ISS-036 — whatever eventually fixes ISS-036 properly should probably cover this too. |
+| **ISS-042** | Low | Sub-issue 1 only: Help page title left-alignment | Navbar sub-issues (2, 3) resolved — CHG-055. Sub-issue 1 never touched; see §3. |
+| **ISS-041** | Medium | `README.md` describes the pre-restyle app (sidebar/accordion, no tests, no renv) | User-facing and actively misleading, not just incomplete. Deliberately not fixed yet — worth its own pass. |
+| **ISS-045** | Low-Medium | Wizard Step 2 modal missing `.wizard-modal-footer`/`.btn-wizard-skip` wrapper classes | Visible regression mid-wizard-flow: modal shrinks, buttons lose flex parity. Fix mirrors `wizardWelcomeModal()` exactly — see `issues-register.md`. |
+| **ISS-046** | Medium | Widespread un-namespaced `pkg::fun()` calls across `ui.R`/`R/ui_*.R`/`server/*.R` | Direct contradiction of `CLAUDE.md`'s own convention. Large surface area — do deliberately, one file/topic at a time, verifying tests after each. |
+| **ISS-047** | Low/Medium | `xticks_default()`/`make_log_range()` are pure math but live inside `server/observers.R` | Extract to `R/helpers.R`; add unit tests. |
+| **ISS-048** | Low | Estimate-label `case_when()` in `server/preview.R` duplicates `get_est_type()` in `R/helpers.R` | Replace with a call to the existing helper. |
+| **ISS-049–054** | Low/Note | Remaining architecture/CSS audit findings — doc-only, not started | Data panel field-wrapper inconsistency, unannotated `server.R` file-order dependency, redundant reactive dereferencing, redundant `isTruthy()`-in-`req()`, unbundled `'JetBrains Mono'` font reference, two divergent "cream" colour tokens. Full detail in `issues-register.md`. |
+| **ISS-043** | — (feature) | Add internal `styling` package as a dependency (colour palettes, fonts) | Doc-only, not started. Same deployability question ISS-036 was — whatever internal-package-hosting approach gets chosen should probably cover this too. |
 | **ISS-028** | Medium | Age group levels not in clinical sort order | Highest-severity pre-existing item and the only one affecting output correctness — but it lives in `forestHelperR`, so it needs a session in *that* repo. Explicitly out of scope per plan §10. |
 | **ISS-029** | Low | OS system fonts absent from selector after `sysfonts` migration | |
 | **ISS-030** | Low | `"Source Sans Pro"` renamed on Google Fonts; silently absent | |
-| **ISS-041** | Medium | `README.md` describes the pre-restyle app (sidebar/accordion, no tests, no renv) | User-facing and actively misleading, not just incomplete. Deliberately not fixed yet — worth its own pass. |
-| **ISS-039** | Low | x-axis tick generation always splits evenly either side of 1 | Doesn't suit a skewed distribution. Deferred future-development note from the user, not an immediate ask. |
+| **ISS-039** | Low | x-axis tick generation always splits evenly either side of 1 | Doesn't suit a skewed distribution. Deferred future-development note, not an immediate ask. |
 | **ISS-040** | Low | Variables rail badge can briefly flash a stale "hidden" count on load | Cosmetic, self-corrects. User explicitly asked this be logged rather than fixed now. |
-| **FEAT-011** | — | Decide whether `design/modal-progression-workflow` gets merged/adopted | Merged to `main` (2026-09-06, rebase — see `app-changelog-decision-register.md`'s renumbering note). |
-| PDEC-005 | — | Move `forestHelperR` to its own repo? | Deferred — gated on publication/hosting being scoped. Note ISS-036 may force this conversation earlier, and now has a concrete Connect Cloud reason to as well. |
+| Follow-up | — | Confirm with Helen whether she's comfortable with her real name/masked-email on the now-public `forestHelperR` repo | Currently credited as `Helen ***` / `H*.*@health.qld.gov.au` pending her confirmation. Not resolved by the history purge — that removed the *leaked, unmasked* version from history; the masked attribution question is separate and still open. |
+| PDEC-005 | — | Move `forestHelperR` to its own repo? | Already effectively actioned by the Connect Cloud publish work (CHG-040) — worth formally closing this pending decision rather than leaving it open. |
 | PDEC-006 | — | Declare package deps vs. document manual install | Deferred to a future package maintenance cycle |
 
 ---
@@ -284,8 +231,14 @@ RStudio runner set it for you; a bare `Rscript -e ...` does not:
 NOT_CRAN=true Rscript -e 'testthat::test_file("tests/testthat/test-shiny-app.R")'
 ```
 
-Until the migration lands, run under **R 4.3.x** (`C:\Program Files\R\R-4.3.3\bin\`) —
-R 4.5.2 has no populated library.
+Both suites were re-run against the merged `main` on 2026-09-06: **48/48 unit
+assertions, 9/9 integration assertions, both green.** (One integration run hit a
+transient Chromote startup timeout on 4/6 blocks — a clean re-run passed all 6/9; if
+you see the same thing, it's very likely a resource/timing fluke, not a regression —
+retry once before treating it as real.)
+
+Until the R 4.5.2 migration lands, run under **R 4.3.x**
+(`C:\Program Files\R\R-4.3.3\bin\`) — R 4.5.2 has no populated library.
 
 ---
 
@@ -300,41 +253,37 @@ R 4.5.2 has no populated library.
   start; the active panel is chosen by toggling a CSS class. This is deliberate — see
   DEC-005 — and is why the shinytest2 suite survived the restyle nearly unmodified.
 - **A green-looking test run may be a skipped one.** See ISS-037 above.
-- **Stale docs have bitten this project twice.** The restyle plan claimed "nothing
-  implemented" for four months after it shipped, and this handoff described a phase
-  three phases out of date. If you finish a phase, update `CLAUDE.md` §Current phase
-  and this file in the same commit.
+- **Stale docs have bitten this project three times now.** The restyle plan claimed
+  "nothing implemented" for four months after it shipped; a later handoff described a
+  phase three phases out of date; and this file itself spent a while describing a
+  merge that was still mid-conflict-resolution. If you finish a phase, update
+  `CLAUDE.md` §Current phase and this file in the same commit.
 - **`rsconnect::writeManifest()` calls `renv::snapshot()` internally, in *both* its
   lockfile-based and library-based dependency-resolution modes** — this isn't
   documented up front and the two failure modes look unrelated until you trace them.
-  The default (lockfile) mode aborts on any library/lockfile drift at all (found
-  2026-09-06: a trivial `codetools` version mismatch was enough); `dependencyResolution
-  = "library"` mode still internally re-snapshots the local library and its pre-flight
-  validation aborts outright on any package with an "unknown" source — this is what
-  actually surfaced ISS-036 as a real deploy blocker, not just an R 4.5.2 migration
-  issue. Neither failure has a documented flag to skip validation; the fix that worked
-  was giving the installed package a resolvable source via `renv/cellar/` +
-  `renv::install()` (see CHG-039), not fighting the validator.
+  The default (lockfile) mode aborts on any library/lockfile drift at all; a
+  library-based mode still internally re-snapshots the local library and its
+  pre-flight validation aborts outright on any package with an "unknown" source — this
+  is what surfaced ISS-036 as a real Connect Cloud deploy blocker, not just an R 4.5.2
+  migration issue. Neither failure has a documented flag to skip validation; the fix
+  that worked was giving `forestHelperR` a real resolvable source (a public GitHub
+  repo, CHG-040), not fighting the validator.
 - **A negation in a parent `.gitignore` cannot re-include a file inside a directory
   a *closer* (more specific) `.gitignore` already excludes.** `renv/.gitignore`
-  excludes `cellar/` outright; adding `!renv/cellar/forestHelperR_0.2.0.tar.gz` to the
-  *root* `.gitignore` silently did nothing (`git check-ignore -v` still showed it
-  ignored) — the un-ignore had to be added inside `renv/.gitignore` itself, as a line
-  after the exclusion it's overriding. Found 2026-09-06 committing the ISS-036
-  cellar workaround.
+  excludes `cellar/` outright; a negation added to the *root* `.gitignore` silently did
+  nothing (`git check-ignore -v` still showed it ignored) — the un-ignore has to live
+  inside `renv/.gitignore` itself, as a line after the exclusion it's overriding.
 - **`conditionalPanel()` renders `display: contents` when shown**, not `block`. It
   promotes its children into the parent's flex/grid layout for *sizing* purposes, but
   CSS structural selectors (`:first-child`, `:not(:first-child)`, `.parent > *`) still
   only see the un-promoted DOM tree — they silently match nothing on a promoted child.
-  Found 2026-09-04 (design/modal-progression-workflow, `www/style.css` has the full
-  writeup) building the Data drawer's field dividers.
+  Found building the Data drawer's field dividers (FEAT-011).
 - **A background dev-server restart on this Windows setup doesn't reliably kill the
   previous `Rscript.exe`.** Stopping a background task and starting a new
-  `shiny::runApp()` task can leave the old R process running and orphaned (found
-  2026-09-04 — three stray processes, one at 200+ MB, accumulated over a session of
-  restarts). Check `tasklist //FI "IMAGENAME eq Rscript.exe"` periodically if you've
-  been restarting a lot, and `taskkill //PID <pid> //F` anything not the one actually
-  listening on the port in use (`netstat -ano | grep :<port>` identifies it).
+  `shiny::runApp()` task can leave the old R process running and orphaned. Check
+  `tasklist //FI "IMAGENAME eq Rscript.exe"` periodically if you've been restarting a
+  lot, and `taskkill //PID <pid> //F` anything not the one actually listening on the
+  port in use (`netstat -ano | grep :<port>` identifies it).
 - **A restart is not always necessary.** `www/*.css` and `www/*.js` are served fresh
   from disk on every browser request — only `ui.R`/`R/*.R`/`server/*.R` changes need
   the R process restarted. A CSS-only edit just needs the browser refreshed (bump the
@@ -343,29 +292,27 @@ R 4.5.2 has no populated library.
   `document.addEventListener("shiny:connected", ...)` can never catch it — confirmed by
   reading the bundled `shiny.min.js` directly. Any client-side "run once Shiny connects"
   code needs `jQuery(document).on("shiny:connected", ...)` instead. This is what ISS-038
-  turned out to be, and it had been silently broken since CHG-039 — worth checking any
-  other `addEventListener("shiny:...", ...)` call in the codebase for the same mistake
-  if one ever gets added.
+  turned out to be, and it had been silently broken since CHG-041 (the wizard's
+  original commit) — worth checking any other `addEventListener("shiny:...", ...)`
+  call in the codebase for the same mistake if one ever gets added.
 - **A plain `observe()` re-fires on the very first reactive flush too**, not just on
   later changes — including when the reactive value it reads is already valid from
   app-start defaults. This bit the wizard's auto-advance observer once Simulated data
   (with a valid response/predictor selection) became the default: it fired almost
   instantly instead of waiting for the user to do something. `bindEvent(..., ignoreInit
-  = TRUE)` on the actual inputs that should trigger it is the fix — see CHG-048.
+  = TRUE)` on the actual inputs that should trigger it is the fix — see CHG-050.
 - **htmltools' pretty-printer inserts whitespace between a tag call's separate
   arguments**, and between *inline* elements (unlike block-level ones) that collapses to
   a visible stray space in the browser. `p("...", strong("X"), ", ", strong("Y"), ...)`
   can render as "X , Y" instead of "X, Y". Building the sentence as one `HTML()` string
-  sidesteps it — see CHG-048 / `R/ui_wizard.R`.
+  sidesteps it — see CHG-050 / `R/ui_wizard.R`.
 - **A CSS descendant selector matches a nested `.drawer-field-block` too, not just a
   direct row item.** `.drawer-row-divided .drawer-field-block--divided` (the divider
   rule) matches *any* descendant with that class, regardless of nesting depth — a field
-  nested inside another field's own content (e.g. a sub-field added to an existing
-  titled field) picks up the row-level divider padding meant for actual row items,
-  visibly shifting it right of its siblings. Fix is always `first = TRUE` on a nested
-  `drawerFieldUI()`/`drawerGroupUI()` call, not just on top-level row items — found
-  2026-09-04 (CHG-050) when "Number of decimal places" landed inside Variables'
-  Estimate Column Formatting field without it.
+  nested inside another field's own content picks up the row-level divider padding
+  meant for actual row items, visibly shifting it right of its siblings. Fix is always
+  `first = TRUE` on a nested `drawerFieldUI()`/`drawerGroupUI()` call, not just on
+  top-level row items — see CHG-052.
 - **`bslib::navset_card_tab()`'s fill behaviour can't be turned off via its own
   arguments — its outer `card()` call is hardcoded inside `bslib` with no `fill`
   passthrough** (confirmed by reading the `bslib` 0.8.0 source directly:
@@ -374,7 +321,7 @@ R 4.5.2 has no populated library.
   keeps sizing itself via its own resize JS regardless. Overriding in CSS
   (`height: auto !important` etc., which *does* beat an inline style even one JS keeps
   rewriting — a real spec exception) was the practical fix, not reimplementing the
-  component against `bslib`'s undocumented internals — see CHG-049 / `www/style.css`.
+  component against `bslib`'s undocumented internals — see CHG-051 / `www/style.css`.
 - **`plotOutput()`'s `height` argument only accepts a fixed CSS length — passing
   `"auto"` breaks Shiny's own client-side plot-resize JS.** The rendered `<img>` came
   back with a literal `height="[object Object]"` HTML attribute (confirmed by
@@ -386,22 +333,22 @@ R 4.5.2 has no populated library.
   does here), widening the container stretches a fixed-resolution image over more
   screen space, reading as "zoomed in, blurry" rather than an actual quality
   regression. `width: auto; max-width: 100%` (shrink-only, never stretch) is the fix —
-  see CHG-049.
+  see CHG-051.
 - **`shinyWidgets::noUiSliderInput()`'s handle *count* is fixed at creation** —
   `updateNoUiSliderInput()` only repositions/reconfigures existing handles (confirmed
   via the package's own formals and example app), it can't add or remove them. Changing
   how many handles a multi-value slider has means rebuilding it via `renderUI()` (same
   pattern as the Data panel's file table / Order panel's sortable list — remember
-  `outputOptions(..., suspendWhenHidden = FALSE)` for it) — see CHG-050.
+  `outputOptions(..., suspendWhenHidden = FALSE)` for it) — see CHG-052.
 - **CSS/layout reasoning verified only against stylesheet text, without an actual
-  rendered screenshot, is not reliable enough to report as "verified."** CHG-052 made
-  three navbar/Help-tab styling changes with detailed reasoning about flexbox
-  `align-items`, absolute-positioning offsets, and class scoping — all internally
-  consistent on paper, checked via `curl` for served HTML/CSS and balanced braces, but
-  the Chrome browser extension was unavailable that session so none of it was actually
-  seen rendered. The user's own live check immediately after found none of the three
-  fixes landed, and one regressed. See **ISS-042**. **Resolution that actually worked
-  (CHG-053, same day):** the user removed the Chrome extension from the session
+  rendered screenshot, is not reliable enough to report as "verified."** An earlier
+  navbar/Help-tab styling attempt (CHG-054) made three changes with detailed reasoning
+  about flexbox `align-items`, absolute-positioning offsets, and class scoping — all
+  internally consistent on paper, checked via `curl` for served HTML/CSS and balanced
+  braces, but no Chrome browser extension was available that session so none of it was
+  actually seen rendered. The user's own live check immediately after found none of the
+  three fixes landed, and one regressed (ISS-042). **Resolution that actually worked
+  (CHG-055, same day):** the user removed the Chrome extension from the session
   entirely and instead checked each CSS round live in their own browser, directing the
   next fix — i.e. the fix wasn't "get Claude a working browser tool", it was "the
   human does the visual verification and Claude iterates on direction." This is now
@@ -413,11 +360,10 @@ R 4.5.2 has no populated library.
   button), and `.navbar-header` — not `.navbar-brand` — is the actual flex child of
   `.container-fluid`. Any CSS assuming `.navbar-brand` is a direct flex sibling of
   `.navbar-collapse` (the natural assumption from reading plain Bootstrap 5 docs) will
-  silently target the wrong element for flex alignment. Found 2026-09-04 (CHG-053) by
-  fetching the served HTML directly (`curl http://127.0.0.1:<port>/`) after a
-  `margin-bottom` change on `.navbar-brand` visibly had no effect — worth doing this
-  check early for any navbar-brand-position CSS in this app, rather than assuming
-  standard markup.
+  silently target the wrong element for flex alignment. Found (CHG-055) by fetching the
+  served HTML directly (`curl http://127.0.0.1:<port>/`) after a `margin-bottom` change
+  on `.navbar-brand` visibly had no effect — worth doing this check early for any
+  navbar-brand-position CSS in this app, rather than assuming standard markup.
 - **Bootstrap 5.3's `.nav-underline` utility class is present by default on bslib's
   generated tab `<ul>`** (`page_navbar()`'s tabs render as `<ul class="nav navbar-nav
   nav-underline" ...>`), and its own rule
@@ -426,14 +372,22 @@ R 4.5.2 has no populated library.
   navbar's border. This silently overrides a plain `.navbar-nav .nav-link` selector
   (specificity 0-2-0) **regardless of which stylesheet loads last** — a same-property
   override that isn't about `!important` or edit order, just a higher-specificity
-  selector nobody wrote deliberately for this app. Found 2026-09-04 (CHG-053) by
-  fetching `bootstrap.min.css` directly (`curl .../bootstrap-5.3.1/bootstrap.min.css`)
-  and diffing it against what our own `.nav-link` rule declared — this is what made
-  every previous attempt at aligning the active-tab underline fail regardless of how
-  the offset math was tuned. Worth checking for on any future `.nav-link`/tab-styling
-  work in this app; the eventual fix was to stop fighting it (switch to filled pill
-  tabs, which don't need underline-precision alignment at all) rather than out-
-  specificity it.
+  selector nobody wrote deliberately for this app. Found (CHG-055) by fetching
+  `bootstrap.min.css` directly and diffing it against what our own `.nav-link` rule
+  declared — this is what made every previous attempt at aligning the active-tab
+  underline fail regardless of how the offset math was tuned. Worth checking for on any
+  future `.nav-link`/tab-styling work in this app; the eventual fix was to stop
+  fighting it (switch to filled pill tabs, which don't need underline-precision
+  alignment at all) rather than out-specificity it.
+- **A merge/rebase that spans many commits touching the same doc files repeatedly is
+  its own kind of slog — plan for it.** Rebasing FEAT-011's 18 commits onto `main`'s 3
+  Connect Cloud commits hit a doc-file conflict (`app-changelog-decision-register.md`,
+  `issues-register.md`, `session-handoff.md`) at nearly every step, because both sides
+  had been updating these same running logs independently. Resolving it required a
+  genuine numbering-collision fix (the branch's own CHG-039–056 vs. `main`'s real
+  CHG-039/040) applied consistently across every subsequent conflict, not just once.
+  If a long-lived branch and `main` both maintain these registers, expect this same
+  slog on the next big merge — there's no shortcut besides doing it carefully.
 
 ---
 
@@ -443,6 +397,7 @@ Full list in `CLAUDE.md`. The two most often missed:
 
 - **Update `app-changelog-decision-register.md` for every change** — every code change
   gets a CHG entry; decisions get a DEC entry; issues get an ISS/FEAT entry.
-- **Explicit `package::function()` notation everywhere.**
+- **Explicit `package::function()` notation everywhere.** (Currently violated
+  widely — see ISS-046.)
 
 ---
