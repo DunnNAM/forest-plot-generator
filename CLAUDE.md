@@ -123,18 +123,18 @@ force-pushed. **Every commit hash predating 2026-09-06 no longer exists** — ma
 references by commit subject line, not hash.
 
 **Open issues (see `issues-register.md` for full detail on all of these):**
-- ISS-042: Help page title still not left-aligned (Low — navbar sub-issues 2/3 already
-  resolved, CHG-055)
 - ISS-041: `README.md` describes the pre-restyle app — stale, not yet rewritten (Medium)
 - ISS-045–048: architecture-review findings (wizard Step 2 modal styling gap; widespread
   un-namespaced calls; testability/DRY items) — all open, none started
 - ISS-028/029/030: pre-existing, unchanged (age-group sort order, OS fonts, renamed
   Google Font — all Low/Medium, mostly out of this repo's scope)
+- FEAT-012 (doc-only idea): Back/Next drawer-navigation buttons — not started
 
 **Next session:** see `session-handoff.md` for the full post-merge checklist — it has
-specific things still worth verifying (a detailed live visual check of the merged
-FEAT-011 UI piece-by-piece, GitHub Support's response on the history-purge ticket).
-Connect Cloud auto-deploy is now confirmed (CHG-060) — see above.
+specific things still worth verifying (GitHub Support's response on the history-purge
+ticket). Connect Cloud auto-deploy is confirmed (CHG-060); the live FEAT-011 visual
+check is done and ISS-042 (Help page title, its last open sub-issue) is now fully
+resolved (CHG-062/CHG-061 fixed the Export drawer along the way) — see above.
 
 ## Conventions
 - Always use explicit package::function() notation

@@ -88,11 +88,10 @@ which can never catch an event Shiny fires through jQuery's `.trigger()` — the
 had silently never shown itself to a genuine first-time visitor since it was written
 (ISS-038, fixed CHG-049).
 
-**Still genuinely open from FEAT-011:** ISS-042's sub-issue 1 (Help page title still
-not left-aligned — the navbar work never touched `R/ui_help.R`) and ISS-045 through
-ISS-048 (an architecture review's findings: a wizard Step-2 modal styling gap;
-widespread un-namespaced `pkg::fun()` calls; a couple of testability/DRY items) — none
-of these are started. See §5.
+**Still genuinely open from FEAT-011:** ISS-045 through ISS-048 (an architecture
+review's findings: a wizard Step-2 modal styling gap; widespread un-namespaced
+`pkg::fun()` calls; a couple of testability/DRY items) — none of these are started.
+ISS-042 is now fully resolved (all three sub-issues, see §3 item 3 below). See §5.
 
 **Also still open, unrelated to FEAT-011:** `README.md` (ISS-041) has been stale since
 before DEC-004/DEC-005 — still describes the old sidebar+accordion layout and lists
@@ -124,11 +123,14 @@ work" handoff, it's a "check the work" one. Four things specifically:
    iterating on direction — no Chrome extension in this session (see the
    `no-chrome-extension-user-inspects-visually` memory) — this is the standing
    process, not a one-off (see §7's CHG-055 entry for why).
-3. **ISS-042 sub-issue 1 (Help page title left-alignment) is still open** — confirmed
-   not touched by any FEAT-011 commit. Worth a quick check next time the Help tab is
-   open. The original hypothesis (an `R/ui_help.R` class rename needing a full R
-   restart, not just a browser refresh, to actually take effect) was never confirmed
-   or ruled out — restart R fully before concluding it's still broken.
+3. ~~**ISS-042 sub-issue 1 (Help page title left-alignment) is still open**~~
+   **Resolved 2026-09-06, no code change needed.** The app already had a full R
+   restart earlier this session (for the export.js work above), and the served HTML
+   confirmed `<h4 class="help-title">` was live, not the old `.drawer-header` — the
+   "needs an R restart" theory this item's own prior write-up proposed. Re-tracing
+   `www/style.css` found nothing setting `text-align` or a centering `max-width` on
+   `.help-title` or any ancestor. Nathan confirmed live: flush left with the section
+   cards below, as intended. ISS-042 is now fully closed (all three sub-issues).
 4. ~~**Confirm Connect Cloud's auto-deploy actually picked up today's push.**~~
    **Confirmed 2026-09-06 (CHG-060)** — Nathan checked the published app directly; it's
    serving the merged FEAT-011 redesign (wizard modal + updated layout), not a stale
